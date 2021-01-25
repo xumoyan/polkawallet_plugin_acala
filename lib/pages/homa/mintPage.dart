@@ -243,7 +243,7 @@ class _MintPageState extends State<MintPage> {
                                           .unselectedWidgetColor),
                                 ),
                                 Text(
-                                    '1 DOT = ${Fmt.priceFloor(1 / pool.liquidExchangeRate, lengthMax: 3)} L-DOT'),
+                                    '1 DOT = ${Fmt.priceFloor(1 / pool.liquidExchangeRate, lengthMax: 4)} L-DOT'),
                               ],
                             ),
                             GestureDetector(

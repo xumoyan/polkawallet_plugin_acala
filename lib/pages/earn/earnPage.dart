@@ -225,7 +225,7 @@ class _EarnPageState extends State<EarnPage> {
                     poolShare;
             final pair = _tab.split('-');
             lpAmountString =
-                '${lpAmount.toStringAsFixed(3)} ${pair[0]} + ${lpAmount2.toStringAsFixed(3)} ${pair[1]}';
+                '${Fmt.priceFloor(lpAmount)} ${pair[0]} + ${Fmt.priceFloor(lpAmount2, lengthFixed: 4)} ${pair[1]}';
             reward = (widget.plugin.store.earn.swapPoolRewards[_tab] ?? 0) *
                 stakeShare;
             rewardSaving =
@@ -386,7 +386,8 @@ class _SystemCard extends StatelessWidget {
               Text('${dic['earn.staked']} ${PluginFmt.tokenView(token)}'),
               Padding(
                 padding: EdgeInsets.only(top: 16, bottom: 8),
-                child: Text(userStaked.toStringAsFixed(3), style: primaryText),
+                child: Text(Fmt.priceFloor(userStaked, lengthFixed: 4),
+                    style: primaryText),
               ),
             ],
           ),
@@ -402,7 +403,7 @@ class _SystemCard extends StatelessWidget {
               InfoItem(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 title: dic['earn.pool'],
-                content: total.toStringAsFixed(3),
+                content: Fmt.priceFloor(total, lengthFixed: 4),
               ),
               InfoItem(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -473,10 +474,10 @@ class _UserCard extends StatelessWidget {
                       Padding(
                         padding: EdgeInsets.only(top: 8, bottom: 8),
                         child: Text(
-                            Fmt.bigIntToDouble(
-                                    reward < BigInt.zero ? BigInt.zero : reward,
-                                    decimals)
-                                .toStringAsFixed(3),
+                            Fmt.priceFloorBigInt(
+                                reward < BigInt.zero ? BigInt.zero : reward,
+                                decimals,
+                                lengthFixed: 4),
                             style: primaryText),
                       ),
                     ],
@@ -487,12 +488,11 @@ class _UserCard extends StatelessWidget {
                       Padding(
                         padding: EdgeInsets.only(top: 8, bottom: 8),
                         child: Text(
-                            Fmt.bigIntToDouble(
-                                    rewardSaving < BigInt.zero
-                                        ? BigInt.zero
-                                        : rewardSaving,
-                                    decimals)
-                                .toStringAsFixed(2),
+                            Fmt.priceFloorBigInt(
+                                rewardSaving < BigInt.zero
+                                    ? BigInt.zero
+                                    : rewardSaving,
+                                decimals),
                             style: primaryText),
                       ),
                     ],

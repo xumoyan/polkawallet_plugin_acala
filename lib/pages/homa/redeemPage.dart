@@ -202,7 +202,7 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
           available = item.free * pool.liquidExchangeRate;
           eraSelectText += ': ${item.era}';
           eraSelectTextTail =
-              '(≈ ${(item.era - pool.currentEra).toInt()}${dic['homa.redeem.day']}, ${dicAssets['amount.available']}: ${Fmt.priceFloor(pool.freeList[_eraSelected].free, lengthMax: 3)} DOT)';
+              '(≈ ${(item.era - pool.currentEra).toInt()}${dic['homa.redeem.day']}, ${dicAssets['amount.available']}: ${Fmt.priceFloor(pool.freeList[_eraSelected].free, lengthMax: 4)} DOT)';
         }
 
         final primary = Theme.of(context).primaryColor;
@@ -349,7 +349,7 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
                                           .unselectedWidgetColor),
                                 ),
                                 Text(
-                                    '1 LDOT = ${Fmt.priceFloor(pool.liquidExchangeRate, lengthMax: 3)} DOT'),
+                                    '1 LDOT = ${Fmt.priceFloor(pool.liquidExchangeRate, lengthMax: 4)} DOT'),
                               ],
                             ),
                             GestureDetector(

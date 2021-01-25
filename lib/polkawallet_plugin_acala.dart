@@ -58,6 +58,8 @@ class PluginAcala extends PolkawalletPlugin {
   }
 
   Map<String, Widget> _basicIcons = {
+    'KAR': Image.asset(
+        'packages/polkawallet_plugin_acala/assets/images/tokens/KAR.png'),
     'ACA': Image.asset(
         'packages/polkawallet_plugin_acala/assets/images/tokens/ACA.png'),
     'AUSD': Image.asset(

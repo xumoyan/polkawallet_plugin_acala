@@ -71,7 +71,7 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
     final decimals = widget.plugin.networkState.tokenDecimals;
     setState(() {
       _shareInput = v;
-      _amountCtrl.text = Fmt.bigIntToDouble(v, decimals).toStringAsFixed(2);
+      _amountCtrl.text = Fmt.bigIntToDouble(v, decimals).toStringAsFixed(4);
     });
     _formKey.currentState.validate();
   }
@@ -196,7 +196,7 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
                           decoration: InputDecoration(
                             hintText: dicAssets['amount'],
                             labelText:
-                                '${dicAssets['amount']} (${dic['earn.available']}: ${Fmt.priceFloorBigInt(shareInt, decimals)} Shares)',
+                                '${dicAssets['amount']} (${dic['earn.available']}: ${Fmt.priceFloorBigInt(shareInt, decimals, lengthMax: 4)} Shares)',
                             suffix: GestureDetector(
                               child: Icon(
                                 CupertinoIcons.clear_thick_circled,
@@ -269,7 +269,7 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
                               style: Theme.of(context).textTheme.headline4,
                             ),
                             Text(
-                              '${Fmt.doubleFormat(amountToken)} ${pair[0]} + ${Fmt.doubleFormat(amountStableCoin, length: 2)} ${pair[1]}',
+                              '${Fmt.doubleFormat(amountToken)} ${pair[0]} + ${Fmt.doubleFormat(amountStableCoin)} ${pair[1]}',
                               style: Theme.of(context).textTheme.headline4,
                             ),
                           ],
@@ -288,7 +288,7 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
                             ),
                           ),
                           Text(
-                              '1 ${pair[0]} = ${Fmt.doubleFormat(_price, length: 2)} ${pair[1]}'),
+                              '1 ${pair[0]} = ${Fmt.doubleFormat(_price)} ${pair[1]}'),
                         ],
                       ),
                       Row(
@@ -303,7 +303,7 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
                             ),
                           ),
                           Text(
-                            '${Fmt.doubleFormat(poolToken)} ${pair[0]}\n+ ${Fmt.doubleFormat(poolStableCoin, length: 2)} ${pair[1]}',
+                            '${Fmt.doubleFormat(poolToken)} ${pair[0]}\n+ ${Fmt.doubleFormat(poolStableCoin)} ${pair[1]}',
                             textAlign: TextAlign.right,
                           ),
                         ],

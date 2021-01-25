@@ -341,7 +341,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                                 '${dicAssets['balance']}: ${Fmt.priceFloorBigInt(
                                   balanceTokenUser,
                                   decimals,
-                                  lengthMax: 3,
+                                  lengthFixed: 4,
                                 )}',
                                 style: TextStyle(
                                   fontSize: 14,
@@ -356,7 +356,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                                 '${dicAssets['balance']}: ${Fmt.priceFloorBigInt(
                                   balanceStableCoinUser,
                                   decimals,
-                                  lengthMax: 2,
+                                  lengthFixed: 4,
                                 )}',
                                 style: TextStyle(
                                   fontSize: 14,
@@ -396,7 +396,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                             ),
                           ),
                           Text(
-                            '${Fmt.doubleFormat(amountToken)} ${tokenPair[0]}\n+ ${Fmt.doubleFormat(amountStableCoin, length: 2)} ${tokenPair[1]}',
+                            '${Fmt.doubleFormat(amountToken)} ${tokenPair[0]}\n+ ${Fmt.doubleFormat(amountStableCoin)} ${tokenPair[1]}',
                             textAlign: TextAlign.right,
                           ),
                         ],
