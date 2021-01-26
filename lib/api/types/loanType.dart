@@ -32,7 +32,7 @@ class LoanType extends _LoanType {
   }
 
   BigInt tokenToUSD(BigInt amount, price, int decimals) {
-    return Fmt.balanceInt(Fmt.token(amount * price, decimals));
+    return amount * price ~/ BigInt.from(pow(10, decimals));
   }
 
   double calcCollateralRatio(BigInt debitInUSD, BigInt collateralInUSD) {

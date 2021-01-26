@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:polkawallet_plugin_acala/api/types/loanType.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanAdjustPage.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanInfoPanel.dart';
@@ -198,111 +199,113 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
 
   @override
   Widget build(BuildContext context) {
-    final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
-    final assetDic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
-    final decimals = widget.plugin.networkState.tokenDecimals;
-    final LoanAdjustPageParams params =
-        ModalRoute.of(context).settings.arguments;
-    String symbol = params.token;
+    return Observer(builder: (_) {
+      final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
+      final assetDic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
+      final decimals = widget.plugin.networkState.tokenDecimals;
+      final LoanAdjustPageParams params =
+          ModalRoute.of(context).settings.arguments;
+      String symbol = params.token;
 
-    String pageTitle = '${dic['loan.create']} $symbol';
+      String pageTitle = '${dic['loan.create']} $symbol';
 
-    final price = widget.plugin.store.assets.prices[symbol];
-    final stableCoinPrice = Fmt.tokenInt('1', decimals);
+      final price = widget.plugin.store.assets.prices[symbol];
+      final stableCoinPrice = Fmt.tokenInt('1', decimals);
 
-    final loanType =
-        widget.plugin.store.loan.loanTypes.firstWhere((i) => i.token == symbol);
-    final balance = Fmt.balanceInt(
-        widget.plugin.store.assets.tokenBalanceMap[symbol]?.amount);
-    final available = balance;
+      final loanType = widget.plugin.store.loan.loanTypes
+          .firstWhere((i) => i.token == symbol);
+      final balance = Fmt.balanceInt(
+          widget.plugin.store.assets.tokenBalanceMap[symbol]?.amount);
+      final available = balance;
 
-    final balanceView = Fmt.token(available, decimals);
-    final maxToBorrow = Fmt.token(_maxToBorrow, decimals);
+      final balanceView = Fmt.token(available, decimals);
+      final maxToBorrow = Fmt.token(_maxToBorrow, decimals);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(pageTitle),
-        centerTitle: true,
-      ),
-      body: Builder(builder: (BuildContext context) {
-        return SafeArea(
-          child: Column(
-            children: <Widget>[
-              Expanded(
-                child: Form(
-                  key: _formKey,
-                  autovalidateMode: _autoValidate
-                      ? AutovalidateMode.onUserInteraction
-                      : AutovalidateMode.disabled,
-                  child: ListView(
-                    padding: EdgeInsets.all(16),
-                    children: <Widget>[
-                      LoanInfoPanel(
-                        price: price,
-                        liquidationRatio: loanType.liquidationRatio,
-                        requiredRatio: loanType.requiredCollateralRatio,
-                        currentRatio: _currentRatio,
-                        liquidationPrice: _liquidationPrice,
-                        decimals: decimals,
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(top: 16),
-                        child: Text(dic['loan.amount.collateral']),
-                      ),
-                      TextFormField(
-                        decoration: InputDecoration(
-                          hintText: assetDic['amount'],
-                          labelText:
-                              '${assetDic['amount']} (${assetDic['amount.available']}: $balanceView $symbol)',
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(pageTitle),
+          centerTitle: true,
+        ),
+        body: Builder(builder: (BuildContext context) {
+          return SafeArea(
+            child: Column(
+              children: <Widget>[
+                Expanded(
+                  child: Form(
+                    key: _formKey,
+                    autovalidateMode: _autoValidate
+                        ? AutovalidateMode.onUserInteraction
+                        : AutovalidateMode.disabled,
+                    child: ListView(
+                      padding: EdgeInsets.all(16),
+                      children: <Widget>[
+                        LoanInfoPanel(
+                          price: price,
+                          liquidationRatio: loanType.liquidationRatio,
+                          requiredRatio: loanType.requiredCollateralRatio,
+                          currentRatio: _currentRatio,
+                          liquidationPrice: _liquidationPrice,
+                          decimals: decimals,
                         ),
-                        inputFormatters: [UI.decimalInputFormatter(decimals)],
-                        controller: _amountCtrl,
-                        keyboardType:
-                            TextInputType.numberWithOptions(decimal: true),
-                        validator: (v) =>
-                            _validateAmount1(v, available, decimals),
-                        onChanged: (v) => _onAmount1Change(
-                            v, loanType, price, stableCoinPrice, decimals),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(top: 16),
-                        child: Text(dic['loan.amount.debit']),
-                      ),
-                      TextFormField(
-                        decoration: InputDecoration(
-                          hintText: assetDic['amount'],
-                          labelText:
-                              '${assetDic['amount']}(${dic['loan.max']}: $maxToBorrow)',
+                        Padding(
+                          padding: EdgeInsets.only(top: 16),
+                          child: Text(dic['loan.amount.collateral']),
                         ),
-                        inputFormatters: [UI.decimalInputFormatter(decimals)],
-                        controller: _amountCtrl2,
-                        keyboardType:
-                            TextInputType.numberWithOptions(decimal: true),
-                        validator: (v) =>
-                            _validateAmount2(v, maxToBorrow, decimals),
-                        onChanged: (v) =>
-                            _onAmount2Change(v, loanType, decimals),
-                      ),
-                    ],
+                        TextFormField(
+                          decoration: InputDecoration(
+                            hintText: assetDic['amount'],
+                            labelText:
+                                '${assetDic['amount']} (${assetDic['amount.available']}: $balanceView $symbol)',
+                          ),
+                          inputFormatters: [UI.decimalInputFormatter(decimals)],
+                          controller: _amountCtrl,
+                          keyboardType:
+                              TextInputType.numberWithOptions(decimal: true),
+                          validator: (v) =>
+                              _validateAmount1(v, available, decimals),
+                          onChanged: (v) => _onAmount1Change(
+                              v, loanType, price, stableCoinPrice, decimals),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.only(top: 16),
+                          child: Text(dic['loan.amount.debit']),
+                        ),
+                        TextFormField(
+                          decoration: InputDecoration(
+                            hintText: assetDic['amount'],
+                            labelText:
+                                '${assetDic['amount']}(${dic['loan.max']}: $maxToBorrow)',
+                          ),
+                          inputFormatters: [UI.decimalInputFormatter(decimals)],
+                          controller: _amountCtrl2,
+                          keyboardType:
+                              TextInputType.numberWithOptions(decimal: true),
+                          validator: (v) =>
+                              _validateAmount2(v, maxToBorrow, decimals),
+                          onChanged: (v) =>
+                              _onAmount2Change(v, loanType, decimals),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              Padding(
-                padding: EdgeInsets.all(16),
-                child: RoundedButton(
-                  text: I18n.of(context)
-                      .getDic(i18n_full_dic_ui, 'common')['tx.submit'],
-                  onPressed: () {
-                    if (_formKey.currentState.validate()) {
-                      _onSubmit(pageTitle, loanType, decimals);
-                    }
-                  },
+                Padding(
+                  padding: EdgeInsets.all(16),
+                  child: RoundedButton(
+                    text: I18n.of(context)
+                        .getDic(i18n_full_dic_ui, 'common')['tx.submit'],
+                    onPressed: () {
+                      if (_formKey.currentState.validate()) {
+                        _onSubmit(pageTitle, loanType, decimals);
+                      }
+                    },
+                  ),
                 ),
-              ),
-            ],
-          ),
-        );
-      }),
-    );
+              ],
+            ),
+          );
+        }),
+      );
+    });
   }
 }
