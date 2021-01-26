@@ -84,11 +84,9 @@ async function fetchDexPoolInfo(api: ApiPromise, pool: any, address: string) {
     api.query.rewards.shareAndWithdrawnReward({ DexSaving: pool }, address),
     api.query.tokens.totalIssuance(pool),
   ])) as any;
-  let proportion = 0;
-  if (res[2]) {
-    proportion = FixedPointNumber.fromInner(res[3][0].toString())
-      .div(FixedPointNumber.fromInner(res[1].totalShares.toString()))
-      .toNumber();
+  let proportion = new FixedPointNumber(0);
+  if (res[1] && res[3]) {
+    proportion = FPNum(res[3][0]).div(FPNum(res[1].totalShares));
   }
   return {
     token: pool.DEXShare.join("-"),
@@ -97,11 +95,21 @@ async function fetchDexPoolInfo(api: ApiPromise, pool: any, address: string) {
     shares: res[3][0],
     proportion: proportion || 0,
     reward: {
-      incentive: new FixedPointNumber(res[1].totalRewards * proportion - res[3][1] || 0).toString(),
-      saving: new FixedPointNumber(res[2].totalRewards * proportion - res[4][1] || 0).toString(),
+      incentive: FPNum(res[1].totalRewards)
+        .times(proportion)
+        .minus(FPNum(res[3][1]))
+        .toString(),
+      saving: FPNum(res[2].totalRewards)
+        .times(proportion)
+        .minus(FPNum(res[4][1]))
+        .toString(),
     },
     issuance: res[5],
   };
+}
+
+function FPNum(input: any) {
+  return FixedPointNumber.fromInner(input.toString());
 }
 
 async function _calacFreeList(api: ApiPromise, start: number, duration: number) {
