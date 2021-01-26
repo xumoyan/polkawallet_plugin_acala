@@ -10,8 +10,8 @@ class DexPoolInfoData extends _DexPoolInfoData {
     data.shares = Fmt.balanceInt(json['shares'].toString());
     data.proportion = double.parse(json['proportion'].toString());
     data.reward = LPRewardData(
-      Fmt.balanceInt(json['reward']['incentive'].toString()),
-      Fmt.balanceInt(json['reward']['saving'].toString()),
+      double.parse(json['reward']['incentive']),
+      double.parse(json['reward']['saving']),
     );
     data.issuance = Fmt.balanceInt(json['issuance'].toString());
     return data;
@@ -31,6 +31,6 @@ abstract class _DexPoolInfoData {
 
 class LPRewardData {
   LPRewardData(this.incentive, this.saving);
-  BigInt incentive;
-  BigInt saving;
+  double incentive;
+  double saving;
 }

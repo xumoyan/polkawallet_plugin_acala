@@ -93,7 +93,7 @@ async function fetchDexPoolInfo(api: ApiPromise, pool: any, address: string) {
     pool: res[0],
     sharesTotal: res[1].totalShares,
     shares: res[3][0],
-    proportion: proportion || 0,
+    proportion: proportion.toNumber() || 0,
     reward: {
       incentive: FPNum(res[1].totalRewards)
         .times(proportion)

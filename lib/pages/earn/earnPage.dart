@@ -75,11 +75,11 @@ class _EarnPageState extends State<EarnPage> {
   Future<void> _onWithdrawReward(LPRewardData reward) async {
     final decimals = widget.plugin.networkState.tokenDecimals;
     final symbol = widget.plugin.networkState.tokenSymbol;
-    final incentiveReward = Fmt.token(reward.incentive, decimals);
-    final savingReward = Fmt.token(reward.saving, decimals);
+    final incentiveReward = Fmt.priceFloor(reward.incentive, lengthFixed: 4);
+    final savingReward = Fmt.priceFloor(reward.saving, lengthFixed: 4);
     final pool = jsonEncode(_tab.toUpperCase().split('-'));
 
-    if (reward.saving > BigInt.zero && reward.incentive > BigInt.zero) {
+    if (reward.saving > 0 && reward.incentive > 0) {
       final params = [
         'api.tx.incentives.claimRewards({DexIncentive: {DEXShare: $pool}})',
         'api.tx.incentives.claimRewards({DexSaving: {DEXShare: $pool}})',
@@ -118,7 +118,7 @@ class _EarnPageState extends State<EarnPage> {
         widget.plugin.store.earn
             .addDexLiquidityTx(tx2, widget.keyring.current.pubKey, decimals);
       }
-    } else if (reward.incentive > BigInt.zero) {
+    } else if (reward.incentive > 0) {
       final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
           arguments: TxConfirmParams(
             module: 'incentives',
@@ -139,7 +139,7 @@ class _EarnPageState extends State<EarnPage> {
         widget.plugin.store.earn
             .addDexLiquidityTx(res, widget.keyring.current.pubKey, decimals);
       }
-    } else if (reward.saving > BigInt.zero) {
+    } else if (reward.saving > 0) {
       final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
           arguments: TxConfirmParams(
             module: 'incentives',
@@ -442,8 +442,8 @@ class _UserCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
-    final reward = poolInfo?.reward?.incentive ?? BigInt.zero;
-    final rewardSaving = poolInfo?.reward?.saving ?? BigInt.zero;
+    final reward = poolInfo?.reward?.incentive ?? 0;
+    final rewardSaving = poolInfo?.reward?.saving ?? 0;
     final Color primary = Theme.of(context).primaryColor;
     final TextStyle primaryText = TextStyle(
       fontSize: 22,
@@ -451,7 +451,7 @@ class _UserCard extends StatelessWidget {
       color: primary,
     );
 
-    final canClaim = reward > BigInt.zero || rewardSaving > BigInt.zero;
+    final canClaim = reward > 0 || rewardSaving > 0;
 
     return RoundedCard(
       margin: EdgeInsets.fromLTRB(16, 0, 16, 24),
@@ -473,11 +473,7 @@ class _UserCard extends StatelessWidget {
                       Text('${dic['earn.incentive']} (ACA)'),
                       Padding(
                         padding: EdgeInsets.only(top: 8, bottom: 8),
-                        child: Text(
-                            Fmt.priceFloorBigInt(
-                                reward < BigInt.zero ? BigInt.zero : reward,
-                                decimals,
-                                lengthFixed: 4),
+                        child: Text(Fmt.priceFloor(reward, lengthFixed: 4),
                             style: primaryText),
                       ),
                     ],
@@ -488,11 +484,7 @@ class _UserCard extends StatelessWidget {
                       Padding(
                         padding: EdgeInsets.only(top: 8, bottom: 8),
                         child: Text(
-                            Fmt.priceFloorBigInt(
-                                rewardSaving < BigInt.zero
-                                    ? BigInt.zero
-                                    : rewardSaving,
-                                decimals),
+                            Fmt.priceFloor(rewardSaving, lengthFixed: 4),
                             style: primaryText),
                       ),
                     ],
