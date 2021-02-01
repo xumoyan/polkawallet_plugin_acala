@@ -1,15 +1,11 @@
 import { StakingPool } from "@acala-network/sdk-homa";
-import { FixedPointNumber, getPresetToken, PresetToken } from "@acala-network/sdk-core";
+import { FixedPointNumber, getPresetToken, PresetToken, TokenPair, currencyId2Token } from "@acala-network/sdk-core";
 import { SwapTrade } from "@acala-network/sdk-swap";
+import { CurrencyId } from "@acala-network/types/interfaces";
 import { ApiPromise } from "@polkadot/api";
 
 /**
  * calc token swap amount
- * @param {ApiPromise} api
- * @param {Number} input
- * @param {Number} output
- * @param {List<String>} swapPair
- * @param {Number} slippage
  */
 async function calcTokenSwapAmount(api: ApiPromise, input: number, output: number, swapPair: PresetToken[], slippage: number) {
   const i = getPresetToken(swapPair[0]).clone({
@@ -19,8 +15,7 @@ async function calcTokenSwapAmount(api: ApiPromise, input: number, output: numbe
     amount: new FixedPointNumber(output || 0),
   });
   const mode = output === null ? "EXACT_INPUT" : "EXACT_OUTPUT";
-  const availableTokenPairs = SwapTrade.getAvailableTokenPairs(api);
-  const maxTradePathLength = new FixedPointNumber(api.consts.dex.tradingPathLimit.toString()).toNumber();
+  const availableTokenPairs = await getTokenPairs(api);
   const fee = {
     numerator: new FixedPointNumber(api.consts.dex.getExchangeFee[0].toString()),
     denominator: new FixedPointNumber(api.consts.dex.getExchangeFee[1].toString()),
@@ -29,8 +24,10 @@ async function calcTokenSwapAmount(api: ApiPromise, input: number, output: numbe
     input: i,
     output: o,
     mode,
-    availableTokenPairs,
-    maxTradePathLength,
+    availableTokenPairs: availableTokenPairs.map((item) => {
+      return new TokenPair(currencyId2Token(item[0]), currencyId2Token(item[1]));
+    }),
+    maxTradePathLength: 3,
     fee,
     acceptSlippage: new FixedPointNumber(slippage),
   });
@@ -62,12 +59,17 @@ async function queryLPTokens(api: ApiPromise, address: string) {
 }
 
 /**
- * getTokenPairs
- * @param {String} currencyId
- * @param {String} address
+ * getAllTokenPairs
  */
 async function getTokenPairs(api: ApiPromise) {
-  return SwapTrade.getAvailableTokenPairs(api).map((e: any) => e.origin);
+  const tokenPairs = await api.query.dex.tradingPairStatuses.entries();
+  return tokenPairs.filter((item) => (item[1] as any).isEnabled).map((item) => api.createType("TradingPair" as any, item[0].args[0]));
+}
+
+async function getAllTokenSymbols(api: ApiPromise) {
+  return (api.registry.createType("TokenSymbol" as any).defKeys as string[])
+    .filter((name) => name != "ACA")
+    .map((name) => api.registry.createType("CurrencyId" as any, { Token: name }) as CurrencyId);
 }
 
 /**
@@ -130,24 +132,26 @@ let homaStakingPool;
 async function fetchHomaStakingPool(api: ApiPromise) {
   const [stakingPool, { mockRewardRate }] = (await Promise.all([
     (api.derive as any).homa.stakingPool(),
-    api.query.polkadotBridge.subAccounts(0),
+    api.query.polkadotBridge.subAccounts(1),
   ])) as any;
 
   const poolInfo = new StakingPool({
-    stakingPoolParams: {
-      targetMaxFreeUnbondedRatio: FixedPointNumber.fromInner(stakingPool.stakingPoolParams.targetMaxFreeUnbondedRatio.toString()),
-      targetMinFreeUnbondedRatio: FixedPointNumber.fromInner(stakingPool.stakingPoolParams.targetMinFreeUnbondedRatio.toString()),
-      targetUnbondingToFreeRatio: FixedPointNumber.fromInner(stakingPool.stakingPoolParams.targetUnbondingToFreeRatio.toString()),
-      baseFeeRate: FixedPointNumber.fromInner(stakingPool.stakingPoolParams.baseFeeRate.toString()),
+    params: {
+      baseFeeRate: FPNum(stakingPool.params.baseFeeRate),
+      targetMaxFreeUnbondedRatio: FPNum(stakingPool.params.targetMaxFreeUnbondedRatio),
+      targetMinFreeUnbondedRatio: FPNum(stakingPool.params.targetMinFreeUnbondedRatio),
+      targetUnbondingToFreeRatio: FPNum(stakingPool.params.targetUnbondingToFreeRatio),
     },
-    defaultExchangeRate: FixedPointNumber.fromInner(stakingPool.defaultExchangeRate.toString()),
-    liquidTotalIssuance: FixedPointNumber.fromInner(stakingPool.liquidTokenIssuance.toString()),
-    unbondNextEra: FixedPointNumber.fromInner(stakingPool.nextEraUnbond[0].toString()),
+    defaultExchangeRate: FPNum(stakingPool.defaultExchangeRate),
+    liquidTotalIssuance: FPNum(stakingPool.liquidIssuance),
     currentEra: stakingPool.currentEra.toNumber(),
     bondingDuration: stakingPool.bondingDuration.toNumber(),
-    totalBonded: FixedPointNumber.fromInner(stakingPool.totalBonded.toString()),
-    unbondingToFree: FixedPointNumber.fromInner(stakingPool.unbondingToFree.toString()),
-    freeUnbonded: FixedPointNumber.fromInner(stakingPool.freeUnbonded.toString()),
+    ledger: {
+      toUnbondNextEra: stakingPool.ledger.toUnbondNextEra.map((e: any) => FPNum(e)),
+      bonded: FPNum(stakingPool.ledger.bonded),
+      unbondingToFree: FPNum(stakingPool.ledger.unbondingToFree),
+      freePool: FPNum(stakingPool.ledger.freePool),
+    },
   });
   homaStakingPool = poolInfo;
 
@@ -160,15 +164,15 @@ async function fetchHomaStakingPool(api: ApiPromise) {
     rewardRate: mockRewardRate.toString(),
     freeList,
     unbondingDuration,
-    liquidTokenIssuance: stakingPool.liquidTokenIssuance.toString(),
-    defaultExchangeRate: FixedPointNumber.fromInner(stakingPool.defaultExchangeRate.toString()).toNumber(),
-    bondingDuration: stakingPool.bondingDuration,
-    currentEra: stakingPool.currentEra,
-    communalBonded: poolInfo.getCommunalBonded().toNumber(),
-    communalTotal: poolInfo.getTotalCommunalBalance().toNumber(),
-    communalFreeRatio: poolInfo.getFreeUnbondedRatio().toNumber(),
-    unbondingToFreeRatio: poolInfo.getUnbondingToFreeRatio().toNumber(),
-    communalBondedRatio: poolInfo.getBondedRatio().toNumber(),
+    liquidTokenIssuance: stakingPool.liquidIssuance.toString(),
+    defaultExchangeRate: FPNum(stakingPool.defaultExchangeRate).toNumber(),
+    bondingDuration: stakingPool.bondingDuration.toNumber(),
+    currentEra: stakingPool.currentEra.toNumber(),
+    communalBonded: poolInfo.ledger.bondedBelongToLiquidHolders.toNumber(),
+    communalTotal: poolInfo.ledger.total.toNumber(),
+    communalFreeRatio: poolInfo.ledger.freePoolRatio.toNumber(),
+    unbondingToFreeRatio: poolInfo.ledger.unbondingToFreeRatio.toNumber(),
+    communalBondedRatio: poolInfo.ledger.bondedBelongToLiquidHolders.div(poolInfo.ledger.total).toNumber(),
     liquidExchangeRate: poolInfo.liquidExchangeRate().toNumber(),
   };
 }
@@ -179,7 +183,7 @@ async function fetchHomaUserInfo(api: ApiPromise, address: string) {
   const duration = stakingPool.bondingDuration.toNumber();
   const claims = [];
   for (let i = start; i < start + duration + 2; i++) {
-    const claimed = (await api.query.stakingPool.claimedUnbond(address, i)) as any;
+    const claimed = (await api.query.stakingPool.unbondings(address, i)) as any;
     if (claimed.gtn(0)) {
       claims[claims.length] = {
         era: i,
@@ -189,7 +193,7 @@ async function fetchHomaUserInfo(api: ApiPromise, address: string) {
   }
   const unbonded = await (api.rpc as any).stakingPool.getAvailableUnbonded(address);
   return {
-    unbonded: unbonded.amount || 0,
+    unbonded: FPNum(unbonded.amount.toString()).toNumber() || 0,
     claims,
   };
 }
@@ -253,6 +257,7 @@ export default {
   calcTokenSwapAmount,
   queryLPTokens,
   getTokenPairs,
+  getAllTokenSymbols,
   fetchDexPoolInfo,
   fetchHomaStakingPool,
   fetchHomaUserInfo,
