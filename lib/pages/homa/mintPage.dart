@@ -53,7 +53,7 @@ class _MintPageState extends State<MintPage> {
 
   Future<void> _onSubmit() async {
     if (_formKey.currentState.validate()) {
-      final decimals = widget.plugin.networkState.tokenDecimals;
+      final decimals = widget.plugin.networkState.tokenDecimals[0];
       final pay = _amountPayCtrl.text.trim();
       final receive = _amountReceiveCtrl.text.trim();
 
@@ -106,7 +106,7 @@ class _MintPageState extends State<MintPage> {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
         final dicAssets =
             I18n.of(context).getDic(i18n_full_dic_acala, 'common');
-        final decimals = widget.plugin.networkState.tokenDecimals;
+        final decimals = widget.plugin.networkState.tokenDecimals[0];
 
         final balance = Fmt.balanceInt(
             widget.plugin.store.assets.tokenBalanceMap['DOT'].amount);

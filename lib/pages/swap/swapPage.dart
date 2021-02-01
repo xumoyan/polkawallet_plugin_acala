@@ -255,7 +255,7 @@ class _SwapPageState extends State<SwapPage> {
         widget.plugin.store.swap.addSwapTx(
           res,
           widget.keyring.current.pubKey,
-          widget.plugin.networkState.tokenDecimals,
+          widget.plugin.networkState.tokenDecimals[0],
         );
       }
     }
@@ -296,7 +296,7 @@ class _SwapPageState extends State<SwapPage> {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
         final dicAssets =
             I18n.of(context).getDic(i18n_full_dic_acala, 'common');
-        final decimals = widget.plugin.networkState.tokenDecimals;
+        final decimals = widget.plugin.networkState.tokenDecimals[0];
 
         BigInt balance = BigInt.zero;
         if (_swapPair.length > 0 && _swapPair[0] == 'ACA') {

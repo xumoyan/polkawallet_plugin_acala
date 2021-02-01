@@ -94,7 +94,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
     if (_formKey.currentState.validate()) {
       final String poolId = ModalRoute.of(context).settings.arguments;
       final pair = poolId.toUpperCase().split('-');
-      final decimals = widget.plugin.networkState.tokenDecimals;
+      final decimals = widget.plugin.networkState.tokenDecimals[0];
       final amountToken = _amountTokenCtrl.text.trim();
       final amountBaseCoin = _amountBaseCoinCtrl.text.trim();
 
@@ -103,6 +103,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
         {'Token': pair[1]},
         Fmt.tokenInt(amountToken, decimals).toString(),
         Fmt.tokenInt(amountBaseCoin, decimals).toString(),
+        false,
       ];
       final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
           arguments: TxConfirmParams(
@@ -156,7 +157,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
         final dicAssets =
             I18n.of(context).getDic(i18n_full_dic_acala, 'common');
-        final decimals = widget.plugin.networkState.tokenDecimals;
+        final decimals = widget.plugin.networkState.tokenDecimals[0];
         final String poolId = ModalRoute.of(context).settings.arguments;
         final tokenPair = poolId.split('-');
 

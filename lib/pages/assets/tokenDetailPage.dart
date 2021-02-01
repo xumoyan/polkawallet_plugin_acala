@@ -25,7 +25,7 @@ class TokenDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
 
-    final decimals = plugin.networkState.tokenDecimals;
+    final decimals = plugin.networkState.tokenDecimals[0];
     final TokenBalanceData token = ModalRoute.of(context).settings.arguments;
 
     final primaryColor = Theme.of(context).primaryColor;

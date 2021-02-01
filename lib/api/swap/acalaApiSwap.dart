@@ -18,18 +18,12 @@ class AcalaApiSwap {
     return SwapOutputData.fromJson(output);
   }
 
-  Future<List<List<AcalaTokenData>>> getDexPools() async {
-    final pools = await service.getDexPools();
-    return pools
-        .map((pool) =>
-            (pool as List).map((e) => AcalaTokenData.fromJson(e)).toList())
-        .toList();
+  Future<List<List>> getTokenPairs() async {
+    return await service.getTokenPairs();
   }
 
-  Future<Map> queryDexLiquidityPoolRewards(
-      List<List<AcalaTokenData>> dexPools) async {
-    final res = await service.queryDexLiquidityPoolRewards(dexPools);
-    return res;
+  Future<Map> queryDexLiquidityPoolRewards(List<List> dexPools) async {
+    return await service.queryDexLiquidityPoolRewards(dexPools);
   }
 
   Future<Map<String, DexPoolInfoData>> queryDexPoolInfo(

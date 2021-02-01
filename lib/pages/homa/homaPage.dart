@@ -44,7 +44,7 @@ class _HomaPageState extends State<HomaPage> {
   }
 
   Future<void> _onSubmitWithdraw() async {
-    final decimals = widget.plugin.networkState.tokenDecimals;
+    final decimals = widget.plugin.networkState.tokenDecimals[0];
     final userInfo = widget.plugin.store.homa.userInfo;
     final String receive =
         Fmt.priceFloorBigInt(userInfo.unbonded, decimals, lengthMax: 3);
@@ -91,7 +91,7 @@ class _HomaPageState extends State<HomaPage> {
     return Observer(
       builder: (BuildContext context) {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
-        final decimals = widget.plugin.networkState.tokenDecimals;
+        final decimals = widget.plugin.networkState.tokenDecimals[0];
 
         final pool = widget.plugin.store.homa.stakingPoolInfo;
         final userInfo = widget.plugin.store.homa.userInfo;

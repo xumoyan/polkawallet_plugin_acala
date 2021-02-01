@@ -24,15 +24,15 @@ abstract class _LPTokenData {
   String free;
 }
 
-@JsonSerializable()
-class AcalaTokenData extends _AcalaTokenData {
-  static AcalaTokenData fromJson(Map json) => _$AcalaTokenDataFromJson(json);
-}
-
-abstract class _AcalaTokenData {
-  String chain;
-  String name;
-  String symbol;
-  int precision;
-  String amount;
-}
+// @JsonSerializable()
+// class AcalaTokenData extends _AcalaTokenData {
+//   static AcalaTokenData fromJson(Map json) => _$AcalaTokenDataFromJson(json);
+// }
+//
+// abstract class _AcalaTokenData {
+//   String chain;
+//   String name;
+//   String symbol;
+//   int precision;
+//   String amount;
+// }

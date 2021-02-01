@@ -59,7 +59,7 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
   }
 
   void _onAmountChange(String v) {
-    final decimals = widget.plugin.networkState.tokenDecimals;
+    final decimals = widget.plugin.networkState.tokenDecimals[0];
     final amountInput = v.trim();
     setState(() {
       _shareInput = Fmt.tokenInt(amountInput, decimals);
@@ -68,7 +68,7 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
   }
 
   void _onAmountSelect(BigInt v) {
-    final decimals = widget.plugin.networkState.tokenDecimals;
+    final decimals = widget.plugin.networkState.tokenDecimals[0];
     setState(() {
       _shareInput = v;
       _amountCtrl.text = Fmt.bigIntToDouble(v, decimals).toStringAsFixed(4);
@@ -107,7 +107,7 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
         widget.plugin.store.earn.addDexLiquidityTx(
             res,
             widget.keyring.current.pubKey,
-            widget.plugin.networkState.tokenDecimals);
+            widget.plugin.networkState.tokenDecimals[0]);
         Navigator.of(context).pop(res);
       }
     }
@@ -140,7 +140,7 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
         final dicAssets =
             I18n.of(context).getDic(i18n_full_dic_acala, 'common');
-        final decimals = widget.plugin.networkState.tokenDecimals;
+        final decimals = widget.plugin.networkState.tokenDecimals[0];
         final String poolId = ModalRoute.of(context).settings.arguments;
         final pair = poolId.split('-');
 

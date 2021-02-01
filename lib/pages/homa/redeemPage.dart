@@ -44,8 +44,10 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
   Future<void> _updateReceiveAmount(double input) async {
     if (input == null || input == 0) return;
 
-    final era =
-        widget.plugin.store.homa.stakingPoolInfo.freeList[_eraSelected].era;
+    int era = 0;
+    if (_radioSelect == 1) {
+      era = widget.plugin.store.homa.stakingPoolInfo.freeList[_eraSelected].era;
+    }
     final res = await widget.plugin.api.homa
         .queryHomaRedeemAmount(input, _radioSelect, era);
     double fee = 0;
@@ -126,7 +128,7 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
 
   Future<void> _onSubmit() async {
     if (_formKey.currentState.validate()) {
-      final decimals = widget.plugin.networkState.tokenDecimals;
+      final decimals = widget.plugin.networkState.tokenDecimals[0];
       final pay = _amountPayCtrl.text.trim();
       final receive = Fmt.priceFloor(
         double.parse(_amountReceiveCtrl.text),
@@ -184,7 +186,7 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
         final dicAssets =
             I18n.of(context).getDic(i18n_full_dic_acala, 'common');
-        final decimals = widget.plugin.networkState.tokenDecimals;
+        final decimals = widget.plugin.networkState.tokenDecimals[0];
 
         final balance = Fmt.balanceInt(
             widget.plugin.store.assets.tokenBalanceMap['LDOT'].amount);

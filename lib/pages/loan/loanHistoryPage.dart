@@ -19,7 +19,7 @@ class LoanHistoryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final int decimals = plugin.networkState.tokenDecimals;
+    final int decimals = plugin.networkState.tokenDecimals[0];
     final list = plugin.store.loan.txs.reversed.toList();
 
     final LoanType loanType = ModalRoute.of(context).settings.arguments;

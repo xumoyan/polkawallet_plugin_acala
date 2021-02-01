@@ -59,7 +59,7 @@ class _TransferPageState extends State<TransferPage> {
 
   Future<void> _onSubmit() async {
     if (_formKey.currentState.validate()) {
-      final decimals = widget.plugin.networkState.tokenDecimals;
+      final decimals = widget.plugin.networkState.tokenDecimals[0];
       final params = [
         // params.to
         _accountTo.address,
@@ -137,7 +137,7 @@ class _TransferPageState extends State<TransferPage> {
     return Observer(
       builder: (_) {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
-        final decimals = widget.plugin.networkState.tokenDecimals;
+        final decimals = widget.plugin.networkState.tokenDecimals[0];
 
         final available = Fmt.balanceInt(widget
             .plugin.store.assets.tokenBalanceMap[_token.toUpperCase()].amount);

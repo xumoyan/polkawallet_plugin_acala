@@ -21,17 +21,15 @@ class AcalaServiceSwap {
     return output;
   }
 
-  Future<List> getDexPools() async {
-    final List res =
-        await plugin.sdk.webView.evalJavascript('acala.getTokenPairs(api)');
-    return res;
+  Future<List<List>> getTokenPairs() async {
+    return List<List>.from(
+        await plugin.sdk.webView.evalJavascript('acala.getTokenPairs(api)'));
   }
 
-  Future<Map> queryDexLiquidityPoolRewards(
-      List<List<AcalaTokenData>> dexPools) async {
+  Future<Map> queryDexLiquidityPoolRewards(List<List> dexPools) async {
     final pools = dexPools
         .map((pool) =>
-            jsonEncode({'DEXShare': pool.map((e) => e.symbol).toList()}))
+            jsonEncode({'DEXShare': pool.map((e) => e['Token']).toList()}))
         .toList();
     final incentiveQuery = pools
         .map((i) => 'api.query.incentives.dEXIncentiveRewards($i)')
@@ -45,7 +43,7 @@ class AcalaServiceSwap {
     final incentives = Map<String, dynamic>();
     final savingRates = Map<String, dynamic>();
     final tokenPairs =
-        dexPools.map((e) => e.map((i) => i.symbol).join('-')).toList();
+        dexPools.map((e) => e.map((i) => i['Token']).join('-')).toList();
     tokenPairs.asMap().forEach((k, v) {
       incentives[v] = res[0][k];
       savingRates[v] = res[1][k];

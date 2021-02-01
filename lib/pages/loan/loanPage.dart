@@ -60,7 +60,7 @@ class _LoanPageState extends State<LoanPage> {
       builder: (_) {
         final loan = widget.plugin.store.loan.loans[_tab];
 
-        final decimals = widget.plugin.networkState.tokenDecimals;
+        final decimals = widget.plugin.networkState.tokenDecimals[0];
         var aUSDBalance = BigInt.zero;
         final aUSDBalanceIndex = widget.plugin.balances.tokens
             .indexWhere((e) => e.symbol == acala_stable_coin);

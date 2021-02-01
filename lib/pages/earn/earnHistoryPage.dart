@@ -29,8 +29,8 @@ class EarnHistoryPage extends StatelessWidget {
       body: SafeArea(
         child: Observer(
           builder: (_) {
-            final decimals = plugin.networkState.tokenDecimals;
-            final symbol = plugin.networkState.tokenSymbol;
+            final decimals = plugin.networkState.tokenDecimals[0];
+            final symbol = plugin.networkState.tokenSymbol[0];
             final String poolId = ModalRoute.of(context).settings.arguments;
             final pair = poolId.split('-');
             final list = plugin.store.earn.txs.reversed.toList();

@@ -108,7 +108,7 @@ class _LPStakePage extends State<LPStakePage> {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
     final assetDic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
     final LPStakePageParams args = ModalRoute.of(context).settings.arguments;
-    final decimals = widget.plugin.networkState.tokenDecimals;
+    final decimals = widget.plugin.networkState.tokenDecimals[0];
     return Scaffold(
       appBar: AppBar(
         title: Text(

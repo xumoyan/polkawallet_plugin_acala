@@ -14,29 +14,18 @@ class AcalaServiceAssets {
 
   final tokenBalanceChannel = 'tokenBalance';
 
-  // Future<String> fetchFaucet() async {
-  //   String address = store.account.currentAddress;
-  //   String deviceId = address;
-  //   DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-  //   if (Platform.isAndroid) {
-  //     AndroidDeviceInfo info = await deviceInfo.androidInfo;
-  //     deviceId = info.androidId;
-  //   } else {
-  //     IosDeviceInfo info = await deviceInfo.iosInfo;
-  //     deviceId = info.identifierForVendor;
-  //   }
-  //   String res = await FaucetApi.getAcalaTokensV2(address, deviceId);
-  //   return res;
-  // }
+  Future<List> getAllTokenSymbols() async {
+    return await plugin.sdk.webView
+        .evalJavascript('acala.getAllTokenSymbols(api)');
+  }
 
   void unsubscribeTokenBalances(String address) async {
-    final tokens =
-        List.of(plugin.networkConst['accounts']['allNonNativeCurrencyIds']);
+    final tokens = await getAllTokenSymbols();
     tokens.forEach((e) {
       plugin.sdk.api.unsubscribeMessage('$tokenBalanceChannel${e['Token']}');
     });
 
-    final dexPairs = List.of(plugin.networkConst['dex']['enabledTradingPairs']);
+    final dexPairs = await plugin.api.swap.getTokenPairs();
     dexPairs.forEach((e) {
       final LPToken = List.of(e).map((i) => i['Token']).toList();
       plugin.sdk.api
@@ -45,9 +34,7 @@ class AcalaServiceAssets {
   }
 
   Future<void> subscribeTokenBalances(
-      String address, Function(Map) callback) async {
-    final tokens =
-        List.of(plugin.networkConst['accounts']['allNonNativeCurrencyIds']);
+      String address, List tokens, Function(Map) callback) async {
     tokens.forEach((e) {
       final channel = '$tokenBalanceChannel${e['Token']}';
       plugin.sdk.api.subscribeMessage(
@@ -59,7 +46,7 @@ class AcalaServiceAssets {
         },
       );
     });
-    final dexPairs = List.of(plugin.networkConst['dex']['enabledTradingPairs']);
+    final dexPairs = await plugin.api.swap.getTokenPairs();
     dexPairs.forEach((e) {
       final LPToken = List.of(e).map((i) => i['Token']).toList();
       final channel = '$tokenBalanceChannel${LPToken.join('')}';

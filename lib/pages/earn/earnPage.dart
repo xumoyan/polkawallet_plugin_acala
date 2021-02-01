@@ -73,8 +73,8 @@ class _EarnPageState extends State<EarnPage> {
   }
 
   Future<void> _onWithdrawReward(LPRewardData reward) async {
-    final decimals = widget.plugin.networkState.tokenDecimals;
-    final symbol = widget.plugin.networkState.tokenSymbol;
+    final decimals = widget.plugin.networkState.tokenDecimals[0];
+    final symbol = widget.plugin.networkState.tokenSymbol[0];
     final incentiveReward = Fmt.priceFloor(reward.incentive, lengthFixed: 4);
     final savingReward = Fmt.priceFloor(reward.saving, lengthFixed: 4);
     final pool = jsonEncode(_tab.toUpperCase().split('-'));
@@ -184,7 +184,7 @@ class _EarnPageState extends State<EarnPage> {
   @override
   Widget build(BuildContext context) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
-    final decimals = widget.plugin.networkState.tokenDecimals;
+    final decimals = widget.plugin.networkState.tokenDecimals[0];
     return Scaffold(
       appBar: AppBar(
         title: Text(dic['earn.title']),
@@ -247,7 +247,7 @@ class _EarnPageState extends State<EarnPage> {
                   token: _tab,
                   decimals: decimals,
                   tokenOptions: widget.plugin.store.earn.dexPools
-                      .map((e) => e.map((e) => e.symbol).join('-'))
+                      .map((e) => e.map((e) => e['Token']).join('-'))
                       .toList(),
                   tokenIcons: widget.plugin.tokenIcons,
                   onSelect: (res) {

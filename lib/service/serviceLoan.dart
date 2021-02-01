@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:polkawallet_plugin_acala/api/acalaApi.dart';
 import 'package:polkawallet_plugin_acala/api/types/loanType.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
@@ -19,10 +18,11 @@ class ServiceLoan {
   void _calcLDOTPrice(Map<String, BigInt> prices, double liquidExchangeRate) {
     // LDOT price may lost precision here
     prices['LDOT'] = Fmt.tokenInt(
-        (Fmt.bigIntToDouble(prices['DOT'], plugin.networkState.tokenDecimals) *
+        (Fmt.bigIntToDouble(
+                    prices['DOT'], plugin.networkState.tokenDecimals[0]) *
                 liquidExchangeRate)
             .toString(),
-        plugin.networkState.tokenDecimals);
+        plugin.networkState.tokenDecimals[0]);
   }
 
   Map<String, LoanData> _calcLoanData(
@@ -37,7 +37,7 @@ class ServiceLoan {
         Map<String, dynamic>.from(i),
         loanTypes.firstWhere((t) => t.token == token),
         prices[token] ?? BigInt.zero,
-        plugin.networkState.tokenDecimals,
+        plugin.networkState.tokenDecimals[0],
       );
     });
     return data;

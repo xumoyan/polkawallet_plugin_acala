@@ -44,13 +44,13 @@ mixin _$EarnStore on _EarnStore, Store {
   final _$dexPoolsAtom = Atom(name: '_EarnStore.dexPools');
 
   @override
-  List<List<AcalaTokenData>> get dexPools {
+  List<List<dynamic>> get dexPools {
     _$dexPoolsAtom.reportRead();
     return super.dexPools;
   }
 
   @override
-  set dexPools(List<List<AcalaTokenData>> value) {
+  set dexPools(List<List<dynamic>> value) {
     _$dexPoolsAtom.reportWrite(value, super.dexPools, () {
       super.dexPools = value;
     });
@@ -89,7 +89,7 @@ mixin _$EarnStore on _EarnStore, Store {
   final _$_EarnStoreActionController = ActionController(name: '_EarnStore');
 
   @override
-  void setDexPools(List<List<AcalaTokenData>> list) {
+  void setDexPools(List<List<dynamic>> list) {
     final _$actionInfo = _$_EarnStoreActionController.startAction(
         name: '_EarnStore.setDexPools');
     try {

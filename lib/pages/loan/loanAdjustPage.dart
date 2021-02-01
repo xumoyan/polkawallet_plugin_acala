@@ -54,7 +54,7 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
   bool _paybackAndCloseChecked = false;
 
   void _updateState(LoanType loanType, BigInt collateral, BigInt debit) {
-    final decimals = widget.plugin.networkState.tokenDecimals;
+    final decimals = widget.plugin.networkState.tokenDecimals[0];
     final LoanAdjustPageParams params =
         ModalRoute.of(context).settings.arguments;
     final tokenPrice = widget.plugin.store.assets.prices[params.token];
@@ -240,7 +240,7 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
   }
 
   Future<Map> _getTxParams(LoanData loan) async {
-    final decimals = widget.plugin.networkState.tokenDecimals;
+    final decimals = widget.plugin.networkState.tokenDecimals[0];
     final LoanAdjustPageParams params =
         ModalRoute.of(context).settings.arguments;
     switch (params.actionType) {
@@ -367,7 +367,7 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
     var dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
     var assetDic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
 
-    final decimals = widget.plugin.networkState.tokenDecimals;
+    final decimals = widget.plugin.networkState.tokenDecimals[0];
     final LoanAdjustPageParams params =
         ModalRoute.of(context).settings.arguments;
     final symbol = params.token;

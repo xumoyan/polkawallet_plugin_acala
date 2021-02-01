@@ -28,17 +28,20 @@ class AcalaApiAssets {
     return res;
   }
 
+  Future<List> getAllTokenSymbols() async {
+    return await service.getAllTokenSymbols();
+  }
+
   void unsubscribeTokenBalances(String address) {
     service.unsubscribeTokenBalances(address);
   }
 
   Future<void> subscribeTokenBalances(
       String address, Function(List<TokenBalanceData>) callback) async {
-    final tokens = List.of(
-        service.plugin.networkConst['accounts']['allNonNativeCurrencyIds']);
+    final tokens = await getAllTokenSymbols();
     _tokenBalances.clear();
 
-    await service.subscribeTokenBalances(address, (Map data) {
+    await service.subscribeTokenBalances(address, tokens, (Map data) {
       _tokenBalances[data['symbol']] = data;
 
       // do not callback if we did not receive enough data.

@@ -5,18 +5,18 @@ const node_list = [
   {
     'name': 'Acala Mandala (Hosted by Acala Network)',
     'ss58': 42,
-    'endpoint': 'wss://acala-testnet-1.polkawallet.io:9904',
+    'endpoint': 'wss://mandala.laminar.codes/ws',
   },
-  {
-    'name': 'Mandala TC5 Node 1 (Hosted by OnFinality)',
-    'ss58': 42,
-    'endpoint': 'wss://node-6714447553777491968.jm.onfinality.io/ws',
-  },
-  {
-    'name': 'Mandala TC5 Node 2 (Hosted by OnFinality)',
-    'ss58': 42,
-    'endpoint': 'wss://node-6714447553211260928.rz.onfinality.io/ws',
-  },
+  // {
+  //   'name': 'Mandala TC5 Node 1 (Hosted by OnFinality)',
+  //   'ss58': 42,
+  //   'endpoint': 'wss://node-6714447553777491968.jm.onfinality.io/ws',
+  // },
+  // {
+  //   'name': 'Mandala TC5 Node 2 (Hosted by OnFinality)',
+  //   'ss58': 42,
+  //   'endpoint': 'wss://node-6714447553211260928.rz.onfinality.io/ws',
+  // },
 ];
 
 const acala_plugin_cache_key = 'plugin_acala';

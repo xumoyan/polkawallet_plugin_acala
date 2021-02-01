@@ -23,7 +23,7 @@ abstract class _EarnStore with Store {
   Map<String, double> swapPoolSavingRewards = Map<String, double>();
 
   @observable
-  List<List<AcalaTokenData>> dexPools = List<List<AcalaTokenData>>();
+  List<List> dexPools = List<List>();
 
   @observable
   ObservableMap<String, DexPoolInfoData> dexPoolInfoMap =
@@ -33,7 +33,7 @@ abstract class _EarnStore with Store {
   ObservableList<TxDexLiquidityData> txs = ObservableList<TxDexLiquidityData>();
 
   @action
-  void setDexPools(List<List<AcalaTokenData>> list) {
+  void setDexPools(List<List> list) {
     dexPools = list;
   }
 

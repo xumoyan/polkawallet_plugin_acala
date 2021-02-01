@@ -17,38 +17,42 @@ class ServiceEarn {
   final PluginStore store;
 
   Map<String, double> _calcIncentives(Map rewards) {
-    final int blockTime = plugin.networkConst['babe']['expectedBlockTime'];
-    final int epoch = plugin.networkConst['incentives']['accumulatePeriod'];
+    final blockTime =
+        int.parse(plugin.networkConst['babe']['expectedBlockTime']);
+    final epoch =
+        int.parse(plugin.networkConst['incentives']['accumulatePeriod']);
     final epochOfDay = SECONDS_OF_DAY * 1000 / blockTime / epoch;
     final res = Map<String, double>();
     rewards.forEach((k, v) {
-      res[k] =
-          Fmt.balanceDouble(v.toString(), plugin.networkState.tokenDecimals) *
-              epochOfDay;
+      res[k] = Fmt.balanceDouble(
+              v.toString(), plugin.networkState.tokenDecimals[0]) *
+          epochOfDay;
     });
     return res;
   }
 
   Map<String, double> _calcSavingRates(Map savingRates) {
-    final int blockTime = plugin.networkConst['babe']['expectedBlockTime'];
-    final int epoch = plugin.networkConst['incentives']['accumulatePeriod'];
+    final blockTime =
+        int.parse(plugin.networkConst['babe']['expectedBlockTime']);
+    final epoch =
+        int.parse(plugin.networkConst['incentives']['accumulatePeriod']);
     final epochOfYear = SECONDS_OF_YEAR * 1000 / blockTime / epoch;
     final res = Map<String, double>();
     savingRates.forEach((k, v) {
-      res[k] =
-          Fmt.balanceDouble(v.toString(), plugin.networkState.tokenDecimals) *
-              epochOfYear;
+      res[k] = Fmt.balanceDouble(
+              v.toString(), plugin.networkState.tokenDecimals[0]) *
+          epochOfYear;
     });
     return res;
   }
 
-  Future<List<List<AcalaTokenData>>> getDexPools() async {
-    final pools = await api.swap.getDexPools();
+  Future<List<List>> getDexPools() async {
+    final pools = await api.swap.getTokenPairs();
     store.earn.setDexPools(pools);
     return pools;
   }
 
-  Future<void> queryDexPoolRewards(List<List<AcalaTokenData>> pools) async {
+  Future<void> queryDexPoolRewards(List<List> pools) async {
     final rewards = await api.swap.queryDexLiquidityPoolRewards(pools);
     final res = Map<String, Map<String, double>>();
     res['incentives'] = _calcIncentives(rewards['incentives']);
