@@ -86,6 +86,7 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
         {'Token': pair[0]},
         {'Token': pair[1]},
         _shareInput.toString(),
+        false,
       ];
       final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
           arguments: TxConfirmParams(

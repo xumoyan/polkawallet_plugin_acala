@@ -9,10 +9,6 @@ class NFTData extends _NFTData {
 
 abstract class _NFTData {
   String description;
-
-  @JsonKey(name: 'external_url')
-  String externalUrl;
-
   String image = "";
   String name = "";
 }

@@ -75,7 +75,6 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
       _maxToBorrow = loanType.calcMaxToBorrow(
           collateral, price, stableCoinPrice, decimals);
     });
-    print(_maxToBorrow.toString());
 
     if (_amountDebit > BigInt.zero) {
       _updateState(loanType, collateral, _amountDebit);
@@ -218,8 +217,9 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
           widget.plugin.store.assets.tokenBalanceMap[symbol]?.amount);
       final available = balance;
 
-      final balanceView = Fmt.token(available, decimals);
-      final maxToBorrow = Fmt.token(_maxToBorrow, decimals);
+      final balanceView =
+          Fmt.priceFloorBigInt(available, decimals, lengthMax: 4);
+      final maxToBorrow = Fmt.priceFloorBigInt(_maxToBorrow, decimals);
 
       return Scaffold(
         appBar: AppBar(

@@ -8,14 +8,12 @@ class AcalaServiceLoan {
   final PluginAcala plugin;
 
   Future<List> queryAccountLoans(String address) async {
-    final List res = await plugin.sdk.webView
+    return await plugin.sdk.webView
         .evalJavascript('api.derive.loan.allLoans("$address")');
-    return res;
   }
 
   Future<List> queryLoanTypes() async {
-    final List res = await plugin.sdk.webView
+    return await plugin.sdk.webView
         .evalJavascript('api.derive.loan.allLoanTypes()');
-    return res;
   }
 }

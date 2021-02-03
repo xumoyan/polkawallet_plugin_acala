@@ -12,14 +12,14 @@ class LoanType extends _LoanType {
         BigInt.parse(json['liquidationPenalty'].toString());
     data.liquidationRatio = BigInt.parse(json['liquidationRatio'].toString());
     data.requiredCollateralRatio =
-        BigInt.parse(json['requiredCollateralRatio'].toString());
+        BigInt.parse((json['requiredCollateralRatio'] ?? 0).toString());
     data.stabilityFee = BigInt.parse((json['stabilityFee'] ?? 0).toString());
     data.globalStabilityFee =
         BigInt.parse(json['globalStabilityFee'].toString());
     data.maximumTotalDebitValue =
         BigInt.parse(json['maximumTotalDebitValue'].toString());
     data.minimumDebitValue = BigInt.parse(json['minimumDebitValue'].toString());
-    data.expectedBlockTime = json['expectedBlockTime'];
+    data.expectedBlockTime = int.parse(json['expectedBlockTime']);
     return data;
   }
 
@@ -57,10 +57,11 @@ class LoanType extends _LoanType {
 
   BigInt calcMaxToBorrow(
       BigInt collaterals, tokenPrice, stableCoinPrice, int decimals) {
-    return Fmt.tokenInt(
-        (collaterals * tokenPrice / (requiredCollateralRatio * stableCoinPrice))
-            .toString(),
-        decimals);
+    return collaterals *
+        tokenPrice ~/
+        (requiredCollateralRatio *
+            stableCoinPrice ~/
+            Fmt.tokenInt('1', decimals));
   }
 }
 

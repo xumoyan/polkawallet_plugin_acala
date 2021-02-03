@@ -34,7 +34,8 @@ class NFTPage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8.0),
                     child: Column(
                       children: [
-                        Image.network(list[i].externalUrl),
+                        Image.network(
+                            'https://ipfs.io/${list[i].image?.substring(7)}'),
                         Padding(
                           padding: EdgeInsets.all(24),
                           child: Row(
