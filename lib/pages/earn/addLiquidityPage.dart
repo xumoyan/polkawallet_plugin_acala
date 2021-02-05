@@ -12,6 +12,7 @@ import 'package:polkawallet_sdk/utils/i18n.dart';
 import 'package:polkawallet_ui/components/currencyWithIcon.dart';
 import 'package:polkawallet_ui/components/roundedButton.dart';
 import 'package:polkawallet_ui/components/roundedCard.dart';
+import 'package:polkawallet_ui/components/tapTooltip.dart';
 import 'package:polkawallet_ui/components/txButton.dart';
 import 'package:polkawallet_ui/pages/txConfirmPage.dart';
 import 'package:polkawallet_ui/utils/format.dart';
@@ -36,6 +37,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
 
   Timer _timer;
   double _price = 0;
+  bool _withStake = false;
 
   Future<void> _refreshData() async {
     final String poolId = ModalRoute.of(context).settings.arguments;
@@ -51,11 +53,12 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
       setState(() {
         _price = output.amount;
       });
+      _timer = Timer(Duration(seconds: 10), () {
+        if (mounted) {
+          _refreshData();
+        }
+      });
     }
-
-    _timer = Timer(Duration(seconds: 10), () {
-      _refreshData();
-    });
   }
 
   Future<void> _onSupplyAmountChange(String v) async {
@@ -103,7 +106,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
         {'Token': pair[1]},
         Fmt.tokenInt(amountToken, decimals).toString(),
         Fmt.tokenInt(amountBaseCoin, decimals).toString(),
-        false,
+        _withStake,
       ];
       final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
           arguments: TxConfirmParams(
@@ -114,6 +117,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
             txDisplay: {
               "poolId": poolId,
               "amount": [amountToken, amountBaseCoin],
+              "withStake": _withStake,
             },
             params: params,
           ))) as Map;
@@ -198,6 +202,8 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
             // parse double failed
           }
         }
+
+        final colorGray = Theme.of(context).unselectedWidgetColor;
 
         return Scaffold(
           appBar: AppBar(title: Text(dic['earn.deposit']), centerTitle: true),
@@ -346,8 +352,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                                 )}',
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color:
-                                      Theme.of(context).unselectedWidgetColor,
+                                  color: colorGray,
                                 ),
                               ),
                             ),
@@ -361,8 +366,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                                 )}',
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color:
-                                      Theme.of(context).unselectedWidgetColor,
+                                  color: colorGray,
                                 ),
                               ),
                             )
@@ -377,12 +381,12 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                             child: Text(
                               dic['dex.rate'],
                               style: TextStyle(
-                                color: Theme.of(context).unselectedWidgetColor,
+                                color: colorGray,
                               ),
                             ),
                           ),
                           Text(
-                              '1 ${tokenPair[0]} = ${Fmt.doubleFormat(_price)} ${tokenPair[1]}'),
+                              '1 ${tokenPair[0]} = ${Fmt.doubleFormat(_price, length: 6)} ${tokenPair[1]}'),
                         ],
                       ),
                       Row(
@@ -391,9 +395,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                           Expanded(
                             child: Text(
                               dic['earn.pool'],
-                              style: TextStyle(
-                                  color:
-                                      Theme.of(context).unselectedWidgetColor),
+                              style: TextStyle(color: colorGray),
                             ),
                           ),
                           Text(
@@ -408,9 +410,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                           Expanded(
                             child: Text(
                               dic['earn.share'],
-                              style: TextStyle(
-                                  color:
-                                      Theme.of(context).unselectedWidgetColor),
+                              style: TextStyle(color: colorGray),
                             ),
                           ),
                           Text(Fmt.ratio(userShareNew)),
@@ -420,7 +420,31 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                   ),
                 ),
                 Padding(
-                  padding: EdgeInsets.only(top: 24),
+                  padding: EdgeInsets.only(top: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TapTooltip(
+                        message: dic['earn.withStake.txt'],
+                        child: Icon(Icons.info, color: colorGray, size: 16),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(left: 8),
+                        child: Text(dic['earn.withStake']),
+                      ),
+                      CupertinoSwitch(
+                        value: _withStake,
+                        onChanged: (res) {
+                          setState(() {
+                            _withStake = res;
+                          });
+                        },
+                      )
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.only(top: 16),
                   child: RoundedButton(
                     text: dic['earn.deposit'],
                     onPressed: _onSubmit,

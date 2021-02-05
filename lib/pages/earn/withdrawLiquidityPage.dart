@@ -12,6 +12,7 @@ import 'package:polkawallet_sdk/utils/i18n.dart';
 import 'package:polkawallet_ui/components/outlinedButtonSmall.dart';
 import 'package:polkawallet_ui/components/roundedButton.dart';
 import 'package:polkawallet_ui/components/roundedCard.dart';
+import 'package:polkawallet_ui/components/tapTooltip.dart';
 import 'package:polkawallet_ui/components/txButton.dart';
 import 'package:polkawallet_ui/pages/txConfirmPage.dart';
 import 'package:polkawallet_ui/utils/format.dart';
@@ -36,6 +37,7 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
 
   BigInt _shareInput = BigInt.zero;
   double _price = 0;
+  bool _fromPool = false;
 
   Future<void> _refreshData() async {
     final String poolId = ModalRoute.of(context).settings.arguments;
@@ -51,11 +53,12 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
       setState(() {
         _price = output.amount;
       });
+      _timer = Timer(Duration(seconds: 10), () {
+        if (mounted) {
+          _refreshData();
+        }
+      });
     }
-
-    _timer = Timer(Duration(seconds: 10), () {
-      _refreshData();
-    });
   }
 
   void _onAmountChange(String v) {
@@ -86,7 +89,7 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
         {'Token': pair[0]},
         {'Token': pair[1]},
         _shareInput.toString(),
-        false,
+        _fromPool,
       ];
       final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
           arguments: TxConfirmParams(
@@ -97,6 +100,7 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
             txDisplay: {
               "poolId": poolId,
               "amount": amount,
+              "fromPool": _fromPool,
             },
             params: params,
           ))) as Map;
@@ -162,8 +166,12 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
         final poolInfo = widget.plugin.store.earn.dexPoolInfoMap[poolId];
         if (poolInfo != null) {
           shareTotal = Fmt.bigIntToDouble(poolInfo.issuance, decimals);
-          shareInt = Fmt.balanceInt(widget.plugin.store.assets
-              .tokenBalanceMap[poolId.toUpperCase()].amount);
+          if (_fromPool) {
+            shareInt = poolInfo.shares;
+          } else {
+            shareInt = Fmt.balanceInt(widget.plugin.store.assets
+                .tokenBalanceMap[poolId.toUpperCase()].amount);
+          }
           shareInt10 = BigInt.from(shareInt / BigInt.from(10));
           shareInt25 = BigInt.from(shareInt / BigInt.from(4));
           shareInt50 = BigInt.from(shareInt / BigInt.from(2));
@@ -186,6 +194,32 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
             child: ListView(
               padding: EdgeInsets.all(16),
               children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.only(bottom: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TapTooltip(
+                        message: dic['earn.fromPool.txt'],
+                        child: Icon(Icons.info,
+                            color: Theme.of(context).unselectedWidgetColor,
+                            size: 16),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(left: 8),
+                        child: Text(dic['earn.fromPool']),
+                      ),
+                      CupertinoSwitch(
+                        value: _fromPool,
+                        onChanged: (res) {
+                          setState(() {
+                            _fromPool = res;
+                          });
+                        },
+                      )
+                    ],
+                  ),
+                ),
                 RoundedCard(
                   padding: EdgeInsets.fromLTRB(16, 8, 16, 16),
                   child: Column(
