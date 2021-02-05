@@ -181,9 +181,15 @@ async function fetchHomaUserInfo(api: ApiPromise, address: string) {
   const stakingPool = await (api.derive as any).homa.stakingPool();
   const start = stakingPool.currentEra.toNumber() + 1;
   const duration = stakingPool.bondingDuration.toNumber();
-  const claims = [];
-  for (let i = start; i < start + duration + 2; i++) {
-    const claimed = (await api.query.stakingPool.unbondings(address, i)) as any;
+  const nextEraUnbund = (await api.query.stakingPool.nextEraUnbonds(address)) as any;
+  const claims = [
+    {
+      era: start,
+      claimed: nextEraUnbund,
+    },
+  ];
+  for (let i = start + 1; i < start + duration + 2; i++) {
+    const claimed = (await api.query.stakingPool.claimedUnbond(address, i)) as any;
     if (claimed.gtn(0)) {
       claims[claims.length] = {
         era: i,
@@ -193,7 +199,7 @@ async function fetchHomaUserInfo(api: ApiPromise, address: string) {
   }
   const unbonded = await (api.rpc as any).stakingPool.getAvailableUnbonded(address);
   return {
-    unbonded: FPNum(unbonded.amount.toString()).toNumber() || 0,
+    unbonded: unbonded.amount || 0,
     claims,
   };
 }
