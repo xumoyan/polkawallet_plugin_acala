@@ -442,8 +442,15 @@ class _UserCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
-    final reward = poolInfo?.reward?.incentive ?? 0;
-    final rewardSaving = poolInfo?.reward?.saving ?? 0;
+    var reward = poolInfo?.reward?.incentive ?? 0;
+    var rewardSaving = poolInfo?.reward?.saving ?? 0;
+    if (reward < 0) {
+      reward = 0;
+    }
+    if (rewardSaving < 0) {
+      rewardSaving = 0;
+    }
+
     final Color primary = Theme.of(context).primaryColor;
     final TextStyle primaryText = TextStyle(
       fontSize: 22,
