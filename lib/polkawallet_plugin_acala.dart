@@ -45,6 +45,9 @@ class PluginAcala extends PolkawalletPlugin {
     name: 'acala-tc6',
     ss58: 42,
     primaryColor: Colors.indigo,
+    gradientColor: Color(0xFF4B68F9),
+    backgroundImage:
+        AssetImage('packages/polkawallet_plugin_acala/assets/images/bg.png'),
     icon:
         Image.asset('packages/polkawallet_plugin_acala/assets/images/logo.png'),
     iconDisabled: Image.asset(
