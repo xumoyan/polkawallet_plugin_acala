@@ -50,6 +50,7 @@ export const EthereumNetworkKeys = Object.freeze({
 export const SubstrateNetworkKeys = Object.freeze({
   ACALA_PC1: "0xc963328a9ce0911b4e6531c60aafda597b05dc4e25bf10d71e9591a0313f5388",
   ACALA_TC5: "0x0a1ac65e36435114b84faf039ff3c3e2582b61763b8483037573897a9effc89a",
+  ACALA_TC6: "0x8f9c2c376fadfd9cdb4241f867808f3248d5656ac7ca813c2eaa4adf2263212d",
   LAMINAR_TC1: "0x51e943649f914229fbfaf3d03d8423bd14c58dbc51da7eff9274c0b401f08675",
   CENTRIFUGE: "0x67dddf2673b69e5f875f6f25277495834398eafd67f492e09f3f3345e003d1b5", // https://portal.chain.centrifuge.io/#/explorer/query/0
   CENTRIFUGE_AMBER: "0x092af6e7d25178ebab1677d15f66e37b30392b44ef442f728a53dd1bf48ec110", // https://portal.chain.centrifuge.io/#/explorer/query/0
@@ -94,6 +95,16 @@ const substrateNetworkBase = {
     pathId: "acala_mandala_tc5",
     prefix: 42,
     title: "Acala Mandala TC5",
+    unit: "ACA",
+  },
+  [SubstrateNetworkKeys.ACALA_TC6]: {
+    color: "#173DC9",
+    decimals: 18,
+    genesisHash: SubstrateNetworkKeys.ACALA_TC6,
+    order: 42,
+    pathId: "acala_mandala_tc6",
+    prefix: 42,
+    title: "Acala Mandala TC6",
     unit: "ACA",
   },
   [SubstrateNetworkKeys.LAMINAR_TC1]: {
