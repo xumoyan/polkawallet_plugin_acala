@@ -134,8 +134,14 @@ class _AcalaEntryState extends State<AcalaEntry> {
                   liveModules
                       ?.retainWhere((e) => _liveModuleRoutes.keys.contains(e));
                   return ListView(
-                    padding: EdgeInsets.all(16),
+                    padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
                     children: <Widget>[
+                      Container(
+                        height: 56,
+                        margin: EdgeInsets.only(bottom: 24),
+                        child: SvgPicture.asset(
+                            'packages/polkawallet_plugin_acala/assets/images/logo.svg'),
+                      ),
                       Padding(
                         padding: EdgeInsets.only(bottom: 16),
                         child: GestureDetector(

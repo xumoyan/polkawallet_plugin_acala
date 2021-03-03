@@ -42,6 +42,7 @@ flutter:
   assets:
     - lib/js_service_acala/dist/main.js
     - assets/images/bg.png
+    - assets/images/logo.svg
     - assets/images/logo.png
     - assets/images/logo_gray.png
     - assets/images/acala_indigo.png

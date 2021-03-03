@@ -3,6 +3,7 @@ library polkawallet_plugin_acala;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:polkawallet_plugin_acala/api/acalaApi.dart';
 import 'package:polkawallet_plugin_acala/api/acalaService.dart';
@@ -92,12 +93,12 @@ class PluginAcala extends PolkawalletPlugin {
     return [
       HomeNavItem(
         text: 'Acala',
-        icon: Image(
-            image: AssetImage('assets/images/acala_dark.png',
-                package: 'polkawallet_plugin_acala')),
-        iconActive: Image(
-            image: AssetImage('assets/images/acala_indigo.png',
-                package: 'polkawallet_plugin_acala')),
+        icon: SvgPicture.asset(
+          'packages/polkawallet_plugin_acala/assets/images/logo.svg',
+          color: Theme.of(context).disabledColor,
+        ),
+        iconActive: SvgPicture.asset(
+            'packages/polkawallet_plugin_acala/assets/images/logo.svg'),
         content: AcalaEntry(this, keyring),
       )
     ];
