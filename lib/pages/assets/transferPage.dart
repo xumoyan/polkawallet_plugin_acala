@@ -148,10 +148,11 @@ class _TransferPageState extends State<TransferPage> {
             centerTitle: true,
             actions: <Widget>[
               IconButton(
+                padding: EdgeInsets.only(right: 8),
                 icon: SvgPicture.asset(
-                  'packages/polkawallet_plugin_acala/assets/images/scan.svg',
+                  'assets/images/scan.svg',
                   color: Theme.of(context).cardColor,
-                  width: 20,
+                  width: 28,
                 ),
                 onPressed: _onScan,
               )

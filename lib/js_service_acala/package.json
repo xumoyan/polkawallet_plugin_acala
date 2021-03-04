@@ -17,14 +17,17 @@
     "build": "webpack -p --mode production",
     "build-dev": "webpack -d --mode development"
   },
-  "resolutions": {},
+  "resolutions": {
+    "@polkadot/api": "^4.0.3",
+    "**/@polkadot/api": "^4.0.3"
+  },
   "dependencies": {
-    "@acala-network/api": "^0.6.2-19",
-    "@acala-network/sdk-core": "^0.6.2-19",
-    "@acala-network/sdk-swap": "^0.6.2-19",
-    "@acala-network/sdk-homa": "^0.6.2-19",
+    "@acala-network/api": "^0.6.2-26",
+    "@acala-network/sdk-core": "^0.6.2-26",
+    "@acala-network/sdk-homa": "^0.6.2-26",
+    "@acala-network/sdk-swap": "^0.6.2-26",
     "@babel/polyfill": "^7.8.3",
-    "@polkadot/api": "^3.11.1",
+    "@polkadot/api": "^4.0.3",
     "@polkadot/ui-shared": "^0.70.1",
     "bn.js": "^5.1.2",
     "oo7-substrate": "^0.8.0",

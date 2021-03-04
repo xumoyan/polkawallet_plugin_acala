@@ -47,8 +47,8 @@ flutter:
     - assets/images/logo_gray.png
     - assets/images/acala_indigo.png
     - assets/images/acala_dark.png
-    - assets/images/assets_up.png
-    - assets/images/assets_down.png
+    - assets/images/assets_up.svg
+    - assets/images/assets_down.svg
     - assets/images/assets_send.png
     - assets/images/swap.svg
     - assets/images/exchange.svg

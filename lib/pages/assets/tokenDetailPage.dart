@@ -1,16 +1,17 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:polkawallet_plugin_acala/api/types/transferData.dart';
 import 'package:polkawallet_plugin_acala/pages/assets/transferPage.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
-import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/plugin/store/balances.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
 import 'package:polkawallet_ui/components/borderedTitle.dart';
 import 'package:polkawallet_ui/components/listTail.dart';
+import 'package:polkawallet_ui/components/roundedButton.dart';
 import 'package:polkawallet_ui/pages/accountQrCodePage.dart';
 import 'package:polkawallet_ui/utils/format.dart';
 
@@ -18,6 +19,9 @@ class TokenDetailPage extends StatelessWidget {
   TokenDetailPage(this.plugin, this.keyring);
   final PluginAcala plugin;
   final Keyring keyring;
+
+  final colorIn = Color(0xFF62CFE4);
+  final colorOut = Color(0xFF3394FF);
 
   static final String route = '/assets/token/detail';
 
@@ -48,37 +52,47 @@ class TokenDetailPage extends StatelessWidget {
             txs.retainWhere((i) => i.token.toUpperCase() == token.symbol);
             return Column(
               children: <Widget>[
-                Container(
-                  width: MediaQuery.of(context).size.width,
-                  alignment: Alignment.center,
-                  color: primaryColor,
-                  padding: EdgeInsets.only(bottom: 24),
-                  child: Padding(
-                    padding: EdgeInsets.only(bottom: 16),
-                    child: Text(
-                      Fmt.token(balance, decimals, length: 8),
-                      style: TextStyle(
-                        color: titleColor,
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
+                Stack(
+                  alignment: AlignmentDirectional.bottomCenter,
+                  children: [
+                    Container(
+                      width: MediaQuery.of(context).size.width,
+                      alignment: Alignment.center,
+                      color: primaryColor,
+                      padding: EdgeInsets.only(bottom: 24),
+                      margin: EdgeInsets.only(bottom: 24),
+                      child: Padding(
+                        padding: EdgeInsets.only(top: 16, bottom: 40),
+                        child: Text(
+                          Fmt.token(balance, decimals, length: 8),
+                          style: TextStyle(
+                            color: titleColor,
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-                Container(
-                  color: titleColor,
-                  padding: EdgeInsets.all(16),
-                  child: Row(
-                    children: <Widget>[
-                      BorderedTitle(
-                        title: dic['loan.txs'],
-                      )
-                    ],
-                  ),
+                    Container(
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: titleColor,
+                        borderRadius:
+                            const BorderRadius.all(const Radius.circular(16)),
+                      ),
+                      child: Row(
+                        children: <Widget>[
+                          BorderedTitle(
+                            title: dic['loan.txs'],
+                          )
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
                 Expanded(
                   child: Container(
-                    color: Colors.white,
+                    color: titleColor,
                     child: ListView.builder(
                       itemCount: txs.length + 1,
                       itemBuilder: (_, i) {
@@ -95,70 +109,49 @@ class TokenDetailPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Container(
-                        color: Colors.lightBlue,
-                        child: FlatButton(
-                          padding: EdgeInsets.all(16),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              Padding(
-                                padding: EdgeInsets.only(right: 16),
-                                child: Image.asset(
-                                  'packages/polkawallet_plugin_acala/assets/images/assets_send.png',
-                                  width: 24,
-                                ),
-                              ),
-                              Text(
-                                dic['transfer'],
-                                style: TextStyle(color: Colors.white),
-                              )
-                            ],
+                Container(
+                  color: titleColor,
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Container(
+                          padding: EdgeInsets.fromLTRB(16, 8, 8, 8),
+                          child: RoundedButton(
+                            icon: Icon(Icons.qr_code,
+                                color: titleColor, size: 24),
+                            text: dic['receive'],
+                            color: colorIn,
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                  context, AccountQrCodePage.route);
+                            },
                           ),
-                          onPressed: () {
-                            Navigator.pushNamed(
-                              context,
-                              TransferPage.route,
-                              arguments: token.symbol,
-                            );
-                          },
                         ),
                       ),
-                    ),
-                    Expanded(
-                      child: Container(
-                        color: Colors.lightGreen,
-                        child: FlatButton(
-                          padding: EdgeInsets.all(16),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              Padding(
-                                padding: EdgeInsets.only(right: 16),
-                                child: Icon(
-                                  Icons.qr_code,
-                                  color: titleColor,
-                                  size: 24,
-                                ),
-                              ),
-                              Text(
-                                dic['receive'],
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ],
+                      Expanded(
+                        child: Container(
+                          padding: EdgeInsets.fromLTRB(8, 8, 16, 8),
+                          child: RoundedButton(
+                            icon: SizedBox(
+                              height: 20,
+                              child:
+                                  Image.asset('assets/images/assets_send.png'),
+                            ),
+                            text: dic['transfer'],
+                            color: colorOut,
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                context,
+                                TransferPage.route,
+                                arguments: token.symbol,
+                              );
+                            },
                           ),
-                          onPressed: () {
-                            Navigator.pushNamed(
-                                context, AccountQrCodePage.route);
-                          },
                         ),
                       ),
-                    )
-                  ],
-                )
+                    ],
+                  ),
+                ),
               ],
             );
           },
@@ -181,43 +174,48 @@ class TransferListItem extends StatelessWidget {
   final String crossChain;
   final bool isOut;
 
+  final colorIn = Color(0xFF62CFE4);
+  final colorOut = Color(0xFF3394FF);
+
   @override
   Widget build(BuildContext context) {
-    String address = isOut ? data.to : data.from;
-    String title =
+    final address = isOut ? data.to : data.from;
+    final title =
         Fmt.address(address) ?? data.extrinsicIndex ?? Fmt.address(data.hash);
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(width: 0.5, color: Colors.black12)),
+    final colorFailed = Theme.of(context).unselectedWidgetColor;
+    final amount = Fmt.priceFloor(double.parse(data.amount), lengthFixed: 4);
+    return ListTile(
+      leading: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          data.success
+              ? isOut
+                  ? SvgPicture.asset('assets/images/assets_up.svg', width: 32)
+                  : SvgPicture.asset('assets/images/assets_down.svg', width: 32)
+              : SvgPicture.asset('assets/images/tx_failed.svg', width: 32)
+        ],
       ),
-      child: ListTile(
-        title: Text('$title${crossChain != null ? ' ($crossChain)' : ''}'),
-        subtitle: Text(Fmt.dateTime(
-            DateTime.fromMillisecondsSinceEpoch(data.blockTimestamp * 1000))),
-        trailing: Container(
-          width: 110,
-          child: Row(
-            children: <Widget>[
-              Expanded(
-                  child: Padding(
-                padding: EdgeInsets.only(right: 8),
-                child: Text(
-                  '${data.amount} ${PluginFmt.tokenView(token)}',
-                  style: Theme.of(context).textTheme.headline4,
-                  textAlign: TextAlign.right,
-                ),
-              )),
-              isOut
-                  ? Image.asset(
-                      'packages/polkawallet_plugin_acala/assets/images/assets_up.png',
-                      width: 16,
-                    )
-                  : Image.asset(
-                      'packages/polkawallet_plugin_acala/assets/images/assets_down.png',
-                      width: 16,
-                    )
-            ],
-          ),
+      title: Text('$title${crossChain != null ? ' ($crossChain)' : ''}'),
+      subtitle: Text(Fmt.dateTime(
+          DateTime.fromMillisecondsSinceEpoch(data.blockTimestamp * 1000))),
+      trailing: Container(
+        width: 110,
+        child: Row(
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                '${isOut ? '-' : '+'} $amount',
+                style: TextStyle(
+                    color: data.success
+                        ? isOut
+                            ? colorOut
+                            : colorIn
+                        : colorFailed,
+                    fontSize: 16),
+                textAlign: TextAlign.right,
+              ),
+            ),
+          ],
         ),
       ),
     );

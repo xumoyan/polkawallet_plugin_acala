@@ -116,7 +116,7 @@ class _AcalaEntryState extends State<AcalaEntry> {
             Expanded(
               child: Observer(
                 builder: (_) {
-                  if (widget.plugin.sdk.api.connectedNode == null) {
+                  if (widget.plugin.sdk.api?.connectedNode == null) {
                     return Container(
                       padding: EdgeInsets.only(
                           top: MediaQuery.of(context).size.width / 2),
