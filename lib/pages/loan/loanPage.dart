@@ -267,9 +267,10 @@ class CurrencySelector extends StatelessWidget {
 }
 
 class TokenIcon extends StatelessWidget {
-  TokenIcon(this.symbol, this.tokenIcons);
+  TokenIcon(this.symbol, this.tokenIcons, {this.small = false});
   final String symbol;
   final Map<String, Widget> tokenIcons;
+  final bool small;
   @override
   Widget build(BuildContext context) {
     if (symbol.contains('-')) {
@@ -290,6 +291,6 @@ class TokenIcon extends StatelessWidget {
         width: 45,
       );
     }
-    return SizedBox(child: tokenIcons[symbol.toUpperCase()], width: 32);
+    return SizedBox(child: tokenIcons[symbol.toUpperCase()], width: small ? 24 : 32);
   }
 }

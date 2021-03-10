@@ -533,8 +533,11 @@ class _SwapPageState extends State<SwapPage> {
                                         children: _swapOutput.path.map((e) {
                                           return CurrencyWithIcon(
                                             e['Token'].toUpperCase(),
-                                            TokenIcon(e['Token'],
-                                                widget.plugin.tokenIcons),
+                                            TokenIcon(
+                                              e['Token'],
+                                              widget.plugin.tokenIcons,
+                                              small: true,
+                                            ),
                                             textStyle: Theme.of(context)
                                                 .textTheme
                                                 .headline4,
@@ -548,7 +551,7 @@ class _SwapPageState extends State<SwapPage> {
                                                         left: 8, right: 8),
                                                     child: Icon(
                                                         Icons.arrow_forward_ios,
-                                                        size: 18),
+                                                        size: 16),
                                                   ),
                                           );
                                         }).toList(),

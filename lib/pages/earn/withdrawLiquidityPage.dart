@@ -297,16 +297,17 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
                       Padding(
                         padding: EdgeInsets.only(top: 16),
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: <Widget>[
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
                             Text(
-                              '=',
-                              style: Theme.of(context).textTheme.headline4,
-                            ),
-                            Text(
-                              '${Fmt.doubleFormat(amountToken)} ${pair[0]} + ${Fmt.doubleFormat(amountStableCoin)} ${pair[1]}',
-                              style: Theme.of(context).textTheme.headline4,
-                            ),
+                              '= ${Fmt.doubleFormat(amountToken)} ${pair[0]} + ${Fmt.doubleFormat(amountStableCoin)} ${pair[1]}',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).unselectedWidgetColor,
+                                wordSpacing: -4,
+                              ),
+                            )
                           ],
                         ),
                       ),
