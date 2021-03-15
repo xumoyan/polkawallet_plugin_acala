@@ -291,6 +291,9 @@ class TokenIcon extends StatelessWidget {
         width: 45,
       );
     }
-    return SizedBox(child: tokenIcons[symbol.toUpperCase()], width: small ? 24 : 32);
+    return SizedBox(child: tokenIcons[symbol.toUpperCase()] ??
+        CircleAvatar(
+          child: Text(symbol.substring(0, 2)),
+        ), width: small ? 24 : 32);
   }
 }

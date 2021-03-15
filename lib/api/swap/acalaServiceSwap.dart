@@ -21,9 +21,8 @@ class AcalaServiceSwap {
     return output;
   }
 
-  Future<List<List>> getTokenPairs() async {
-    return List<List>.from(
-        await plugin.sdk.webView.evalJavascript('acala.getTokenPairs(api)'));
+  Future<List> getTokenPairs() async {
+    return await plugin.sdk.webView.evalJavascript('acala.getTokenPairs(api)');
   }
 
   Future<Map> queryDexLiquidityPoolRewards(List<List> dexPools) async {

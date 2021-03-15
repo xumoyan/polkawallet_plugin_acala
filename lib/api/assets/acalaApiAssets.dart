@@ -28,17 +28,17 @@ class AcalaApiAssets {
     return res;
   }
 
-  Future<List> getAllTokenSymbols() async {
-    return await service.getAllTokenSymbols();
+  Future<List> getAllTokenSymbols(String chain) async {
+    return await service.getAllTokenSymbols(chain);
   }
 
-  void unsubscribeTokenBalances(String address) {
-    service.unsubscribeTokenBalances(address);
+  void unsubscribeTokenBalances(String chain, String address) {
+    service.unsubscribeTokenBalances(chain, address);
   }
 
-  Future<void> subscribeTokenBalances(
-      String address, Function(List<TokenBalanceData>) callback) async {
-    final tokens = await getAllTokenSymbols();
+  Future<void> subscribeTokenBalances(String chain, String address,
+      Function(List<TokenBalanceData>) callback) async {
+    final tokens = await getAllTokenSymbols(chain);
     _tokenBalances.clear();
 
     await service.subscribeTokenBalances(address, tokens, (Map data) {
@@ -51,6 +51,7 @@ class AcalaApiAssets {
           .map((e) => TokenBalanceData(
                 name: PluginFmt.tokenView(e['symbol']),
                 symbol: e['symbol'],
+                decimals: e['decimals'],
                 amount: e['balance']['free'].toString(),
                 detailPageRoute: '/assets/token/detail',
               ))
@@ -59,12 +60,18 @@ class AcalaApiAssets {
   }
 
   Future<List<TokenBalanceData>> queryAirdropTokens(String address) async {
-    final res = List<TokenBalanceData>();
+    final symbolAll = service.plugin.networkState.tokenSymbol;
+    final decimalsAll = service.plugin.networkState.tokenDecimals;
+
+    final res = List<TokenBalanceData>.empty(growable: true);
     final ls = await service.queryAirdropTokens(address);
     if (ls['tokens'] != null) {
       List.of(ls['tokens']).asMap().forEach((i, v) {
         res.add(TokenBalanceData(
-            name: v, symbol: v, amount: ls['amount'][i].toString()));
+            name: v,
+            symbol: v,
+            decimals: decimalsAll[symbolAll.indexOf(v)],
+            amount: ls['amount'][i].toString()));
       });
     }
     return res;

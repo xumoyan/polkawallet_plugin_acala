@@ -18,7 +18,7 @@ class AcalaApiSwap {
     return SwapOutputData.fromJson(output);
   }
 
-  Future<List<List>> getTokenPairs() async {
+  Future<List> getTokenPairs() async {
     return await service.getTokenPairs();
   }
 

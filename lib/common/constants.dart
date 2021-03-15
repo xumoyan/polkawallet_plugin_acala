@@ -5,7 +5,7 @@ const node_list = [
   {
     'name': 'Acala Mandala (Hosted by Acala Network)',
     'ss58': 42,
-    'endpoint': 'wss://mandala.laminar.codes/ws',
+    'endpoint': 'wss://mandala6.laminar.codes',
   },
   // {
   //   'name': 'Mandala TC5 Node 1 (Hosted by OnFinality)',

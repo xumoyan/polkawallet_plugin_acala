@@ -29,7 +29,6 @@ class TokenDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
 
-    final decimals = plugin.networkState.tokenDecimals[0];
     final TokenBalanceData token = ModalRoute.of(context).settings.arguments;
 
     final primaryColor = Theme.of(context).primaryColor;
@@ -64,7 +63,7 @@ class TokenDetailPage extends StatelessWidget {
                       child: Padding(
                         padding: EdgeInsets.only(top: 16, bottom: 40),
                         child: Text(
-                          Fmt.token(balance, decimals, length: 8),
+                          Fmt.token(balance, token.decimals, length: 8),
                           style: TextStyle(
                             color: titleColor,
                             fontSize: 28,

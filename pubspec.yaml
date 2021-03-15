@@ -5,7 +5,7 @@ homepage:
 
 environment:
   sdk: ">=2.10.0 <3.0.0"
-  flutter: ">=1.17.0 <2.0.0"
+  flutter: ">=1.17.0"
 
 dependencies:
   flutter:
@@ -61,10 +61,15 @@ flutter:
     - assets/images/tokens/KAR.png
     - assets/images/tokens/ACA.png
     - assets/images/tokens/AUSD.png
+    - assets/images/tokens/KUSD.png
     - assets/images/tokens/DOT.png
+    - assets/images/tokens/KSM.png
     - assets/images/tokens/LDOT.png
+    - assets/images/tokens/LKSM.png
     - assets/images/tokens/RENBTC.png
     - assets/images/tokens/XBTC.png
+    - assets/images/tokens/PLM.png
+    - assets/images/tokens/PHA.png
 
   # For details regarding assets in packages, see
   # https://flutter.dev/assets-and-images/#from-packages

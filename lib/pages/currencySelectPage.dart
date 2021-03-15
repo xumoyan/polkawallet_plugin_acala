@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanPage.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
+import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
 import 'package:polkawallet_ui/components/currencyWithIcon.dart';
 
@@ -25,7 +26,7 @@ class CurrencySelectPage extends StatelessWidget {
           children: currencyIds.map((i) {
             return ListTile(
               title: CurrencyWithIcon(
-                i,
+                PluginFmt.tokenView(i),
                 TokenIcon(i, plugin.tokenIcons),
                 textStyle: Theme.of(context).textTheme.headline4,
               ),

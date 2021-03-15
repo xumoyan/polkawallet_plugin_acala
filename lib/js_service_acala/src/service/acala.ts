@@ -1,8 +1,8 @@
 import { StakingPool } from "@acala-network/sdk-homa";
-import { FixedPointNumber, getPresetToken, PresetToken, TokenPair, currencyId2Token } from "@acala-network/sdk-core";
+import { FixedPointNumber, getPresetToken, PresetToken, TokenPair, currencyId2Token, DexShare } from "@acala-network/sdk-core";
 import { SwapTrade } from "@acala-network/sdk-swap";
-import { CurrencyId } from "@acala-network/types/interfaces";
 import { ApiPromise } from "@polkadot/api";
+import { tokensForAcala, tokensForKarura } from "../constants/acala";
 
 /**
  * calc token swap amount
@@ -63,13 +63,27 @@ async function queryLPTokens(api: ApiPromise, address: string) {
  */
 async function getTokenPairs(api: ApiPromise) {
   const tokenPairs = await api.query.dex.tradingPairStatuses.entries();
-  return tokenPairs.filter((item) => (item[1] as any).isEnabled).map((item) => api.createType("TradingPair" as any, item[0].args[0]));
+  return tokenPairs
+    .filter((item) => (item[1] as any).isEnabled)
+    .map(
+      ([
+        {
+          args: [item],
+        },
+      ]) => {
+        const pair = DexShare.fromCurrencyId(
+          api.createType("CurrencyId" as any, { DEXShare: [(item[0] as any).asToken.toString(), (item[1] as any).asToken.toString()] })
+        );
+        return {
+          decimals: pair.decimal,
+          tokens: [{ token: pair.token1.symbol }, { token: pair.token2.symbol }],
+        };
+      }
+    );
 }
 
-async function getAllTokenSymbols(api: ApiPromise) {
-  return (api.registry.createType("TokenSymbol" as any).defKeys as string[])
-    .filter((name) => name != "ACA")
-    .map((name) => api.registry.createType("CurrencyId" as any, { Token: name }) as CurrencyId);
+async function getAllTokenSymbols(chain: string) {
+  return chain.match("karura") ? tokensForKarura : tokensForAcala;
 }
 
 /**

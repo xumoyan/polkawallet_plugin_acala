@@ -68,14 +68,24 @@ class PluginAcala extends PolkawalletPlugin {
         'packages/polkawallet_plugin_acala/assets/images/tokens/ACA.png'),
     'AUSD': Image.asset(
         'packages/polkawallet_plugin_acala/assets/images/tokens/AUSD.png'),
+    'KUSD': Image.asset(
+        'packages/polkawallet_plugin_acala/assets/images/tokens/KUSD.png'),
     'DOT': Image.asset(
         'packages/polkawallet_plugin_acala/assets/images/tokens/DOT.png'),
     'LDOT': Image.asset(
         'packages/polkawallet_plugin_acala/assets/images/tokens/LDOT.png'),
+    'KSM': Image.asset(
+        'packages/polkawallet_plugin_acala/assets/images/tokens/KSM.png'),
+    'LKSM': Image.asset(
+        'packages/polkawallet_plugin_acala/assets/images/tokens/LKSM.png'),
     'RENBTC': Image.asset(
         'packages/polkawallet_plugin_acala/assets/images/tokens/RENBTC.png'),
     'XBTC': Image.asset(
         'packages/polkawallet_plugin_acala/assets/images/tokens/XBTC.png'),
+    'PLM': Image.asset(
+        'packages/polkawallet_plugin_acala/assets/images/tokens/PLM.png'),
+    'PHA': Image.asset(
+        'packages/polkawallet_plugin_acala/assets/images/tokens/PHA.png'),
   };
 
   @override
@@ -153,7 +163,7 @@ class PluginAcala extends PolkawalletPlugin {
   PluginService get service => _service;
 
   Future<void> _subscribeTokenBalances(KeyPairData acc) async {
-    _api.assets.subscribeTokenBalances(acc.address, (data) {
+    _api.assets.subscribeTokenBalances(basic.name, acc.address, (data) {
       _store.assets.setTokenBalanceMap(data);
 
       data.removeWhere((e) => e.symbol.contains('-') && e.amount == '0');
@@ -206,7 +216,7 @@ class PluginAcala extends PolkawalletPlugin {
     _loadCacheData(acc);
 
     if (_service.connected) {
-      _api.assets.unsubscribeTokenBalances(acc.address);
+      _api.assets.unsubscribeTokenBalances(basic.name, acc.address);
       _subscribeTokenBalances(acc);
     }
   }

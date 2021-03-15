@@ -14,20 +14,20 @@ class AcalaServiceAssets {
 
   final tokenBalanceChannel = 'tokenBalance';
 
-  Future<List> getAllTokenSymbols() async {
+  Future<List> getAllTokenSymbols(String chain) async {
     return await plugin.sdk.webView
-        .evalJavascript('acala.getAllTokenSymbols(api)');
+        .evalJavascript('acala.getAllTokenSymbols("$chain")');
   }
 
-  void unsubscribeTokenBalances(String address) async {
-    final tokens = await getAllTokenSymbols();
+  void unsubscribeTokenBalances(String chain, String address) async {
+    final tokens = await getAllTokenSymbols(chain);
     tokens.forEach((e) {
-      plugin.sdk.api.unsubscribeMessage('$tokenBalanceChannel${e['Token']}');
+      plugin.sdk.api.unsubscribeMessage('$tokenBalanceChannel${e['token']}');
     });
 
     final dexPairs = await plugin.api.swap.getTokenPairs();
     dexPairs.forEach((e) {
-      final LPToken = List.of(e).map((i) => i['Token']).toList();
+      final LPToken = List.of(e).map((i) => i['token']).toList();
       plugin.sdk.api
           .unsubscribeMessage('$tokenBalanceChannel${LPToken.join('')}');
     });
@@ -36,19 +36,23 @@ class AcalaServiceAssets {
   Future<void> subscribeTokenBalances(
       String address, List tokens, Function(Map) callback) async {
     tokens.forEach((e) {
-      final channel = '$tokenBalanceChannel${e['Token']}';
+      final channel = '$tokenBalanceChannel${e['token']}';
       plugin.sdk.api.subscribeMessage(
         'api.query.tokens.accounts',
         [address, e],
         channel,
         (Map data) {
-          callback({'symbol': e['Token'], 'balance': data});
+          callback({
+            'symbol': e['token'],
+            'decimals': e['decimals'],
+            'balance': data
+          });
         },
       );
     });
     final dexPairs = await plugin.api.swap.getTokenPairs();
     dexPairs.forEach((e) {
-      final LPToken = List.of(e).map((i) => i['Token']).toList();
+      final LPToken = List.of(e['tokens']).map((i) => i['token']).toList();
       final channel = '$tokenBalanceChannel${LPToken.join('')}';
       plugin.sdk.api.subscribeMessage(
         'api.query.tokens.accounts',
@@ -58,7 +62,11 @@ class AcalaServiceAssets {
         ],
         channel,
         (Map data) {
-          callback({'symbol': LPToken.join('-'), 'balance': data});
+          callback({
+            'symbol': LPToken.join('-'),
+            'decimals': e['decimals'],
+            'balance': data
+          });
         },
       );
     });

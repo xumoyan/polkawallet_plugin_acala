@@ -9,6 +9,7 @@ import 'package:polkawallet_plugin_acala/pages/currencySelectPage.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanPage.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
+import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_ui/components/addressInputField.dart';
 import 'package:polkawallet_ui/components/currencyWithIcon.dart';
@@ -59,7 +60,8 @@ class _TransferPageState extends State<TransferPage> {
 
   Future<void> _onSubmit() async {
     if (_formKey.currentState.validate()) {
-      final decimals = widget.plugin.networkState.tokenDecimals[0];
+      final decimals =
+          widget.plugin.store.assets.tokenBalanceMap[_token].decimals;
       final params = [
         // params.to
         _accountTo.address,
@@ -78,7 +80,7 @@ class _TransferPageState extends State<TransferPage> {
                 '${I18n.of(context).getDic(i18n_full_dic_acala, 'acala')['transfer']} $_token',
             txDisplay: {
               "destination": _accountTo.address,
-              "currency": _token,
+              "currency": PluginFmt.tokenView(_token),
               "amount": _amountCtrl.text.trim(),
             },
             params: params,
@@ -137,7 +139,8 @@ class _TransferPageState extends State<TransferPage> {
     return Observer(
       builder: (_) {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
-        final decimals = widget.plugin.networkState.tokenDecimals[0];
+        final decimals =
+            widget.plugin.store.assets.tokenBalanceMap[_token].decimals;
 
         final available = Fmt.balanceInt(widget
             .plugin.store.assets.tokenBalanceMap[_token.toUpperCase()].amount);
@@ -226,7 +229,7 @@ class _TransferPageState extends State<TransferPage> {
                                                 .unselectedWidgetColor),
                                       ),
                                       CurrencyWithIcon(
-                                        _token,
+                                        PluginFmt.tokenView(_token),
                                         TokenIcon(
                                             _token, widget.plugin.tokenIcons),
                                       ),
