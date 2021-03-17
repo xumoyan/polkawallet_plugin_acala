@@ -245,7 +245,6 @@ class _EarnPageState extends State<EarnPage> {
               children: <Widget>[
                 CurrencySelector(
                   token: _tab,
-                  decimals: decimals,
                   tokenOptions: widget.plugin.store.earn.dexPools
                       .map((e) => e.map((e) => e['Token']).join('-'))
                       .toList(),

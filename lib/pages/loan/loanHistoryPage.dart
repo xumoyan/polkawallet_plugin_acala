@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:polkawallet_plugin_acala/api/types/loanType.dart';
 import 'package:polkawallet_plugin_acala/api/types/txLoanData.dart';
 import 'package:polkawallet_plugin_acala/common/constants.dart';
@@ -19,10 +20,14 @@ class LoanHistoryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final int decimals = plugin.networkState.tokenDecimals[0];
+    final symbols = plugin.networkState.tokenSymbol;
+    final decimals = plugin.networkState.tokenDecimals;
+    final stableCoinDecimals = decimals[symbols.indexOf('AUSD')];
+
     final list = plugin.store.loan.txs.reversed.toList();
 
     final LoanType loanType = ModalRoute.of(context).settings.arguments;
+    final collateralDecimals = decimals[symbols.indexOf(loanType.token)];
     list.retainWhere((i) => i.currencyId == loanType.token);
     return Scaffold(
       appBar: AppBar(
@@ -43,15 +48,19 @@ class LoanHistoryPage extends StatelessWidget {
                 .firstWhere((i) => i.token == detail.currencyId);
             BigInt amountView = detail.amountCollateral;
             if (detail.currencyIdView.toUpperCase() == acala_stable_coin) {
-              amountView =
-                  loanType.debitShareToDebit(detail.amountDebitShare, decimals);
+              amountView = loanType.debitShareToDebit(detail.amountDebitShare);
             } else {
               amountView = BigInt.zero - amountView;
             }
-            String icon = 'assets_down.png';
+            bool isOut = false;
             if (detail.actionType == TxLoanData.actionTypePayback ||
                 detail.actionType == TxLoanData.actionTypeDeposit) {
-              icon = 'assets_up.png';
+              isOut = true;
+            }
+            int decimal = collateralDecimals;
+            if (detail.actionType == TxLoanData.actionTypePayback ||
+                detail.actionType == TxLoanData.actionTypeBorrow) {
+              decimal = stableCoinDecimals;
             }
             return Container(
               decoration: BoxDecoration(
@@ -59,29 +68,18 @@ class LoanHistoryPage extends StatelessWidget {
                     bottom: BorderSide(width: 0.5, color: Colors.black12)),
               ),
               child: ListTile(
-                title: Text(list[i].actionType),
-                subtitle: Text(Fmt.dateTime(list[i].time)),
-                trailing: Container(
-                  width: 140,
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Padding(
-                          padding: EdgeInsets.only(right: 12),
-                          child: Text(
-                            '${Fmt.priceFloorBigInt(amountView, decimals)} ${detail.currencyIdView}',
-                            style: Theme.of(context).textTheme.headline4,
-                            textAlign: TextAlign.end,
-                          ),
-                        ),
-                      ),
-                      Image.asset(
-                          'packages/polkawallet_plugin_acala/assets/images/$icon',
-                          width: 16)
-                    ],
-                  ),
-                ),
-              ),
+                  title: Text(list[i].actionType),
+                  subtitle: Text(Fmt.dateTime(list[i].time)),
+                  leading: SvgPicture.asset(
+                      'assets/images/assets_${isOut ? 'up' : 'down'}.svg',
+                      width: 32),
+                  trailing: FittedBox(
+                    child: Text(
+                      '${Fmt.priceFloorBigInt(amountView, decimal)} ${detail.currencyIdView}',
+                      style: Theme.of(context).textTheme.headline4,
+                      textAlign: TextAlign.end,
+                    ),
+                  )),
             );
           },
         ),

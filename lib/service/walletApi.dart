@@ -27,7 +27,7 @@ class WalletApi {
       "account": deviceId,
     });
     try {
-      Response res = await post('$_endpoint/v2/faucet/faucet',
+      Response res = await post('$_endpoint/v2/faucet-tc6/faucet',
           headers: headers, body: body);
       if (res.statusCode == 200) {
         try {

@@ -6,7 +6,7 @@ import 'package:polkawallet_ui/utils/format.dart';
 class LoanType extends _LoanType {
   static LoanType fromJson(Map<String, dynamic> json) {
     LoanType data = LoanType();
-    data.token = json['currency']['Token'];
+    data.token = json['currency']['token'];
     data.debitExchangeRate = BigInt.parse(json['debitExchangeRate'].toString());
     data.liquidationPenalty =
         BigInt.parse(json['liquidationPenalty'].toString());
@@ -23,16 +23,24 @@ class LoanType extends _LoanType {
     return data;
   }
 
-  BigInt debitShareToDebit(BigInt debitShares, int decimals) {
-    return debitShares * debitExchangeRate ~/ BigInt.from(pow(10, decimals));
+  BigInt debitShareToDebit(BigInt debitShares) {
+    return debitShares *
+        debitExchangeRate ~/
+        BigInt.from(pow(10, acala_price_decimals));
   }
 
-  BigInt debitToDebitShare(BigInt debits, int decimals) {
-    return debits * BigInt.from(pow(10, decimals)) ~/ debitExchangeRate;
+  BigInt debitToDebitShare(BigInt debits) {
+    return debits *
+        BigInt.from(pow(10, acala_price_decimals)) ~/
+        debitExchangeRate;
   }
 
-  BigInt tokenToUSD(BigInt amount, price, int decimals) {
-    return amount * price ~/ BigInt.from(pow(10, decimals));
+  BigInt tokenToUSD(BigInt amount, price,
+      {int stableCoinDecimals, int collateralDecimals}) {
+    return amount *
+        price ~/
+        BigInt.from(pow(10,
+            acala_price_decimals + collateralDecimals - stableCoinDecimals));
   }
 
   double calcCollateralRatio(BigInt debitInUSD, BigInt collateralInUSD) {
@@ -42,26 +50,33 @@ class LoanType extends _LoanType {
     return collateralInUSD / debitInUSD;
   }
 
-  BigInt calcLiquidationPrice(BigInt debitInUSD, BigInt collaterals) {
-    return debitInUSD > BigInt.zero
-        ? BigInt.from(debitInUSD * this.liquidationRatio / collaterals)
+  BigInt calcLiquidationPrice(BigInt debit, BigInt collaterals,
+      {int stableCoinDecimals, int collateralDecimals}) {
+    return debit > BigInt.zero
+        ? BigInt.from(debit *
+            this.liquidationRatio /
+            collaterals /
+            pow(10, stableCoinDecimals - collateralDecimals))
         : BigInt.zero;
   }
 
-  BigInt calcRequiredCollateral(BigInt debitInUSD, BigInt price) {
+  BigInt calcRequiredCollateral(BigInt debitInUSD, BigInt price,
+      {int stableCoinDecimals, int collateralDecimals}) {
     if (price > BigInt.zero && debitInUSD > BigInt.zero) {
-      return BigInt.from(debitInUSD * requiredCollateralRatio / price);
+      return BigInt.from(debitInUSD *
+          requiredCollateralRatio /
+          price /
+          pow(10, stableCoinDecimals - collateralDecimals));
     }
     return BigInt.zero;
   }
 
-  BigInt calcMaxToBorrow(
-      BigInt collaterals, tokenPrice, stableCoinPrice, int decimals) {
-    return collaterals *
-        tokenPrice ~/
-        (requiredCollateralRatio *
-            stableCoinPrice ~/
-            Fmt.tokenInt('1', decimals));
+  BigInt calcMaxToBorrow(BigInt collaterals, tokenPrice,
+      {int stableCoinDecimals, int collateralDecimals}) {
+    return tokenToUSD(collaterals, tokenPrice,
+            stableCoinDecimals: stableCoinDecimals,
+            collateralDecimals: collateralDecimals) * BigInt.from(pow(10, acala_price_decimals)) ~/
+        requiredCollateralRatio;
   }
 }
 
@@ -80,30 +95,40 @@ abstract class _LoanType {
 
 class LoanData extends _LoanData {
   static LoanData fromJson(Map<String, dynamic> json, LoanType type,
-      BigInt tokenPrice, int decimals) {
+      BigInt tokenPrice, List<String> symbols, List<int> decimals) {
+    final stableCoinDecimals = decimals[symbols.indexOf('AUSD')];
+
     LoanData data = LoanData();
-    data.token = json['currency']['Token'];
+    data.token = json['currency']['token'];
     data.type = type;
     data.price = tokenPrice;
-    data.stableCoinPrice = Fmt.tokenInt('1', decimals);
+    data.stableCoinPrice = Fmt.tokenInt('1', stableCoinDecimals);
     data.debitShares = BigInt.parse(json['debit'].toString());
-    data.debits = type.debitShareToDebit(data.debitShares, decimals);
+    data.debits = type.debitShareToDebit(data.debitShares);
     data.collaterals = BigInt.parse(json['collateral'].toString());
 
-    data.debitInUSD =
-        type.tokenToUSD(data.debits, data.stableCoinPrice, decimals);
-    data.collateralInUSD =
-        type.tokenToUSD(data.collaterals, tokenPrice, decimals);
+    final collateralDecimals = decimals[symbols.indexOf(data.token)];
+
+    data.debitInUSD = data.debits;
+    data.collateralInUSD = type.tokenToUSD(data.collaterals, tokenPrice,
+        stableCoinDecimals: stableCoinDecimals,
+        collateralDecimals: collateralDecimals);
     data.collateralRatio =
         type.calcCollateralRatio(data.debitInUSD, data.collateralInUSD);
-    data.requiredCollateral =
-        type.calcRequiredCollateral(data.debitInUSD, tokenPrice);
-    data.maxToBorrow = type.calcMaxToBorrow(
-        data.collaterals, tokenPrice, data.stableCoinPrice, decimals);
+
+    data.requiredCollateral = type.calcRequiredCollateral(
+        data.debitInUSD, tokenPrice,
+        stableCoinDecimals: stableCoinDecimals,
+        collateralDecimals: collateralDecimals);
+    data.maxToBorrow = type.calcMaxToBorrow(data.collaterals, tokenPrice,
+        stableCoinDecimals: stableCoinDecimals,
+        collateralDecimals: collateralDecimals);
     data.stableFeeDay = data.calcStableFee(SECONDS_OF_DAY);
     data.stableFeeYear = data.calcStableFee(SECONDS_OF_YEAR);
-    data.liquidationPrice =
-        type.calcLiquidationPrice(data.debitInUSD, data.collaterals);
+    data.liquidationPrice = type.calcLiquidationPrice(
+        data.debitInUSD, data.collaterals,
+        stableCoinDecimals: stableCoinDecimals,
+        collateralDecimals: collateralDecimals);
     return data;
   }
 }
@@ -131,7 +156,7 @@ abstract class _LoanData {
     int blocks = seconds * 1000 ~/ type.expectedBlockTime;
     double base = 1 +
         (type.globalStabilityFee + type.stabilityFee) /
-            BigInt.from(pow(10, acala_token_decimals));
+            BigInt.from(pow(10, acala_price_decimals));
     return (pow(base, blocks) - 1);
   }
 }

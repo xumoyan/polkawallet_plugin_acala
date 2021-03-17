@@ -5,16 +5,16 @@ import 'package:polkawallet_sdk/utils/i18n.dart';
 import 'package:polkawallet_ui/utils/format.dart';
 
 class LoanChart extends StatelessWidget {
-  LoanChart(this.loan, this.decimals);
+  LoanChart(this.loan);
   final LoanData loan;
-  final int decimals;
+
   @override
   Widget build(BuildContext context) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
     double requiredCollateralRatio =
-        double.parse(Fmt.token(loan.type.requiredCollateralRatio, decimals));
+        double.parse(Fmt.token(loan.type.requiredCollateralRatio, 18));
     double liquidationRatio =
-        double.parse(Fmt.token(loan.type.liquidationRatio, decimals));
+        double.parse(Fmt.token(loan.type.liquidationRatio, 18));
 
     const double heightTotal = 160;
     final double widthChart = MediaQuery.of(context).size.width / 4;
@@ -43,12 +43,6 @@ class LoanChart extends StatelessWidget {
         heightBorrowedAdjusted = heightRequiredAdjusted - 24;
       }
     }
-
-//    String collateralInUSD = Fmt.priceFloorBigInt(loan.collateralInUSD,
-//        decimals: acala_token_decimals);
-//    String debitInUSD =
-//        Fmt.priceCeilBigInt(loan.debitInUSD, decimals: acala_token_decimals);
-//    const TextStyle textStyle = TextStyle(fontSize: 12);
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -119,32 +113,6 @@ class LoanChart extends StatelessWidget {
               dic['liquid.ratio.current'],
               style: TextStyle(color: Colors.orange),
             ),
-//              liquidation: Row(
-//                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                children: <Widget>[
-//                  Text(
-//                    dic['liquid.ratio'],
-//                    style: TextStyle(color: Colors.red),
-//                  ),
-//                  Text(
-//                    Fmt.ratio(liquidationRatio),
-//                    style: TextStyle(color: Colors.red),
-//                  ),
-//                ],
-//              ),
-//              required: Row(
-//                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                children: <Widget>[
-//                  Text(
-//                    dic['liquid.ratio.require'],
-//                    style: TextStyle(color: Colors.blue),
-//                  ),
-//                  Text(
-//                    Fmt.ratio(requiredCollateralRatio),
-//                    style: TextStyle(color: Colors.blue),
-//                  ),
-//                ],
-//              ),
           ),
         ),
       ],

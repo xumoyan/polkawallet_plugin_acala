@@ -1,5 +1,5 @@
 import { StakingPool } from "@acala-network/sdk-homa";
-import { FixedPointNumber, getPresetToken, PresetToken, TokenPair, currencyId2Token, DexShare } from "@acala-network/sdk-core";
+import { FixedPointNumber, TokenPair, currencyId2Token, DexShare } from "@acala-network/sdk-core";
 import { SwapTrade } from "@acala-network/sdk-swap";
 import { ApiPromise } from "@polkadot/api";
 import { tokensForAcala, tokensForKarura } from "../constants/acala";

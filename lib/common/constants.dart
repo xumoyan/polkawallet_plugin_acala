@@ -21,7 +21,7 @@ const node_list = [
 
 const acala_plugin_cache_key = 'plugin_acala';
 
-const acala_token_decimals = 18;
+const acala_price_decimals = 18;
 const acala_stable_coin = 'AUSD';
 const acala_stable_coin_view = 'aUSD';
 const acala_token_ren_btc = 'RENBTC';

@@ -60,7 +60,11 @@ class _LoanPageState extends State<LoanPage> {
       builder: (_) {
         final loan = widget.plugin.store.loan.loans[_tab];
 
-        final decimals = widget.plugin.networkState.tokenDecimals[0];
+        final symbols = widget.plugin.networkState.tokenSymbol;
+        final decimals = widget.plugin.networkState.tokenDecimals;
+        final stableCoinDecimals = decimals[symbols.indexOf('AUSD')];
+        final collateralDecimals = decimals[symbols.indexOf(_tab)];
+
         var aUSDBalance = BigInt.zero;
         final aUSDBalanceIndex = widget.plugin.balances.tokens
             .indexWhere((e) => e.symbol == acala_stable_coin);
@@ -68,12 +72,6 @@ class _LoanPageState extends State<LoanPage> {
           aUSDBalance = Fmt.balanceInt(
               widget.plugin.balances.tokens[aUSDBalanceIndex].amount);
         }
-
-        // final aUSDBalance = Fmt.priceFloorBigInt(
-        //   Fmt.balanceInt(
-        //       widget.plugin.balances.tokens..tokenBalances[acala_stable_coin]),
-        //   decimals,
-        // );
 
         final Color cardColor = Theme.of(context).cardColor;
         final Color primaryColor = Theme.of(context).primaryColor;
@@ -101,7 +99,6 @@ class _LoanPageState extends State<LoanPage> {
                       .toList(),
                   tokenIcons: widget.plugin.tokenIcons,
                   token: _tab,
-                  decimals: decimals,
                   price: widget.plugin.store.assets.prices[_tab],
                   onSelect: (res) {
                     if (res != null) {
@@ -118,8 +115,9 @@ class _LoanPageState extends State<LoanPage> {
                             loan.collaterals > BigInt.zero
                                 ? LoanCard(
                                     loan,
-                                    Fmt.priceFloorBigInt(aUSDBalance, decimals),
-                                    decimals)
+                                    Fmt.priceFloorBigInt(
+                                        aUSDBalance, stableCoinDecimals),
+                                    stableCoinDecimals, collateralDecimals)
                                 : RoundedCard(
                                     margin: EdgeInsets.all(16),
                                     padding:
@@ -128,7 +126,7 @@ class _LoanPageState extends State<LoanPage> {
                                         'packages/polkawallet_plugin_acala/assets/images/loan-start.svg'),
                                   ),
                             loan.debitInUSD > BigInt.zero
-                                ? LoanChart(loan, decimals)
+                                ? LoanChart(loan)
 //                                    ? LoanDonutChart(loan)
                                 : Container()
                           ],
@@ -205,14 +203,12 @@ class CurrencySelector extends StatelessWidget {
     this.tokenOptions,
     this.tokenIcons,
     this.token,
-    this.decimals,
     this.price,
     this.onSelect,
   });
   final List<String> tokenOptions;
   final Map<String, Widget> tokenIcons;
   final String token;
-  final int decimals;
   final BigInt price;
   final Function(String) onSelect;
   @override
@@ -244,7 +240,7 @@ class CurrencySelector extends StatelessWidget {
         ),
         subtitle: price != null
             ? Text(
-                '\$${Fmt.token(price, decimals)}',
+                '\$${Fmt.token(price, acala_price_decimals)}',
                 style: TextStyle(
                   fontSize: 12,
                   color: Theme.of(context).unselectedWidgetColor,
@@ -291,9 +287,11 @@ class TokenIcon extends StatelessWidget {
         width: 45,
       );
     }
-    return SizedBox(child: tokenIcons[symbol.toUpperCase()] ??
-        CircleAvatar(
-          child: Text(symbol.substring(0, 2)),
-        ), width: small ? 24 : 32);
+    return SizedBox(
+        child: tokenIcons[symbol.toUpperCase()] ??
+            CircleAvatar(
+              child: Text(symbol.substring(0, 2)),
+            ),
+        width: small ? 24 : 32);
   }
 }

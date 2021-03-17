@@ -26,8 +26,8 @@ class CurrencySelectPage extends StatelessWidget {
           children: currencyIds.map((i) {
             return ListTile(
               title: CurrencyWithIcon(
-                PluginFmt.tokenView(i),
-                TokenIcon(i, plugin.tokenIcons),
+                PluginFmt.tokenView(i ?? ''),
+                TokenIcon(i ?? '', plugin.tokenIcons),
                 textStyle: Theme.of(context).textTheme.headline4,
               ),
               trailing: Icon(

@@ -73,7 +73,7 @@ abstract class _EarnStore with Store {
     if (list != null) {
       txs = ObservableList<TxDexLiquidityData>.of(list.map((e) =>
           TxDexLiquidityData.fromJson(
-              Map<String, dynamic>.from(e), acala_token_decimals)));
+              Map<String, dynamic>.from(e), acala_price_decimals)));
     } else {
       txs = ObservableList<TxDexLiquidityData>();
     }

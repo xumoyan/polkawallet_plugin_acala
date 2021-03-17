@@ -54,19 +54,23 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
   bool _paybackAndCloseChecked = false;
 
   void _updateState(LoanType loanType, BigInt collateral, BigInt debit) {
-    final decimals = widget.plugin.networkState.tokenDecimals[0];
+    final symbols = widget.plugin.networkState.tokenSymbol;
+    final decimals = widget.plugin.networkState.tokenDecimals;
+    final stableCoinDecimals = decimals[symbols.indexOf('AUSD')];
+
     final LoanAdjustPageParams params =
         ModalRoute.of(context).settings.arguments;
+    final collateralDecimals = decimals[symbols.indexOf(params.token)];
+
     final tokenPrice = widget.plugin.store.assets.prices[params.token];
-    final stableCoinPrice = Fmt.tokenInt('1', decimals);
-    final collateralInUSD =
-        loanType.tokenToUSD(collateral, tokenPrice, decimals);
-    final debitInUSD = loanType.tokenToUSD(debit, stableCoinPrice, decimals);
+    final collateralInUSD = loanType.tokenToUSD(collateral, tokenPrice,
+        collateralDecimals: collateralDecimals,
+        stableCoinDecimals: stableCoinDecimals);
+    final debitInUSD = debit;
     setState(() {
-      _liquidationPrice = loanType.calcLiquidationPrice(
-        debitInUSD,
-        collateral,
-      );
+      _liquidationPrice = loanType.calcLiquidationPrice(debitInUSD, collateral,
+          collateralDecimals: collateralDecimals,
+          stableCoinDecimals: stableCoinDecimals);
       _currentRatio = loanType.calcCollateralRatio(debitInUSD, collateralInUSD);
     });
   }
@@ -104,14 +108,13 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
     String value,
     LoanType loanType,
     BigInt price,
-    BigInt stableCoinPrice,
-    int decimals, {
+    int collateralDecimals, {
     BigInt max,
   }) {
     String v = value.trim();
     if (v.isEmpty) return;
 
-    BigInt collateral = max != null ? max : Fmt.tokenInt(v, decimals);
+    BigInt collateral = max != null ? max : Fmt.tokenInt(v, collateralDecimals);
     setState(() {
       _amountCollateral = collateral;
     });
@@ -126,14 +129,14 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
     String value,
     LoanType loanType,
     BigInt stableCoinPrice,
-    int decimals,
+    int stableCoinDecimals,
     bool showCheckbox, {
     BigInt debits,
   }) {
     String v = value.trim();
     if (v.isEmpty) return;
 
-    BigInt debitsNew = debits ?? Fmt.tokenInt(v, decimals);
+    BigInt debitsNew = debits ?? Fmt.tokenInt(v, stableCoinDecimals);
 
     setState(() {
       _amountDebit = debitsNew;
@@ -183,7 +186,7 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
   }
 
   String _validateAmount2(String value, BigInt max, String maxToBorrowView,
-      BigInt balanceAUSD, LoanData loan, int decimals) {
+      BigInt balanceAUSD, LoanData loan, int stableCoinDecimals) {
     final assetDic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
 
@@ -203,12 +206,12 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
     }
     if (params.actionType == LoanAdjustPage.actionTypePayback) {
       if (_amountDebit > balanceAUSD) {
-        String balance = Fmt.token(balanceAUSD, decimals);
+        String balance = Fmt.token(balanceAUSD, stableCoinDecimals);
         return '${assetDic['amount.low']}(${assetDic['balance']}: $balance)';
       }
       BigInt debitLeft = loan.debits - _amountDebit;
       if (debitLeft > BigInt.zero &&
-          loan.type.debitToDebitShare(debitLeft, decimals) <
+          loan.type.debitToDebitShare(debitLeft) <
               loan.type.minimumDebitValue) {
         return dic['payback.small'];
       }
@@ -240,18 +243,21 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
   }
 
   Future<Map> _getTxParams(LoanData loan) async {
-    final decimals = widget.plugin.networkState.tokenDecimals[0];
+    final symbols = widget.plugin.networkState.tokenSymbol;
+    final decimals = widget.plugin.networkState.tokenDecimals;
+    final stableCoinDecimals = decimals[symbols.indexOf('AUSD')];
+
     final LoanAdjustPageParams params =
         ModalRoute.of(context).settings.arguments;
     switch (params.actionType) {
       case LoanAdjustPage.actionTypeBorrow:
-        BigInt debitAdd = loan.type.debitToDebitShare(_amountDebit, decimals);
+        BigInt debitAdd = loan.type.debitToDebitShare(_amountDebit);
         return {
           'detail': {
             "amount": _amountCtrl2.text.trim(),
           },
           'params': [
-            {'Token': params.token},
+            {'token': params.token},
             0,
             debitAdd.toString(),
           ]
@@ -261,24 +267,24 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
         /// payback all debts if user input more than debts
         BigInt debitSubtract = _amountDebit >= loan.debits
             ? loan.debitShares
-            : loan.type.debitToDebitShare(_amountDebit, decimals);
+            : loan.type.debitToDebitShare(_amountDebit);
 
         /// pay less if less than 1 debit(aUSD) will be left,
         /// make sure tx success by leaving more than 1 debit(aUSD).
-        final debitValueOne = Fmt.tokenInt('1', decimals);
+        final debitValueOne = Fmt.tokenInt('1', stableCoinDecimals);
         if (loan.debits - _amountDebit > BigInt.zero &&
             loan.debits - _amountDebit < debitValueOne) {
           final bool canContinue = await _confirmPaybackParams();
           if (!canContinue) return null;
-          debitSubtract = loan.debitShares -
-              loan.type.debitToDebitShare(debitValueOne, decimals);
+          debitSubtract =
+              loan.debitShares - loan.type.debitToDebitShare(debitValueOne);
         }
         return {
           'detail': {
             "amount": _amountCtrl2.text.trim(),
           },
           'params': [
-            {'Token': params.token},
+            {'token': params.token},
             _paybackAndCloseChecked
                 ? (BigInt.zero - loan.collaterals).toString()
                 : 0,
@@ -291,25 +297,19 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
             "amount": _amountCtrl.text.trim(),
           },
           'params': [
-            {'Token': params.token},
+            {'token': params.token},
             _amountCollateral.toString(),
             0,
           ]
         };
       case LoanAdjustPage.actionTypeWithdraw:
-
-        /// withdraw all if user input near max
-        BigInt amt =
-            loan.collaterals - _amountCollateral > BigInt.parse('1000000000000')
-                ? _amountCollateral
-                : loan.collaterals;
         return {
           'detail': {
             "amount": _amountCtrl.text.trim(),
           },
           'params': [
-            {'Token': params.token},
-            (BigInt.zero - amt).toString(),
+            {'token': params.token},
+            (BigInt.zero - _amountCollateral).toString(),
             0,
           ]
         };
@@ -318,7 +318,7 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
     }
   }
 
-  Future<TxConfirmParams> _onSubmit(String title, LoanData loan) async {
+  Future<void> _onSubmit(String title, LoanData loan) async {
     final params = await _getTxParams(loan);
     if (params == null) return null;
 
@@ -367,14 +367,19 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
     var dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
     var assetDic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
 
-    final decimals = widget.plugin.networkState.tokenDecimals[0];
+    final symbols = widget.plugin.networkState.tokenSymbol;
+    final decimals = widget.plugin.networkState.tokenDecimals;
+    final stableCoinDecimals = decimals[symbols.indexOf('AUSD')];
+
     final LoanAdjustPageParams params =
         ModalRoute.of(context).settings.arguments;
     final symbol = params.token;
+    final collateralDecimals = decimals[symbols.indexOf(symbol)];
+
     final loan = widget.plugin.store.loan.loans[symbol];
 
     final price = widget.plugin.store.assets.prices[symbol];
-    final stableCoinPrice = Fmt.tokenInt('1', decimals);
+    final stableCoinPrice = Fmt.tokenInt('1', stableCoinDecimals);
 
     String titleSuffix = ' $symbol';
     bool showCollateral = true;
@@ -386,18 +391,19 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
         widget.plugin.store.assets.tokenBalanceMap[params.token].amount);
     BigInt available = balance;
     BigInt maxToBorrow = loan.maxToBorrow - loan.debits;
-    String maxToBorrowView = Fmt.priceFloorBigInt(maxToBorrow, decimals);
+    String maxToBorrowView =
+        Fmt.priceFloorBigInt(maxToBorrow, stableCoinDecimals);
 
     switch (params.actionType) {
       case LoanAdjustPage.actionTypeBorrow:
-        maxToBorrow = Fmt.tokenInt(maxToBorrowView, decimals);
+        maxToBorrow = Fmt.tokenInt(maxToBorrowView, stableCoinDecimals);
         showCollateral = false;
         titleSuffix = ' aUSD';
         break;
       case LoanAdjustPage.actionTypePayback:
         // max to payback
         maxToBorrow = loan.debits;
-        maxToBorrowView = Fmt.priceCeilBigInt(maxToBorrow, decimals);
+        maxToBorrowView = Fmt.priceCeilBigInt(maxToBorrow, stableCoinDecimals);
         showCollateral = false;
         titleSuffix = ' aUSD';
         break;
@@ -412,8 +418,8 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
     }
 
     int maxCollateralDecimal =
-        loan.debits > BigInt.zero ? 6 : acala_token_decimals;
-    String availableView = Fmt.priceFloorBigInt(available, decimals,
+        loan.debits > BigInt.zero ? 6 : acala_price_decimals;
+    String availableView = Fmt.priceFloorBigInt(available, collateralDecimals,
         lengthMax: maxCollateralDecimal);
 
     String pageTitle = '${dic['loan.${params.actionType}']}$titleSuffix';
@@ -447,7 +453,6 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
                           requiredRatio: loan.type.requiredCollateralRatio,
                           currentRatio: _currentRatio,
                           liquidationPrice: _liquidationPrice,
-                          decimals: decimals,
                         ),
                       ),
                       showCollateral
@@ -458,7 +463,7 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
                                   hintText: assetDic['amount'],
                                   labelText:
                                       '${assetDic['amount']} (${assetDic['amount.available']}: $availableView $symbol)',
-                                  suffix: GestureDetector(
+                                  suffix: params.actionType == LoanAdjustPage.actionTypeDeposit ? GestureDetector(
                                     child: Text(
                                       dic['loan.max'],
                                       style: TextStyle(
@@ -474,15 +479,14 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
                                         availableView,
                                         loan.type,
                                         price,
-                                        stableCoinPrice,
-                                        decimals,
+                                        collateralDecimals,
                                         max: available,
                                       );
                                     },
-                                  ),
+                                  ):null,
                                 ),
                                 inputFormatters: [
-                                  UI.decimalInputFormatter(decimals)
+                                  UI.decimalInputFormatter(collateralDecimals)
                                 ],
                                 controller: _amountCtrl,
                                 keyboardType: TextInputType.numberWithOptions(
@@ -493,8 +497,7 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
                                   v,
                                   loan.type,
                                   price,
-                                  stableCoinPrice,
-                                  decimals,
+                                  collateralDecimals,
                                 ),
                               ),
                             )
@@ -507,7 +510,7 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
                                   hintText: assetDic['amount'],
                                   labelText:
                                       '${assetDic['amount']}(${dic['loan.max']}: $maxToBorrowView)',
-                                  suffix: GestureDetector(
+                                  suffix: params.actionType == LoanAdjustPage.actionTypePayback ? GestureDetector(
                                     child: Text(
                                       dic['loan.max'],
                                       style: TextStyle(
@@ -525,15 +528,15 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
                                         maxToBorrowView,
                                         loan.type,
                                         stableCoinPrice,
-                                        decimals,
+                                        stableCoinDecimals,
                                         showCheckbox,
                                         debits: maxToBorrow,
                                       );
                                     },
-                                  ),
+                                  ):null,
                                 ),
                                 inputFormatters: [
-                                  UI.decimalInputFormatter(decimals)
+                                  UI.decimalInputFormatter(stableCoinDecimals)
                                 ],
                                 controller: _amountCtrl2,
                                 keyboardType: TextInputType.numberWithOptions(
@@ -544,9 +547,13 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
                                     maxToBorrowView,
                                     balanceAUSD,
                                     loan,
-                                    decimals),
-                                onChanged: (v) => _onAmount2Change(v, loan.type,
-                                    stableCoinPrice, decimals, showCheckbox),
+                                    stableCoinDecimals),
+                                onChanged: (v) => _onAmount2Change(
+                                    v,
+                                    loan.type,
+                                    stableCoinPrice,
+                                    stableCoinDecimals,
+                                    showCheckbox),
                               ),
                             )
                           : Container(),

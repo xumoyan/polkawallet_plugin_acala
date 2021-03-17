@@ -57,7 +57,7 @@ abstract class _HomaStore with Store {
     final list = cached[pubKey] as List;
     if (list != null) {
       txs = ObservableList<TxHomaData>.of(list.map((e) => TxHomaData.fromJson(
-          Map<String, dynamic>.from(e), acala_token_decimals)));
+          Map<String, dynamic>.from(e), acala_price_decimals)));
     } else {
       txs = ObservableList<TxHomaData>();
     }

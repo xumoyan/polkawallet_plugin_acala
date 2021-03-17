@@ -41,60 +41,60 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
 
   bool _autoValidate = false;
 
-  void _updateState(LoanType loanType, BigInt collateral, BigInt debit) {
-    final decimals = widget.plugin.networkState.tokenDecimals[0];
+  void _updateState(LoanType loanType, BigInt collateral, BigInt debit,
+      {int stableCoinDecimals, int collateralDecimals}) {
     final LoanAdjustPageParams params =
         ModalRoute.of(context).settings.arguments;
     final tokenPrice = widget.plugin.store.assets.prices[params.token];
-    final stableCoinPrice = Fmt.tokenInt('1', decimals);
-    final collateralInUSD =
-        loanType.tokenToUSD(collateral, tokenPrice, decimals);
-    final debitInUSD = loanType.tokenToUSD(debit, stableCoinPrice, decimals);
+    final collateralInUSD = loanType.tokenToUSD(collateral, tokenPrice,
+        stableCoinDecimals: stableCoinDecimals,
+        collateralDecimals: collateralDecimals);
+    final debitInUSD = debit;
     setState(() {
-      _liquidationPrice = loanType.calcLiquidationPrice(
-        debitInUSD,
-        collateral,
-      );
+      _liquidationPrice = loanType.calcLiquidationPrice(debitInUSD, collateral,
+          stableCoinDecimals: stableCoinDecimals,
+          collateralDecimals: collateralDecimals);
       _currentRatio = loanType.calcCollateralRatio(debitInUSD, collateralInUSD);
     });
   }
 
-  void _onAmount1Change(
-    String value,
-    LoanType loanType,
-    BigInt price,
-    stableCoinPrice,
-    int decimals,
-  ) {
+  void _onAmount1Change(String value, LoanType loanType, BigInt price,
+      {int stableCoinDecimals, int collateralDecimals}) {
     String v = value.trim();
     if (v.isEmpty) return;
 
-    BigInt collateral = Fmt.tokenInt(v, decimals);
+    BigInt collateral = Fmt.tokenInt(v, collateralDecimals);
     setState(() {
       _amountCollateral = collateral;
-      _maxToBorrow = loanType.calcMaxToBorrow(
-          collateral, price, stableCoinPrice, decimals);
+      _maxToBorrow = loanType.calcMaxToBorrow(collateral, price,
+          stableCoinDecimals: stableCoinDecimals,
+          collateralDecimals: collateralDecimals);
     });
 
     if (_amountDebit > BigInt.zero) {
-      _updateState(loanType, collateral, _amountDebit);
+      _updateState(loanType, collateral, _amountDebit,
+          stableCoinDecimals: stableCoinDecimals,
+          collateralDecimals: collateralDecimals);
     }
 
     _checkAutoValidate();
   }
 
-  void _onAmount2Change(String value, LoanType loanType, int decimals) {
+  void _onAmount2Change(String value, LoanType loanType, int stableCoinDecimals,
+      int collateralDecimals) {
     String v = value.trim();
     if (v.isEmpty) return;
 
-    BigInt debits = Fmt.tokenInt(v, decimals);
+    BigInt debits = Fmt.tokenInt(v, stableCoinDecimals);
 
     setState(() {
       _amountDebit = debits;
     });
 
     if (_amountCollateral > BigInt.zero) {
-      _updateState(loanType, _amountCollateral, debits);
+      _updateState(loanType, _amountCollateral, debits,
+          stableCoinDecimals: stableCoinDecimals,
+          collateralDecimals: collateralDecimals);
     }
 
     _checkAutoValidate();
@@ -115,7 +115,8 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
     }
   }
 
-  String _validateAmount1(String value, BigInt available, int decimals) {
+  String _validateAmount1(
+      String value, BigInt available, int collateralDecimals) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
 
     String v = value.trim();
@@ -126,14 +127,14 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
     } catch (err) {
       return dic['amount.error'];
     }
-    BigInt collateral = Fmt.tokenInt(v, decimals);
+    BigInt collateral = Fmt.tokenInt(v, collateralDecimals);
     if (collateral > available) {
       return dic['amount.low'];
     }
     return null;
   }
 
-  String _validateAmount2(String value, max, int decimals) {
+  String _validateAmount2(String value, max, int stableCoinDecimals) {
     final assetDic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
 
@@ -145,33 +146,36 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
     } catch (err) {
       return assetDic['amount.error'];
     }
-    BigInt debits = Fmt.tokenInt(v, decimals);
+    BigInt debits = Fmt.tokenInt(v, stableCoinDecimals);
     if (debits >= _maxToBorrow) {
       return '${dic['loan.max']} $max';
     }
     return null;
   }
 
-  Map _getTxParams(LoanType loanType, int decimals) {
+  Map _getTxParams(LoanType loanType,
+      {int stableCoinDecimals, int collateralDecimals}) {
     final LoanAdjustPageParams params =
         ModalRoute.of(context).settings.arguments;
-    BigInt debitShare = loanType.debitToDebitShare(_amountDebit, decimals);
+    BigInt debitShare = loanType.debitToDebitShare(_amountDebit);
     return {
       'detail': {
-        "colleterals": Fmt.token(_amountCollateral, decimals),
-        "debits": Fmt.token(_amountDebit, decimals),
+        "colleterals": Fmt.token(_amountCollateral, collateralDecimals),
+        "debits": Fmt.token(_amountDebit, stableCoinDecimals),
       },
       'params': [
-        {'Token': params.token},
+        {'token': params.token},
         _amountCollateral.toString(),
         debitShare.toString(),
       ]
     };
   }
 
-  Future<void> _onSubmit(
-      String pageTitle, LoanType loanType, int decimals) async {
-    final params = _getTxParams(loanType, decimals);
+  Future<void> _onSubmit(String pageTitle, LoanType loanType,
+      {int stableCoinDecimals, int collateralDecimals}) async {
+    final params = _getTxParams(loanType,
+        stableCoinDecimals: stableCoinDecimals,
+        collateralDecimals: collateralDecimals);
     final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
         arguments: TxConfirmParams(
           module: 'honzon',
@@ -201,15 +205,18 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
     return Observer(builder: (_) {
       final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
       final assetDic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
-      final decimals = widget.plugin.networkState.tokenDecimals[0];
+      final symbols = widget.plugin.networkState.tokenSymbol;
+      final decimals = widget.plugin.networkState.tokenDecimals;
+      final stableCoinDecimals = decimals[symbols.indexOf('AUSD')];
+
       final LoanAdjustPageParams params =
           ModalRoute.of(context).settings.arguments;
-      String symbol = params.token;
+      final symbol = params.token;
+      final collateralDecimals = decimals[symbols.indexOf(symbol)];
 
-      String pageTitle = '${dic['loan.create']} $symbol';
+      final pageTitle = '${dic['loan.create']} $symbol';
 
       final price = widget.plugin.store.assets.prices[symbol];
-      final stableCoinPrice = Fmt.tokenInt('1', decimals);
 
       final loanType = widget.plugin.store.loan.loanTypes
           .firstWhere((i) => i.token == symbol);
@@ -218,8 +225,9 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
       final available = balance;
 
       final balanceView =
-          Fmt.priceFloorBigInt(available, decimals, lengthMax: 4);
-      final maxToBorrow = Fmt.priceFloorBigInt(_maxToBorrow, decimals);
+          Fmt.priceFloorBigInt(available, collateralDecimals, lengthMax: 4);
+      final maxToBorrow =
+          Fmt.priceFloorBigInt(_maxToBorrow, stableCoinDecimals);
 
       return Scaffold(
         appBar: AppBar(
@@ -245,7 +253,6 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
                           requiredRatio: loanType.requiredCollateralRatio,
                           currentRatio: _currentRatio,
                           liquidationPrice: _liquidationPrice,
-                          decimals: decimals,
                         ),
                         Padding(
                           padding: EdgeInsets.only(top: 16),
@@ -257,14 +264,17 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
                             labelText:
                                 '${assetDic['amount']} (${assetDic['amount.available']}: $balanceView $symbol)',
                           ),
-                          inputFormatters: [UI.decimalInputFormatter(decimals)],
+                          inputFormatters: [
+                            UI.decimalInputFormatter(collateralDecimals)
+                          ],
                           controller: _amountCtrl,
                           keyboardType:
                               TextInputType.numberWithOptions(decimal: true),
-                          validator: (v) =>
-                              _validateAmount1(v, available, decimals),
-                          onChanged: (v) => _onAmount1Change(
-                              v, loanType, price, stableCoinPrice, decimals),
+                          validator: (v) => _validateAmount1(
+                              v, available, collateralDecimals),
+                          onChanged: (v) => _onAmount1Change(v, loanType, price,
+                              stableCoinDecimals: stableCoinDecimals,
+                              collateralDecimals: collateralDecimals),
                         ),
                         Padding(
                           padding: EdgeInsets.only(top: 16),
@@ -276,14 +286,16 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
                             labelText:
                                 '${assetDic['amount']}(${dic['loan.max']}: $maxToBorrow)',
                           ),
-                          inputFormatters: [UI.decimalInputFormatter(decimals)],
+                          inputFormatters: [
+                            UI.decimalInputFormatter(stableCoinDecimals)
+                          ],
                           controller: _amountCtrl2,
                           keyboardType:
                               TextInputType.numberWithOptions(decimal: true),
-                          validator: (v) =>
-                              _validateAmount2(v, maxToBorrow, decimals),
-                          onChanged: (v) =>
-                              _onAmount2Change(v, loanType, decimals),
+                          validator: (v) => _validateAmount2(
+                              v, maxToBorrow, stableCoinDecimals),
+                          onChanged: (v) => _onAmount2Change(v, loanType,
+                              stableCoinDecimals, collateralDecimals),
                         ),
                       ],
                     ),
@@ -296,7 +308,9 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
                         .getDic(i18n_full_dic_ui, 'common')['tx.submit'],
                     onPressed: () {
                       if (_formKey.currentState.validate()) {
-                        _onSubmit(pageTitle, loanType, decimals);
+                        _onSubmit(pageTitle, loanType,
+                            stableCoinDecimals: stableCoinDecimals,
+                            collateralDecimals: collateralDecimals);
                       }
                     },
                   ),

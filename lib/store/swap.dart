@@ -40,7 +40,7 @@ abstract class _SwapStore with Store {
     final list = cached[pubKey] as List;
     if (list != null) {
       txs = ObservableList<TxSwapData>.of(list.map((e) => TxSwapData.fromJson(
-          Map<String, dynamic>.from(e), acala_token_decimals)));
+          Map<String, dynamic>.from(e), acala_price_decimals)));
     } else {
       txs = ObservableList<TxSwapData>();
     }

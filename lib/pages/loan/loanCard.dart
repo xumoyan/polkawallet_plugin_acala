@@ -9,18 +9,21 @@ import 'package:polkawallet_ui/utils/format.dart';
 
 // TODO: account balance display with address
 class LoanCard extends StatelessWidget {
-  LoanCard(this.loan, this.balance, this.decimals);
+  LoanCard(this.loan, this.balance, this.stableCoinDecimals,
+      this.collateralDecimals);
   final LoanData loan;
   final String balance;
-  final int decimals;
+  final int stableCoinDecimals;
+  final int collateralDecimals;
   @override
   Widget build(BuildContext context) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
 
-    String collateral = Fmt.token(loan.collaterals, decimals);
-    String collateralRequired = Fmt.token(loan.requiredCollateral, decimals);
+    String collateral = Fmt.token(loan.collaterals, collateralDecimals);
+    String collateralRequired =
+        Fmt.token(loan.requiredCollateral, collateralDecimals);
     double dailyInterest =
-        Fmt.bigIntToDouble(loan.debits, decimals) * loan.stableFeeDay;
+        Fmt.bigIntToDouble(loan.debits, stableCoinDecimals) * loan.stableFeeDay;
     String ratio = Fmt.ratio(loan.stableFeeYear);
 
     Color primaryColor = Theme.of(context).primaryColor;
@@ -35,7 +38,7 @@ class LoanCard extends StatelessWidget {
               Padding(
                 padding: EdgeInsets.only(top: 8, bottom: 0),
                 child: Text(
-                  Fmt.priceCeilBigInt(loan.debits, decimals),
+                  Fmt.priceCeilBigInt(loan.debits, stableCoinDecimals),
                   style: TextStyle(
                     fontSize: 36,
                     color: Theme.of(context).primaryColor,

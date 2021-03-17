@@ -68,7 +68,7 @@ class AcalaApiAssets {
     if (ls['tokens'] != null) {
       List.of(ls['tokens']).asMap().forEach((i, v) {
         res.add(TokenBalanceData(
-            name: v,
+            name: 'pre$v',
             symbol: v,
             decimals: decimalsAll[symbolAll.indexOf(v)],
             amount: ls['amount'][i].toString()));

@@ -101,7 +101,7 @@ class AcalaServiceAssets {
     if (res != null) {
       final prices = Map<String, BigInt>();
       res.forEach((e) {
-        prices[e[0]['Token']] = Fmt.balanceInt(e[1]['value'].toString());
+        prices[e[0]['token']] = Fmt.balanceInt(e[1]['value'].toString());
       });
       callback(prices);
     }

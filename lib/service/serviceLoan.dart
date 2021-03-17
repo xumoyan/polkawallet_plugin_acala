@@ -32,12 +32,13 @@ class ServiceLoan {
   ) {
     final data = Map<String, LoanData>();
     loans.forEach((i) {
-      String token = i['currency']['Token'];
+      String token = i['currency']['token'];
       data[token] = LoanData.fromJson(
         Map<String, dynamic>.from(i),
         loanTypes.firstWhere((t) => t.token == token),
         prices[token] ?? BigInt.zero,
-        plugin.networkState.tokenDecimals[0],
+        plugin.networkState.tokenSymbol,
+        plugin.networkState.tokenDecimals,
       );
     });
     return data;
