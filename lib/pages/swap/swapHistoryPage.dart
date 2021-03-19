@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:polkawallet_plugin_acala/api/types/txSwapData.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
@@ -41,26 +42,17 @@ class SwapHistoryPage extends StatelessWidget {
               ),
               child: ListTile(
                 title: Text(
-                    '${dic['dex.tx.pay']} ${detail.amountPay} ${PluginFmt.tokenView(detail.tokenPay)}'),
+                  '${dic['dex.tx.pay']} ${detail.amountPay} ${PluginFmt.tokenView(detail.tokenPay['Token'])}'
+                ),
                 subtitle: Text(Fmt.dateTime(list[i].time)),
+                leading: SvgPicture.asset('assets/images/assets_down.svg',
+                    width: 32),
                 trailing: Container(
                   width: 140,
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Padding(
-                          padding: EdgeInsets.only(right: 12),
-                          child: Text(
-                            '${detail.amountReceive} ${PluginFmt.tokenView(detail.tokenReceive)}',
-                            style: Theme.of(context).textTheme.headline4,
-                            textAlign: TextAlign.end,
-                          ),
-                        ),
-                      ),
-                      Image.asset(
-                          'packages/polkawallet_plugin_acala/assets/images/assets_down.png',
-                          width: 16)
-                    ],
+                  child: Text(
+                    '${detail.amountReceive} ${PluginFmt.tokenView(detail.tokenReceive['Token'])}',
+                    style: Theme.of(context).textTheme.headline4,
+                    textAlign: TextAlign.end,
                   ),
                 ),
               ),

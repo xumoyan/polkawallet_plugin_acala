@@ -2,7 +2,7 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'swapOutputData.g.dart';
 
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class SwapOutputData extends _SwapOutputData {
   static SwapOutputData fromJson(Map json) => _$SwapOutputDataFromJson(json);
 }
@@ -23,16 +23,3 @@ abstract class _LPTokenData {
   List<String> currencyId;
   String free;
 }
-
-// @JsonSerializable()
-// class AcalaTokenData extends _AcalaTokenData {
-//   static AcalaTokenData fromJson(Map json) => _$AcalaTokenDataFromJson(json);
-// }
-//
-// abstract class _AcalaTokenData {
-//   String chain;
-//   String name;
-//   String symbol;
-//   int precision;
-//   String amount;
-// }

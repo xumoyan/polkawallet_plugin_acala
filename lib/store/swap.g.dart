@@ -27,11 +27,11 @@ mixin _$SwapStore on _SwapStore, Store {
   final _$_SwapStoreActionController = ActionController(name: '_SwapStore');
 
   @override
-  void addSwapTx(Map<dynamic, dynamic> tx, String pubKey, int decimals) {
+  void addSwapTx(Map<dynamic, dynamic> tx, String pubKey) {
     final _$actionInfo =
         _$_SwapStoreActionController.startAction(name: '_SwapStore.addSwapTx');
     try {
-      return super.addSwapTx(tx, pubKey, decimals);
+      return super.addSwapTx(tx, pubKey);
     } finally {
       _$_SwapStoreActionController.endAction(_$actionInfo);
     }

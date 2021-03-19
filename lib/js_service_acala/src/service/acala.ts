@@ -1,48 +1,36 @@
 import { StakingPool } from "@acala-network/sdk-homa";
-import { FixedPointNumber, TokenPair, currencyId2Token, DexShare } from "@acala-network/sdk-core";
-import { SwapTrade } from "@acala-network/sdk-swap";
+import { FixedPointNumber, TokenPair, TokenBalance, Token, DexShare } from "@acala-network/sdk-core";
+import { SwapPromise } from "@acala-network/sdk-swap";
 import { ApiPromise } from "@polkadot/api";
 import { tokensForAcala, tokensForKarura } from "../constants/acala";
 
+let swapper: SwapPromise;
 /**
  * calc token swap amount
  */
-async function calcTokenSwapAmount(api: ApiPromise, input: number, output: number, swapPair: PresetToken[], slippage: number) {
-  const i = getPresetToken(swapPair[0]).clone({
-    amount: new FixedPointNumber(input || 0),
-  });
-  const o = getPresetToken(swapPair[1]).clone({
-    amount: new FixedPointNumber(output || 0),
-  });
-  const mode = output === null ? "EXACT_INPUT" : "EXACT_OUTPUT";
-  const availableTokenPairs = await getTokenPairs(api);
-  const fee = {
-    numerator: new FixedPointNumber(api.consts.dex.getExchangeFee[0].toString()),
-    denominator: new FixedPointNumber(api.consts.dex.getExchangeFee[1].toString()),
-  };
-  const swapTrader = new SwapTrade({
-    input: i,
-    output: o,
-    mode,
-    availableTokenPairs: availableTokenPairs.map((item) => {
-      return new TokenPair(currencyId2Token(item[0]), currencyId2Token(item[1]));
-    }),
-    maxTradePathLength: 3,
-    fee,
-    acceptSlippage: new FixedPointNumber(slippage),
-  });
+async function calcTokenSwapAmount(api: ApiPromise, input: number, output: number, swapPair: string[], slippage: number) {
+  if (!swapper) {
+    swapper = new SwapPromise(api);
+  }
 
-  const paths = swapTrader.getTradeTokenPairsByPaths();
-  const res = await api.queryMulti(paths.map((e) => [api.query.dex.liquidityPool, e.toChainData()]));
-  const pools = SwapTrade.convertLiquidityPoolsToTokenPairs(paths, res as any);
-  const data = swapTrader.getTradeParameters(pools);
-  const params = data.toChainData(mode);
-  return {
-    amount: output === null ? data.output.amount.toNumber(6) : data.input.amount.toNumber(6),
-    path: params[0],
-    input: params[1],
-    output: params[2],
-  };
+  const inputToken = Token.fromCurrencyId(api.createType("CurrencyId" as any, { token: swapPair[0] }));
+  const outputToken = Token.fromCurrencyId(api.createType("CurrencyId" as any, { token: swapPair[1] }));
+  const i = new TokenBalance(inputToken, new FixedPointNumber(input || 0, inputToken.decimal));
+  const o = new TokenBalance(outputToken, new FixedPointNumber(output || 0, outputToken.decimal));
+
+  const mode = output === null ? "EXACT_INPUT" : "EXACT_OUTPUT";
+
+  return new Promise((resolve, reject) => {
+    swapper.swap(i, o, mode, (res: any) => {
+      console.log(res);
+      resolve({
+        amount: output === null ? res.output.balance.toNumber(6) : res.input.balance.toNumber(6),
+        path: res.path,
+        input: res.input.token.toString(),
+        output: res.output.token.toString(),
+      });
+    });
+  });
 }
 
 async function queryLPTokens(api: ApiPromise, address: string) {

@@ -54,8 +54,12 @@ class _SwapPageState extends State<SwapPage> {
   Timer _delayTimer;
 
   Future<void> _switchPair() async {
+    final pay = _amountPayCtrl.text;
     setState(() {
       _swapPair = [_swapPair[1], _swapPair[0]];
+      _amountPayCtrl.text = _amountReceiveCtrl.text;
+      _amountReceiveCtrl.text = pay;
+      _swapMode = _swapMode == 0 ? 1: 0;
     });
     await _updateSwapAmount();
   }
@@ -220,18 +224,28 @@ class _SwapPageState extends State<SwapPage> {
     setState(() {
       _slippage = input;
     });
-    await _calcSwapAmount(_amountPayCtrl.text.trim(), null);
+    if (_swapMode == 0) {
+      await _calcSwapAmount(_amountPayCtrl.text.trim(), null);
+    } else {
+      await _calcSwapAmount(null, _amountReceiveCtrl.text.trim());
+    }
   }
 
-  Future<void> _onSubmit() async {
+  Future<void> _onSubmit(List<int> pairDecimals, double minMax) async {
     if (_formKey.currentState.validate()) {
       final pay = _amountPayCtrl.text.trim();
       final receive = _amountReceiveCtrl.text.trim();
       final params = [
-        _swapOutput.path,
-        _swapOutput.input,
-        _swapOutput.output,
+        _swapOutput.path
+            .map((e) => ({'Token': e['symbol'], 'decimal': e['decimal']}))
+            .toList(),
+        Fmt.tokenInt(_swapMode == 0 ? pay : receive,
+                pairDecimals[_swapMode == 0 ? 0 : 1])
+            .toString(),
+        Fmt.tokenInt(minMax.toString(), pairDecimals[_swapMode == 0 ? 1 : 0])
+            .toString(),
       ];
+      print(params);
       final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
           arguments: TxConfirmParams(
             module: 'dex',
@@ -252,11 +266,7 @@ class _SwapPageState extends State<SwapPage> {
         res['time'] = DateTime.now().millisecondsSinceEpoch;
         res['mode'] = _swapMode;
 
-        widget.plugin.store.swap.addSwapTx(
-          res,
-          widget.keyring.current.pubKey,
-          widget.plugin.networkState.tokenDecimals[0],
-        );
+        widget.plugin.store.swap.addSwapTx(res, widget.keyring.current.pubKey);
       }
     }
   }
@@ -296,7 +306,15 @@ class _SwapPageState extends State<SwapPage> {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
         final dicAssets =
             I18n.of(context).getDic(i18n_full_dic_acala, 'common');
-        final decimals = widget.plugin.networkState.tokenDecimals[0];
+        final symbols = widget.plugin.networkState.tokenSymbol;
+        final decimals = widget.plugin.networkState.tokenDecimals;
+        final pairDecimals = [8, 8];
+        if (_swapPair.length > 0) {
+          pairDecimals
+              .replaceRange(0, 1, [decimals[symbols.indexOf(_swapPair[0])]]);
+          pairDecimals
+              .replaceRange(1, 2, [decimals[symbols.indexOf(_swapPair[1])]]);
+        }
 
         BigInt balance = BigInt.zero;
         if (_swapPair.length > 0 && _swapPair[0] == 'ACA') {
@@ -306,6 +324,13 @@ class _SwapPageState extends State<SwapPage> {
           balance = Fmt.balanceInt(widget.plugin.store.assets
                   .tokenBalanceMap[_swapPair[0].toUpperCase()]?.amount ??
               '0');
+        }
+
+        double minMax = 0;
+        if (_swapOutput.output != null) {
+          minMax = _swapMode == 0
+              ? _swapOutput.amount * (1 - _slippage)
+              : _swapOutput.amount * (1 + _slippage);
         }
 
         final primary = Theme.of(context).primaryColor;
@@ -368,7 +393,8 @@ class _SwapPageState extends State<SwapPage> {
                                             ),
                                           ),
                                           inputFormatters: [
-                                            UI.decimalInputFormatter(decimals)
+                                            UI.decimalInputFormatter(
+                                                pairDecimals[0])
                                           ],
                                           controller: _amountPayCtrl,
                                           keyboardType:
@@ -386,7 +412,7 @@ class _SwapPageState extends State<SwapPage> {
                                             }
                                             if (double.parse(v.trim()) >
                                                 Fmt.bigIntToDouble(
-                                                    balance, decimals)) {
+                                                    balance, pairDecimals[0])) {
                                               return dicAssets['amount.low'];
                                             }
                                             return null;
@@ -396,7 +422,7 @@ class _SwapPageState extends State<SwapPage> {
                                         Padding(
                                           padding: EdgeInsets.only(top: 8),
                                           child: Text(
-                                            '${dicAssets['balance']}: ${Fmt.token(balance, decimals)} ${PluginFmt.tokenView(_swapPair[0])}',
+                                            '${dicAssets['balance']}: ${Fmt.token(balance, pairDecimals[0])} ${PluginFmt.tokenView(_swapPair[0])}',
                                             style: TextStyle(
                                                 color: Theme.of(context)
                                                     .unselectedWidgetColor),
@@ -454,7 +480,8 @@ class _SwapPageState extends State<SwapPage> {
                                             ),
                                           ),
                                           inputFormatters: [
-                                            UI.decimalInputFormatter(decimals)
+                                            UI.decimalInputFormatter(
+                                                pairDecimals[1])
                                           ],
                                           controller: _amountReceiveCtrl,
                                           keyboardType:
@@ -532,9 +559,9 @@ class _SwapPageState extends State<SwapPage> {
                                       Row(
                                         children: _swapOutput.path.map((e) {
                                           return CurrencyWithIcon(
-                                            e['Token'].toUpperCase(),
+                                            e['symbol'],
                                             TokenIcon(
-                                              e['Token'],
+                                              e['symbol'],
                                               widget.plugin.tokenIcons,
                                               small: true,
                                             ),
@@ -602,8 +629,10 @@ class _SwapPageState extends State<SwapPage> {
                                   padding: EdgeInsets.fromLTRB(12, 4, 12, 4),
                                   placeholder: dic['custom'],
                                   inputFormatters: [
-                                    UI.decimalInputFormatter(decimals)
+                                    UI.decimalInputFormatter(6)
                                   ],
+                                  keyboardType: TextInputType.numberWithOptions(
+                                      decimal: true),
                                   decoration: BoxDecoration(
                                     borderRadius:
                                         BorderRadius.all(Radius.circular(24)),
@@ -639,6 +668,21 @@ class _SwapPageState extends State<SwapPage> {
                           )
                         ],
                       ),
+                      _amountPayCtrl.text.isNotEmpty
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Divider(),
+                                Text(
+                                    dic[_swapMode == 0 ? 'dex.min' : 'dex.max'],
+                                    style: TextStyle(
+                                        color: Theme.of(context)
+                                            .unselectedWidgetColor)),
+                                Text(
+                                    '${minMax.toStringAsFixed(6)} ${_swapMode == 0 ? _swapOutput.output : _swapOutput.input}'),
+                              ],
+                            )
+                          : Container(),
                     ],
                   ),
                 ),
@@ -646,7 +690,9 @@ class _SwapPageState extends State<SwapPage> {
                   padding: EdgeInsets.only(top: 24),
                   child: RoundedButton(
                     text: dic['dex.title'],
-                    onPressed: _swapRatio == 0 ? null : _onSubmit,
+                    onPressed: _swapRatio == 0
+                        ? null
+                        : () => _onSubmit(pairDecimals, minMax),
                   ),
                 )
               ],

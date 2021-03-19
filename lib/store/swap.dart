@@ -18,8 +18,8 @@ abstract class _SwapStore with Store {
   ObservableList<TxSwapData> txs = ObservableList<TxSwapData>();
 
   @action
-  void addSwapTx(Map tx, String pubKey, int decimals) {
-    txs.add(TxSwapData.fromJson(Map<String, dynamic>.from(tx), decimals));
+  void addSwapTx(Map tx, String pubKey) {
+    txs.add(TxSwapData.fromJson(Map<String, dynamic>.from(tx)));
 
     final cached = cache.swapTxs.val;
     List list = cached[pubKey];
@@ -39,8 +39,8 @@ abstract class _SwapStore with Store {
     final cached = cache.swapTxs.val;
     final list = cached[pubKey] as List;
     if (list != null) {
-      txs = ObservableList<TxSwapData>.of(list.map((e) => TxSwapData.fromJson(
-          Map<String, dynamic>.from(e), acala_price_decimals)));
+      txs = ObservableList<TxSwapData>.of(
+          list.map((e) => TxSwapData.fromJson(Map<String, dynamic>.from(e))));
     } else {
       txs = ObservableList<TxSwapData>();
     }

@@ -13,6 +13,8 @@ const Map<String, String> zhDex = {
   'dex.slippage.error': '允许的滑点范围：0.1%～5%',
   'dex.tx.pay': '支付',
   'dex.tx.receive': '收到',
+  'dex.min': '最少收到',
+  'dex.max': '最多卖出',
   'loan.title': '自助借贷',
   'loan.brief': '将您的数字资产（如：DOT、XBTC）锁定在 Acala 平台作为质押，可以借出相应数量的 aUSD。',
   'loan.borrowed': '债务',
