@@ -14,6 +14,8 @@ const Map<String, String> enDex = {
   'dex.slippage.error': 'Valid Slippage: 0.1%~5%',
   'dex.tx.pay': 'Pay with',
   'dex.tx.receive': 'Receive',
+  'dex.min': 'Minimum received',
+  'dex.max': 'Maximum sold',
   'loan.title': 'Self Serviced Loan',
   'loan.brief':
       'Lock your digital assets(i.e. DOT, XBTC) in Acala platform to borrow equivalent aUSD.',
