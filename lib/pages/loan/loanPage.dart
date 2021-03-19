@@ -10,6 +10,7 @@ import 'package:polkawallet_plugin_acala/pages/loan/loanCreatePage.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanHistoryPage.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
+import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
 import 'package:polkawallet_ui/components/roundedCard.dart';
@@ -117,7 +118,8 @@ class _LoanPageState extends State<LoanPage> {
                                     loan,
                                     Fmt.priceFloorBigInt(
                                         aUSDBalance, stableCoinDecimals),
-                                    stableCoinDecimals, collateralDecimals)
+                                    stableCoinDecimals,
+                                    collateralDecimals)
                                 : RoundedCard(
                                     margin: EdgeInsets.all(16),
                                     padding:
@@ -231,7 +233,7 @@ class CurrencySelector extends StatelessWidget {
       child: ListTile(
         leading: TokenIcon(token, tokenIcons),
         title: Text(
-          token,
+          PluginFmt.tokenView(token),
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,

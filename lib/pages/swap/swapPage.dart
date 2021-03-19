@@ -245,7 +245,6 @@ class _SwapPageState extends State<SwapPage> {
         Fmt.tokenInt(minMax.toString(), pairDecimals[_swapMode == 0 ? 1 : 0])
             .toString(),
       ];
-      print(params);
       final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
           arguments: TxConfirmParams(
             module: 'dex',

@@ -23,7 +23,7 @@ abstract class _EarnStore with Store {
   Map<String, double> swapPoolSavingRewards = Map<String, double>();
 
   @observable
-  List<List> dexPools = List<List>();
+  List<DexPoolData> dexPools = [];
 
   @observable
   ObservableMap<String, DexPoolInfoData> dexPoolInfoMap =
@@ -33,7 +33,7 @@ abstract class _EarnStore with Store {
   ObservableList<TxDexLiquidityData> txs = ObservableList<TxDexLiquidityData>();
 
   @action
-  void setDexPools(List<List> list) {
+  void setDexPools(List<DexPoolData> list) {
     dexPools = list;
   }
 
@@ -49,9 +49,8 @@ abstract class _EarnStore with Store {
   }
 
   @action
-  void addDexLiquidityTx(Map tx, String pubKey, int decimals) {
-    txs.add(
-        TxDexLiquidityData.fromJson(Map<String, dynamic>.from(tx), decimals));
+  void addDexLiquidityTx(Map tx, String pubKey) {
+    txs.add(TxDexLiquidityData.fromJson(Map<String, dynamic>.from(tx)));
 
     final cached = cache.dexLiquidityTxs.val;
     List list = cached[pubKey];
@@ -73,7 +72,7 @@ abstract class _EarnStore with Store {
     if (list != null) {
       txs = ObservableList<TxDexLiquidityData>.of(list.map((e) =>
           TxDexLiquidityData.fromJson(
-              Map<String, dynamic>.from(e), acala_price_decimals)));
+              Map<String, dynamic>.from(e))));
     } else {
       txs = ObservableList<TxDexLiquidityData>();
     }

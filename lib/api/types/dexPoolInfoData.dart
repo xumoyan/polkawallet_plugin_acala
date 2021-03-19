@@ -1,4 +1,8 @@
+import 'package:json_annotation/json_annotation.dart';
+
 import 'package:polkawallet_ui/utils/format.dart';
+
+part 'dexPoolInfoData.g.dart';
 
 class DexPoolInfoData extends _DexPoolInfoData {
   static DexPoolInfoData fromJson(Map<String, dynamic> json) {
@@ -33,4 +37,15 @@ class LPRewardData {
   LPRewardData(this.incentive, this.saving);
   double incentive;
   double saving;
+}
+
+@JsonSerializable()
+class DexPoolData extends _DexPoolData {
+  static DexPoolData fromJson(Map<String, dynamic> json) => _$DexPoolDataFromJson(json);
+  Map<String, dynamic> toJson() => _$DexPoolDataToJson(this);
+}
+
+abstract class _DexPoolData {
+  int decimals;
+  List tokens;
 }

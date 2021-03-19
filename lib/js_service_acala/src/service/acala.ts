@@ -92,6 +92,8 @@ async function fetchDexPoolInfo(api: ApiPromise, pool: any, address: string) {
   if (res[1] && res[3]) {
     proportion = FPNum(res[3][0]).div(FPNum(res[1].totalShares));
   }
+  const decimalsACA = 13;
+  const decimalsAUSD = 12;
   return {
     token: pool.DEXShare.join("-"),
     pool: res[0],
@@ -99,21 +101,21 @@ async function fetchDexPoolInfo(api: ApiPromise, pool: any, address: string) {
     shares: res[3][0],
     proportion: proportion.toNumber() || 0,
     reward: {
-      incentive: FPNum(res[1].totalRewards)
+      incentive: FPNum(res[1].totalRewards, decimalsACA)
         .times(proportion)
-        .minus(FPNum(res[3][1]))
+        .minus(FPNum(res[3][1], decimalsACA))
         .toString(),
-      saving: FPNum(res[2].totalRewards)
+      saving: FPNum(res[2].totalRewards, decimalsAUSD)
         .times(proportion)
-        .minus(FPNum(res[4][1]))
+        .minus(FPNum(res[4][1], decimalsAUSD))
         .toString(),
     },
     issuance: res[5],
   };
 }
 
-function FPNum(input: any) {
-  return FixedPointNumber.fromInner(input.toString());
+function FPNum(input: any, decimals?: number) {
+  return FixedPointNumber.fromInner(input.toString(), decimals);
 }
 
 async function _calacFreeList(api: ApiPromise, start: number, duration: number) {

@@ -98,7 +98,7 @@ class _LPStakePage extends State<LPStakePage> {
       res['time'] = DateTime.now().millisecondsSinceEpoch;
 
       widget.plugin.store.earn
-          .addDexLiquidityTx(res, widget.keyring.current.pubKey, decimals);
+          .addDexLiquidityTx(res, widget.keyring.current.pubKey);
       Navigator.of(context).pop(res);
     }
   }
@@ -107,8 +107,18 @@ class _LPStakePage extends State<LPStakePage> {
   Widget build(BuildContext context) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
     final assetDic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
+    final symbols = widget.plugin.networkState.tokenSymbol;
+    final decimals = widget.plugin.networkState.tokenDecimals;
+
     final LPStakePageParams args = ModalRoute.of(context).settings.arguments;
-    final decimals = widget.plugin.networkState.tokenDecimals[0];
+
+    final token = args.poolId.toUpperCase().split('-').firstWhere((e) => e != 'AUSD');
+    final stableCoinDecimals = decimals[symbols.indexOf('AUSD')];
+    final tokenDecimals = decimals[symbols.indexOf(token)];
+    final shareDecimals = stableCoinDecimals >= tokenDecimals
+        ? stableCoinDecimals
+        : tokenDecimals;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -132,7 +142,7 @@ class _LPStakePage extends State<LPStakePage> {
             }
 
             final balanceView =
-                Fmt.priceFloorBigInt(balance, decimals, lengthMax: 6);
+                Fmt.priceFloorBigInt(balance, shareDecimals, lengthMax: 6);
             return Column(
               children: [
                 Expanded(
@@ -152,15 +162,15 @@ class _LPStakePage extends State<LPStakePage> {
                                 style: TextStyle(
                                     color: Theme.of(context).primaryColor),
                               ),
-                              onTap: () => _onSetMax(balance, decimals),
+                              onTap: () => _onSetMax(balance, shareDecimals),
                             ),
                           ),
-                          inputFormatters: [UI.decimalInputFormatter(decimals)],
+                          inputFormatters: [UI.decimalInputFormatter(shareDecimals)],
                           controller: _amountCtrl,
                           keyboardType:
                               TextInputType.numberWithOptions(decimal: true),
                           validator: (v) =>
-                              _validateAmount(v, balance, decimals),
+                              _validateAmount(v, balance, shareDecimals),
                           onChanged: (_) {
                             if (_isMax) {
                               setState(() {
@@ -177,7 +187,7 @@ class _LPStakePage extends State<LPStakePage> {
                   padding: EdgeInsets.all(16),
                   child: RoundedButton(
                     text: dic['earn.${args.action}'],
-                    onPressed: () => _onSubmit(balance, decimals),
+                    onPressed: () => _onSubmit(balance, shareDecimals),
                   ),
                 )
               ],

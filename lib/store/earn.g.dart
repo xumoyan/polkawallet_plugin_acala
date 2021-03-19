@@ -44,13 +44,13 @@ mixin _$EarnStore on _EarnStore, Store {
   final _$dexPoolsAtom = Atom(name: '_EarnStore.dexPools');
 
   @override
-  List<List<dynamic>> get dexPools {
+  List<DexPoolData> get dexPools {
     _$dexPoolsAtom.reportRead();
     return super.dexPools;
   }
 
   @override
-  set dexPools(List<List<dynamic>> value) {
+  set dexPools(List<DexPoolData> value) {
     _$dexPoolsAtom.reportWrite(value, super.dexPools, () {
       super.dexPools = value;
     });
@@ -89,7 +89,7 @@ mixin _$EarnStore on _EarnStore, Store {
   final _$_EarnStoreActionController = ActionController(name: '_EarnStore');
 
   @override
-  void setDexPools(List<List<dynamic>> list) {
+  void setDexPools(List<DexPoolData> list) {
     final _$actionInfo = _$_EarnStoreActionController.startAction(
         name: '_EarnStore.setDexPools');
     try {
@@ -122,12 +122,11 @@ mixin _$EarnStore on _EarnStore, Store {
   }
 
   @override
-  void addDexLiquidityTx(
-      Map<dynamic, dynamic> tx, String pubKey, int decimals) {
+  void addDexLiquidityTx(Map<dynamic, dynamic> tx, String pubKey) {
     final _$actionInfo = _$_EarnStoreActionController.startAction(
         name: '_EarnStore.addDexLiquidityTx');
     try {
-      return super.addDexLiquidityTx(tx, pubKey, decimals);
+      return super.addDexLiquidityTx(tx, pubKey);
     } finally {
       _$_EarnStoreActionController.endAction(_$actionInfo);
     }

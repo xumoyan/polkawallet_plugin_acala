@@ -28,7 +28,7 @@ class AcalaServiceSwap {
   Future<Map> queryDexLiquidityPoolRewards(List<List> dexPools) async {
     final pools = dexPools
         .map((pool) =>
-            jsonEncode({'DEXShare': pool.map((e) => e['Token']).toList()}))
+            jsonEncode({'DEXShare': pool.map((e) => e['token']).toList()}))
         .toList();
     final incentiveQuery = pools
         .map((i) => 'api.query.incentives.dEXIncentiveRewards($i)')
@@ -42,7 +42,7 @@ class AcalaServiceSwap {
     final incentives = Map<String, dynamic>();
     final savingRates = Map<String, dynamic>();
     final tokenPairs =
-        dexPools.map((e) => e.map((i) => i['Token']).join('-')).toList();
+        dexPools.map((e) => e.map((i) => i['token']).join('-')).toList();
     tokenPairs.asMap().forEach((k, v) {
       incentives[v] = res[0][k];
       savingRates[v] = res[1][k];

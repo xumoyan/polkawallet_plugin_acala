@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:polkawallet_plugin_acala/common/constants.dart';
 import 'package:polkawallet_plugin_acala/api/types/txLiquidityData.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanPage.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
@@ -32,8 +33,8 @@ class AddLiquidityPage extends StatefulWidget {
 
 class _AddLiquidityPageState extends State<AddLiquidityPage> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _amountTokenCtrl = new TextEditingController();
-  final TextEditingController _amountBaseCoinCtrl = new TextEditingController();
+  final TextEditingController _amountLeftCtrl = new TextEditingController();
+  final TextEditingController _amountRightCtrl = new TextEditingController();
 
   Timer _timer;
   double _price = 0;
@@ -71,7 +72,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
       return;
     }
     setState(() {
-      _amountBaseCoinCtrl.text =
+      _amountRightCtrl.text =
           (double.parse(supply) * _price).toStringAsFixed(6);
     });
     _formKey.currentState.validate();
@@ -87,25 +88,36 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
       return;
     }
     setState(() {
-      _amountTokenCtrl.text =
-          (double.parse(target) / _price).toStringAsFixed(6);
+      _amountLeftCtrl.text = (double.parse(target) / _price).toStringAsFixed(6);
     });
     _formKey.currentState.validate();
   }
 
   Future<void> _onSubmit() async {
     if (_formKey.currentState.validate()) {
+      final symbols = widget.plugin.networkState.tokenSymbol;
+      final decimals = widget.plugin.networkState.tokenDecimals;
+
       final String poolId = ModalRoute.of(context).settings.arguments;
       final pair = poolId.toUpperCase().split('-');
-      final decimals = widget.plugin.networkState.tokenDecimals[0];
-      final amountToken = _amountTokenCtrl.text.trim();
-      final amountBaseCoin = _amountBaseCoinCtrl.text.trim();
+
+      final token = pair.firstWhere((e) => e != 'AUSD');
+      final stableCoinDecimals = decimals[symbols.indexOf('AUSD')];
+      final tokenDecimals = decimals[symbols.indexOf(token)];
+
+      final decimalsLeft =
+          pair[0] == acala_stable_coin ? stableCoinDecimals : tokenDecimals;
+      final decimalsRight =
+          pair[0] == acala_stable_coin ? tokenDecimals : stableCoinDecimals;
+
+      final amountLeft = _amountLeftCtrl.text.trim();
+      final amountRight = _amountRightCtrl.text.trim();
 
       final params = [
         {'Token': pair[0]},
         {'Token': pair[1]},
-        Fmt.tokenInt(amountToken, decimals).toString(),
-        Fmt.tokenInt(amountBaseCoin, decimals).toString(),
+        Fmt.tokenInt(amountLeft, decimalsLeft).toString(),
+        Fmt.tokenInt(amountRight, decimalsRight).toString(),
         _withStake,
       ];
       final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
@@ -116,7 +128,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                 .getDic(i18n_full_dic_acala, 'acala')['earn.deposit'],
             txDisplay: {
               "poolId": poolId,
-              "amount": [amountToken, amountBaseCoin],
+              "amount": [amountLeft, amountRight],
               "withStake": _withStake,
             },
             params: params,
@@ -127,7 +139,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
         res['time'] = DateTime.now().millisecondsSinceEpoch;
 
         widget.plugin.store.earn
-            .addDexLiquidityTx(res, widget.keyring.current.pubKey, decimals);
+            .addDexLiquidityTx(res, widget.keyring.current.pubKey);
         Navigator.of(context).pop(res);
       }
     }
@@ -149,8 +161,8 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
       _timer = null;
     }
 
-    _amountTokenCtrl.dispose();
-    _amountBaseCoinCtrl.dispose();
+    _amountLeftCtrl.dispose();
+    _amountRightCtrl.dispose();
     super.dispose();
   }
 
@@ -161,9 +173,21 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
         final dicAssets =
             I18n.of(context).getDic(i18n_full_dic_acala, 'common');
-        final decimals = widget.plugin.networkState.tokenDecimals[0];
+        final symbols = widget.plugin.networkState.tokenSymbol;
+        final decimals = widget.plugin.networkState.tokenDecimals;
+
         final String poolId = ModalRoute.of(context).settings.arguments;
-        final tokenPair = poolId.split('-');
+        final tokenPair = poolId.toUpperCase().split('-');
+
+        final token = tokenPair.firstWhere((e) => e != acala_stable_coin);
+        final stableCoinDecimals = decimals[symbols.indexOf(acala_stable_coin)];
+        final tokenDecimals = decimals[symbols.indexOf(token)];
+        final decimalsLeft = tokenPair[0] == acala_stable_coin
+            ? stableCoinDecimals
+            : tokenDecimals;
+        final decimalsRight = tokenPair[0] == acala_stable_coin
+            ? tokenDecimals
+            : stableCoinDecimals;
 
         final double inputWidth = MediaQuery.of(context).size.width / 3;
 
@@ -173,13 +197,13 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
         double amountToken = 0;
         double amountStableCoin = 0;
         double amountTokenUser = 0;
-        BigInt balanceTokenUser = tokenPair[0] == 'ACA'
+        BigInt balanceLeftUser = tokenPair[0] == 'ACA'
             ? Fmt.balanceInt(
                 widget.plugin.balances.native.freeBalance.toString())
             : Fmt.balanceInt(widget.plugin.store.assets
                     .tokenBalanceMap[tokenPair[0].toUpperCase()]?.amount ??
                 '0');
-        BigInt balanceStableCoinUser = Fmt.balanceInt(widget.plugin.store.assets
+        BigInt balanceRightUser = Fmt.balanceInt(widget.plugin.store.assets
                 .tokenBalanceMap[tokenPair[1].toUpperCase()]?.amount ??
             '0');
 
@@ -187,12 +211,12 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
         if (poolInfo != null) {
           userShare = poolInfo.proportion;
 
-          amountToken = Fmt.bigIntToDouble(poolInfo.amountToken, decimals);
+          amountToken = Fmt.bigIntToDouble(poolInfo.amountToken, tokenDecimals);
           amountStableCoin =
-              Fmt.bigIntToDouble(poolInfo.amountStableCoin, decimals);
+              Fmt.bigIntToDouble(poolInfo.amountStableCoin, stableCoinDecimals);
           amountTokenUser = amountToken * userShare;
 
-          String input = _amountTokenCtrl.text.trim();
+          String input = _amountLeftCtrl.text.trim();
           try {
             final double amountInput =
                 double.parse(input.isEmpty ? '0' : input);
@@ -263,14 +287,14 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                                     onTap: () {
                                       WidgetsBinding.instance
                                           .addPostFrameCallback(
-                                              (_) => _amountTokenCtrl.clear());
+                                              (_) => _amountLeftCtrl.clear());
                                     },
                                   ),
                                 ),
                                 inputFormatters: [
-                                  UI.decimalInputFormatter(decimals)
+                                  UI.decimalInputFormatter(decimalsLeft)
                                 ],
-                                controller: _amountTokenCtrl,
+                                controller: _amountLeftCtrl,
                                 keyboardType: TextInputType.numberWithOptions(
                                     decimal: true),
                                 validator: (v) {
@@ -282,8 +306,8 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                                   } catch (err) {
                                     return dicAssets['amount.error'];
                                   }
-                                  if (Fmt.tokenInt(v.trim(), decimals) >
-                                      balanceTokenUser) {
+                                  if (Fmt.tokenInt(v.trim(), decimalsLeft) >
+                                      balanceLeftUser) {
                                     return dicAssets['amount.low'];
                                   }
                                   return null;
@@ -305,15 +329,15 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                                     ),
                                     onTap: () {
                                       WidgetsBinding.instance
-                                          .addPostFrameCallback((_) =>
-                                              _amountBaseCoinCtrl.clear());
+                                          .addPostFrameCallback(
+                                              (_) => _amountRightCtrl.clear());
                                     },
                                   ),
                                 ),
                                 inputFormatters: [
-                                  UI.decimalInputFormatter(decimals)
+                                  UI.decimalInputFormatter(decimalsRight)
                                 ],
-                                controller: _amountBaseCoinCtrl,
+                                controller: _amountRightCtrl,
                                 keyboardType: TextInputType.numberWithOptions(
                                     decimal: true),
                                 validator: (v) {
@@ -325,8 +349,8 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                                   } catch (err) {
                                     return dicAssets['amount.error'];
                                   }
-                                  if (Fmt.tokenInt(v.trim(), decimals) >
-                                      balanceStableCoinUser) {
+                                  if (Fmt.tokenInt(v.trim(), decimalsRight) >
+                                      balanceRightUser) {
                                     return dicAssets['amount.low'];
                                   }
                                   return null;
@@ -346,8 +370,8 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                               width: inputWidth,
                               child: Text(
                                 '${dicAssets['balance']}: ${Fmt.priceFloorBigInt(
-                                  balanceTokenUser,
-                                  decimals,
+                                  balanceLeftUser,
+                                  decimalsLeft,
                                   lengthFixed: 4,
                                 )}',
                                 style: TextStyle(
@@ -360,8 +384,8 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                               width: inputWidth,
                               child: Text(
                                 '${dicAssets['balance']}: ${Fmt.priceFloorBigInt(
-                                  balanceStableCoinUser,
-                                  decimals,
+                                  balanceRightUser,
+                                  decimalsRight,
                                   lengthFixed: 4,
                                 )}',
                                 style: TextStyle(

@@ -114,9 +114,9 @@ class _EarnPageState extends State<EarnPage> {
         };
 
         widget.plugin.store.earn
-            .addDexLiquidityTx(tx1, widget.keyring.current.pubKey, decimals);
+            .addDexLiquidityTx(tx1, widget.keyring.current.pubKey);
         widget.plugin.store.earn
-            .addDexLiquidityTx(tx2, widget.keyring.current.pubKey, decimals);
+            .addDexLiquidityTx(tx2, widget.keyring.current.pubKey);
       }
     } else if (reward.incentive > 0) {
       final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
@@ -137,7 +137,7 @@ class _EarnPageState extends State<EarnPage> {
         res['action'] = TxDexLiquidityData.actionRewardIncentive;
         res['params'] = [_tab, incentiveReward, ''];
         widget.plugin.store.earn
-            .addDexLiquidityTx(res, widget.keyring.current.pubKey, decimals);
+            .addDexLiquidityTx(res, widget.keyring.current.pubKey);
       }
     } else if (reward.saving > 0) {
       final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
@@ -158,7 +158,7 @@ class _EarnPageState extends State<EarnPage> {
         res['action'] = TxDexLiquidityData.actionRewardSaving;
         res['params'] = [_tab, '', savingReward];
         widget.plugin.store.earn
-            .addDexLiquidityTx(res, widget.keyring.current.pubKey, decimals);
+            .addDexLiquidityTx(res, widget.keyring.current.pubKey);
       }
     }
   }
@@ -184,7 +184,15 @@ class _EarnPageState extends State<EarnPage> {
   @override
   Widget build(BuildContext context) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
-    final decimals = widget.plugin.networkState.tokenDecimals[0];
+    final symbols = widget.plugin.networkState.tokenSymbol;
+    final decimals = widget.plugin.networkState.tokenDecimals;
+    final pair = _tab.toUpperCase().split('-');
+    final token = pair.firstWhere((e) => e != 'AUSD');
+    final stableCoinDecimals = decimals[symbols.indexOf('AUSD')];
+    final tokenDecimals = decimals[symbols.indexOf(token)];
+    final shareDecimals = stableCoinDecimals >= tokenDecimals
+        ? stableCoinDecimals
+        : tokenDecimals;
     return Scaffold(
       appBar: AppBar(
         title: Text(dic['earn.title']),
@@ -219,13 +227,14 @@ class _EarnPageState extends State<EarnPage> {
             poolShare = share / issuance;
 
             final lpAmount =
-                Fmt.bigIntToDouble(poolInfo.amountToken, decimals) * poolShare;
-            final lpAmount2 =
-                Fmt.bigIntToDouble(poolInfo.amountStableCoin, decimals) *
+                Fmt.bigIntToDouble(poolInfo.amountToken, tokenDecimals) *
                     poolShare;
+            final lpAmount2 = Fmt.bigIntToDouble(
+                    poolInfo.amountStableCoin, stableCoinDecimals) *
+                poolShare;
             final pair = _tab.split('-');
             lpAmountString =
-                '${Fmt.priceFloor(lpAmount)} ${pair[0]} + ${Fmt.priceFloor(lpAmount2, lengthFixed: 4)} ${pair[1]}';
+                '${Fmt.priceFloor(lpAmount)} ${PluginFmt.tokenView(pair[0])} + ${Fmt.priceFloor(lpAmount2, lengthFixed: 4)} ${PluginFmt.tokenView(pair[1])}';
             reward = (widget.plugin.store.earn.swapPoolRewards[_tab] ?? 0) *
                 stakeShare;
             rewardSaving =
@@ -246,7 +255,7 @@ class _EarnPageState extends State<EarnPage> {
                 CurrencySelector(
                   token: _tab,
                   tokenOptions: widget.plugin.store.earn.dexPools
-                      .map((e) => e.map((e) => e['Token']).join('-'))
+                      .map((e) => e.tokens.map((e) => e['token']).join('-'))
                       .toList(),
                   tokenIcons: widget.plugin.tokenIcons,
                   onSelect: (res) {
@@ -262,9 +271,10 @@ class _EarnPageState extends State<EarnPage> {
                       _SystemCard(
                         token: _tab,
                         total: Fmt.bigIntToDouble(
-                            poolInfo?.sharesTotal ?? BigInt.zero, decimals),
+                            poolInfo?.sharesTotal ?? BigInt.zero,
+                            shareDecimals),
                         userStaked: Fmt.bigIntToDouble(
-                            poolInfo?.shares ?? BigInt.zero, decimals),
+                            poolInfo?.shares ?? BigInt.zero, shareDecimals),
                         lpAmountString: lpAmountString,
                         actions: Row(
                           children: [
@@ -293,7 +303,6 @@ class _EarnPageState extends State<EarnPage> {
                       _UserCard(
                         share: stakeShare,
                         poolInfo: poolInfo,
-                        decimals: decimals,
                         token: _tab,
                         rewardEstimate: reward,
                         rewardSavingEstimate: rewardSaving,
@@ -423,7 +432,6 @@ class _UserCard extends StatelessWidget {
   _UserCard({
     this.share,
     this.poolInfo,
-    this.decimals,
     this.token,
     this.rewardEstimate,
     this.rewardSavingEstimate,
@@ -432,7 +440,6 @@ class _UserCard extends StatelessWidget {
   });
   final double share;
   final DexPoolInfoData poolInfo;
-  final int decimals;
   final String token;
   final double rewardEstimate;
   final double rewardSavingEstimate;
