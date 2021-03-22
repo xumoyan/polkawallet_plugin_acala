@@ -35,8 +35,8 @@ abstract class _HomaStore with Store {
   }
 
   @action
-  void addHomaTx(Map tx, String pubKey, int decimals) {
-    txs.add(TxHomaData.fromJson(Map<String, dynamic>.from(tx), decimals));
+  void addHomaTx(Map tx, String pubKey) {
+    txs.add(TxHomaData.fromJson(Map<String, dynamic>.from(tx)));
 
     final cached = cache.homaTxs.val;
     List list = cached[pubKey];
@@ -56,8 +56,8 @@ abstract class _HomaStore with Store {
     final cached = cache.homaTxs.val;
     final list = cached[pubKey] as List;
     if (list != null) {
-      txs = ObservableList<TxHomaData>.of(list.map((e) => TxHomaData.fromJson(
-          Map<String, dynamic>.from(e), acala_price_decimals)));
+      txs = ObservableList<TxHomaData>.of(
+          list.map((e) => TxHomaData.fromJson(Map<String, dynamic>.from(e))));
     } else {
       txs = ObservableList<TxHomaData>();
     }

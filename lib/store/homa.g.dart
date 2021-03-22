@@ -76,11 +76,11 @@ mixin _$HomaStore on _HomaStore, Store {
   }
 
   @override
-  void addHomaTx(Map<dynamic, dynamic> tx, String pubKey, int decimals) {
+  void addHomaTx(Map<dynamic, dynamic> tx, String pubKey) {
     final _$actionInfo =
         _$_HomaStoreActionController.startAction(name: '_HomaStore.addHomaTx');
     try {
-      return super.addHomaTx(tx, pubKey, decimals);
+      return super.addHomaTx(tx, pubKey);
     } finally {
       _$_HomaStoreActionController.endAction(_$actionInfo);
     }

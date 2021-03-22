@@ -51,14 +51,13 @@ class _MintPageState extends State<MintPage> {
     _updateReceiveAmount(double.parse(supply));
   }
 
-  Future<void> _onSubmit() async {
+  Future<void> _onSubmit(int stakeDecimal) async {
     if (_formKey.currentState.validate()) {
-      final decimals = widget.plugin.networkState.tokenDecimals[0];
       final pay = _amountPayCtrl.text.trim();
       final receive = _amountReceiveCtrl.text.trim();
 
       final params = [
-        Fmt.tokenInt(pay, decimals).toString(),
+        Fmt.tokenInt(pay, stakeDecimal).toString(),
       ];
       final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
           arguments: TxConfirmParams(
@@ -75,10 +74,11 @@ class _MintPageState extends State<MintPage> {
       if (res != null) {
         res['time'] = DateTime.now().millisecondsSinceEpoch;
         res['action'] = TxHomaData.actionMint;
+        res['amountPay'] = pay;
         res['amountReceive'] = receive;
         res['params'] = params;
         widget.plugin.store.homa
-            .addHomaTx(res, widget.keyring.current.pubKey, decimals);
+            .addHomaTx(res, widget.keyring.current.pubKey);
         Navigator.of(context).pushNamed(HomaHistoryPage.route);
       }
     }
@@ -106,10 +106,16 @@ class _MintPageState extends State<MintPage> {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
         final dicAssets =
             I18n.of(context).getDic(i18n_full_dic_acala, 'common');
-        final decimals = widget.plugin.networkState.tokenDecimals[0];
+
+        final symbols = widget.plugin.networkState.tokenSymbol;
+        final stakeToken = 'DOT';
+        final liquidToken = 'L$stakeToken';
+        final decimals = widget.plugin.networkState.tokenDecimals;
+
+        final stakeDecimal = decimals[symbols.indexOf(stakeToken)];
 
         final balance = Fmt.balanceInt(
-            widget.plugin.store.assets.tokenBalanceMap['DOT'].amount);
+            widget.plugin.store.assets.tokenBalanceMap[stakeToken].amount);
 
         final pool = widget.plugin.store.homa.stakingPoolInfo;
 
@@ -137,8 +143,9 @@ class _MintPageState extends State<MintPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: <Widget>[
                                   CurrencyWithIcon(
-                                    'DOT',
-                                    TokenIcon('DOT', widget.plugin.tokenIcons),
+                                    stakeToken,
+                                    TokenIcon(
+                                        stakeToken, widget.plugin.tokenIcons),
                                     textStyle:
                                         Theme.of(context).textTheme.headline4,
                                   ),
@@ -161,7 +168,8 @@ class _MintPageState extends State<MintPage> {
                                       ),
                                     ),
                                     inputFormatters: [
-                                      UI.decimalInputFormatter(decimals)
+                                      UI.decimalInputFormatter(
+                                          stakeDecimal)
                                     ],
                                     controller: _amountPayCtrl,
                                     keyboardType:
@@ -177,7 +185,7 @@ class _MintPageState extends State<MintPage> {
                                       }
                                       if (double.parse(v.trim()) >=
                                           Fmt.bigIntToDouble(
-                                              balance, decimals)) {
+                                              balance, stakeDecimal)) {
                                         return dicAssets['amount.low'];
                                       }
                                       return null;
@@ -187,7 +195,7 @@ class _MintPageState extends State<MintPage> {
                                   Padding(
                                     padding: EdgeInsets.only(top: 8),
                                     child: Text(
-                                      '${dicAssets['balance']}: ${Fmt.token(balance, decimals)} DOT',
+                                      '${dicAssets['balance']}: ${Fmt.token(balance, stakeDecimal)} DOT',
                                       style: TextStyle(
                                           color: Theme.of(context)
                                               .unselectedWidgetColor),
@@ -207,8 +215,8 @@ class _MintPageState extends State<MintPage> {
                               child: Column(
                                 children: <Widget>[
                                   CurrencyWithIcon(
-                                    'LDOT',
-                                    TokenIcon('LDOT', widget.plugin.tokenIcons),
+                                    liquidToken,
+                                    TokenIcon(liquidToken, widget.plugin.tokenIcons),
                                     textStyle:
                                         Theme.of(context).textTheme.headline4,
                                   ),
@@ -243,7 +251,7 @@ class _MintPageState extends State<MintPage> {
                                           .unselectedWidgetColor),
                                 ),
                                 Text(
-                                    '1 DOT = ${Fmt.priceFloor(1 / pool.liquidExchangeRate, lengthMax: 4)} L-DOT'),
+                                    '1 $stakeToken = ${Fmt.priceFloor(1 / pool.liquidExchangeRate, lengthMax: 4)} L-$stakeToken'),
                               ],
                             ),
                             GestureDetector(
@@ -270,7 +278,7 @@ class _MintPageState extends State<MintPage> {
                   padding: EdgeInsets.only(top: 24),
                   child: RoundedButton(
                     text: dic['homa.mint'],
-                    onPressed: _onSubmit,
+                    onPressed: () => _onSubmit(stakeDecimal),
                   ),
                 )
               ],

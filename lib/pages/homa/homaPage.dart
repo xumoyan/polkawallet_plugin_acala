@@ -43,11 +43,10 @@ class _HomaPageState extends State<HomaPage> {
     });
   }
 
-  Future<void> _onSubmitWithdraw() async {
-    final decimals = widget.plugin.networkState.tokenDecimals[0];
+  Future<void> _onSubmitWithdraw(int liquidDecimal) async {
     final userInfo = widget.plugin.store.homa.userInfo;
     final String receive =
-        Fmt.priceFloorBigInt(userInfo.unbonded, decimals, lengthMax: 3);
+        Fmt.priceFloorBigInt(userInfo.unbonded, liquidDecimal, lengthMax: 3);
 
     final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
         arguments: TxConfirmParams(
@@ -63,9 +62,9 @@ class _HomaPageState extends State<HomaPage> {
     if (res != null) {
       res['time'] = DateTime.now().millisecondsSinceEpoch;
       res['action'] = TxHomaData.actionWithdrawRedemption;
+      res['amountPay'] = '0';
       res['amountReceive'] = receive;
-      widget.plugin.store.homa
-          .addHomaTx(res, widget.keyring.current.pubKey, decimals);
+      widget.plugin.store.homa.addHomaTx(res, widget.keyring.current.pubKey);
     }
   }
 
@@ -91,7 +90,12 @@ class _HomaPageState extends State<HomaPage> {
     return Observer(
       builder: (BuildContext context) {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
-        final decimals = widget.plugin.networkState.tokenDecimals[0];
+        final symbols = widget.plugin.networkState.tokenSymbol;
+        final decimals = widget.plugin.networkState.tokenDecimals;
+        final stakeSymbol = 'DOT';
+
+        final nativeDecimal = decimals[symbols.indexOf(stakeSymbol)];
+        final liquidDecimal = decimals[symbols.indexOf('L$stakeSymbol')];
 
         final pool = widget.plugin.store.homa.stakingPoolInfo;
         final userInfo = widget.plugin.store.homa.userInfo;
@@ -232,7 +236,7 @@ class _HomaPageState extends State<HomaPage> {
                                                     content:
                                                         Fmt.priceFloorBigInt(
                                                             i.claimed,
-                                                            decimals),
+                                                            nativeDecimal),
                                                   ),
                                                   InfoItem(
                                                     title:
@@ -256,13 +260,16 @@ class _HomaPageState extends State<HomaPage> {
                                               title:
                                                   dic['homa.user.redeemable'],
                                               content: Fmt.priceFloorBigInt(
-                                                  userInfo.unbonded, decimals),
+                                                  userInfo.unbonded,
+                                                  nativeDecimal),
                                             ),
                                             OutlinedButtonSmall(
                                               margin: EdgeInsets.all(0),
                                               active: true,
                                               content: dic['homa.now'],
-                                              onPressed: _onSubmitWithdraw,
+                                              onPressed: () =>
+                                                  _onSubmitWithdraw(
+                                                      liquidDecimal),
                                             ),
                                           ],
                                         )

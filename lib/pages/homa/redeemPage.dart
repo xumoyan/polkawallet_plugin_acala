@@ -126,9 +126,8 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
     }
   }
 
-  Future<void> _onSubmit() async {
+  Future<void> _onSubmit(int liquidDecimal) async {
     if (_formKey.currentState.validate()) {
-      final decimals = widget.plugin.networkState.tokenDecimals[0];
       final pay = _amountPayCtrl.text.trim();
       final receive = Fmt.priceFloor(
         double.parse(_amountReceiveCtrl.text),
@@ -144,7 +143,7 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
         era = pool.freeList[_eraSelected].era;
       }
       final params = [
-        Fmt.tokenInt(pay, decimals).toString(),
+        Fmt.tokenInt(pay, liquidDecimal).toString(),
         _radioSelect == 1 ? {"Target": era} : strategy
       ];
       final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
@@ -163,10 +162,10 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
       if (res != null) {
         res['time'] = DateTime.now().millisecondsSinceEpoch;
         res['action'] = TxHomaData.actionRedeem;
+        res['amountPay'] = pay;
         res['amountReceive'] = receive;
         res['params'] = params;
-        widget.plugin.store.homa
-            .addHomaTx(res, widget.keyring.current.pubKey, decimals);
+        widget.plugin.store.homa.addHomaTx(res, widget.keyring.current.pubKey);
         Navigator.of(context).pushNamed(HomaHistoryPage.route);
       }
     }
@@ -186,10 +185,15 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
         final dicAssets =
             I18n.of(context).getDic(i18n_full_dic_acala, 'common');
-        final decimals = widget.plugin.networkState.tokenDecimals[0];
+
+        final symbols = widget.plugin.networkState.tokenSymbol;
+        final decimals = widget.plugin.networkState.tokenDecimals;
+        final stakeSymbol = 'DOT';
+        final liquidSymbol = 'L$stakeSymbol';
+        final liquidDecimal = decimals[symbols.indexOf(liquidSymbol)];
 
         final balance = Fmt.balanceInt(
-            widget.plugin.store.assets.tokenBalanceMap['LDOT'].amount);
+            widget.plugin.store.assets.tokenBalanceMap[liquidSymbol].amount);
 
         final pool = widget.plugin.store.homa.stakingPoolInfo;
 
@@ -204,7 +208,7 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
           available = item.free * pool.liquidExchangeRate;
           eraSelectText += ': ${item.era}';
           eraSelectTextTail =
-              '(≈ ${(item.era - pool.currentEra).toInt()}${dic['homa.redeem.day']}, ${dicAssets['amount.available']}: ${Fmt.priceFloor(pool.freeList[_eraSelected].free, lengthMax: 4)} DOT)';
+              '(≈ ${(item.era - pool.currentEra).toInt()}${dic['homa.redeem.day']}, ${dicAssets['amount.available']}: ${Fmt.priceFloor(pool.freeList[_eraSelected].free, lengthMax: 4)} $stakeSymbol)';
         }
 
         final primary = Theme.of(context).primaryColor;
@@ -232,8 +236,9 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: <Widget>[
                                   CurrencyWithIcon(
-                                    'LDOT',
-                                    TokenIcon('LDOT', widget.plugin.tokenIcons),
+                                    liquidSymbol,
+                                    TokenIcon(
+                                        liquidSymbol, widget.plugin.tokenIcons),
                                     textStyle:
                                         Theme.of(context).textTheme.headline4,
                                   ),
@@ -256,7 +261,7 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
                                       ),
                                     ),
                                     inputFormatters: [
-                                      UI.decimalInputFormatter(decimals)
+                                      UI.decimalInputFormatter(liquidDecimal)
                                     ],
                                     controller: _amountPayCtrl,
                                     keyboardType:
@@ -274,7 +279,7 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
                                       }
                                       if (amt >=
                                           Fmt.bigIntToDouble(
-                                              balance, decimals)) {
+                                              balance, liquidDecimal)) {
                                         return dicAssets['amount.low'];
                                       }
                                       final input = double.parse(v.trim()) *
@@ -294,7 +299,7 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
                                   Padding(
                                     padding: EdgeInsets.only(top: 8),
                                     child: Text(
-                                      '${dicAssets['balance']}: ${Fmt.token(balance, decimals)} LDOT',
+                                      '${dicAssets['balance']}: ${Fmt.token(balance, liquidDecimal)} $liquidSymbol',
                                       style: TextStyle(
                                           color: Theme.of(context)
                                               .unselectedWidgetColor),
@@ -315,8 +320,9 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: <Widget>[
                                   CurrencyWithIcon(
-                                    'DOT',
-                                    TokenIcon('DOT', widget.plugin.tokenIcons),
+                                    stakeSymbol,
+                                    TokenIcon(
+                                        stakeSymbol, widget.plugin.tokenIcons),
                                     textStyle:
                                         Theme.of(context).textTheme.headline4,
                                   ),
@@ -351,7 +357,7 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
                                           .unselectedWidgetColor),
                                 ),
                                 Text(
-                                    '1 LDOT = ${Fmt.priceFloor(pool.liquidExchangeRate, lengthMax: 4)} DOT'),
+                                    '1 $liquidSymbol = ${Fmt.priceFloor(pool.liquidExchangeRate, lengthMax: 4)} $stakeSymbol'),
                               ],
                             ),
                             GestureDetector(
@@ -385,7 +391,7 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: <Widget>[
                             Text('${dic['homa.redeem.fee']}:'),
-                            Text('(≈ ${Fmt.doubleFormat(_fee)} DOT)'),
+                            Text('(≈ ${Fmt.doubleFormat(_fee)} $stakeSymbol)'),
                           ],
                         ),
                       ),
@@ -402,7 +408,7 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
                               child: Text(dic['homa.now']),
                             ),
                             Text(
-                              '(${dic['homa.redeem.free']}: ${Fmt.priceFloor(availableNow)} DOT)',
+                              '(${dic['homa.redeem.free']}: ${Fmt.priceFloor(availableNow)} $stakeSymbol)',
                               style: TextStyle(fontSize: 14),
                             ),
                           ],
@@ -461,7 +467,7 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
                   padding: EdgeInsets.only(top: 24),
                   child: RoundedButton(
                     text: dic['homa.redeem'],
-                    onPressed: _onSubmit,
+                    onPressed: () => _onSubmit(liquidDecimal),
                   ),
                 )
               ],

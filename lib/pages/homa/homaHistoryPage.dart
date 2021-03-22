@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:polkawallet_plugin_acala/api/types/txHomaData.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
@@ -17,6 +18,7 @@ class HomaHistoryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final symbol = 'DOT';
     final list = plugin.store.homa.txs.reversed.toList();
     return Scaffold(
       appBar: AppBar(
@@ -37,11 +39,11 @@ class HomaHistoryPage extends StatelessWidget {
             String amountPay = detail.amountPay ?? '0';
             String amountReceive = detail.amountReceive ?? '0';
             if (detail.action == TxHomaData.actionRedeem) {
-              amountPay += ' LDOT';
-              amountReceive += ' DOT';
+              amountPay += ' L$symbol';
+              amountReceive += ' $symbol';
             } else {
-              amountPay += ' DOT';
-              amountReceive += ' LDOT';
+              amountPay += ' $symbol';
+              amountReceive += ' L$symbol';
             }
             return Container(
               decoration: BoxDecoration(
@@ -51,26 +53,12 @@ class HomaHistoryPage extends StatelessWidget {
               child: ListTile(
                 title: Text('${list[i].action} $amountReceive'),
                 subtitle: Text(Fmt.dateTime(list[i].time)),
-                trailing: Container(
-                  width: 140,
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Padding(
-                          padding: EdgeInsets.only(right: 12),
-                          child: Text(
-                            amountPay,
-                            style: Theme.of(context).textTheme.headline4,
-                            textAlign: TextAlign.end,
-                          ),
-                        ),
-                      ),
-                      Image.asset(
-                        'packages/polkawallet_plugin_acala/assets/images/assets_up.png',
-                        width: 16,
-                      )
-                    ],
-                  ),
+                leading:
+                    SvgPicture.asset('assets/images/assets_up.svg', width: 32),
+                trailing: Text(
+                  amountPay,
+                  style: Theme.of(context).textTheme.headline4,
+                  textAlign: TextAlign.end,
                 ),
               ),
             );

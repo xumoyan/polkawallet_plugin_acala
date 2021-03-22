@@ -134,6 +134,7 @@ async function _calacFreeList(api: ApiPromise, start: number, duration: number) 
 let homaStakingPool;
 
 async function fetchHomaStakingPool(api: ApiPromise) {
+  const decimalsDOT = 10;
   const [stakingPool, { mockRewardRate }] = (await Promise.all([
     (api.derive as any).homa.stakingPool(),
     api.query.polkadotBridge.subAccounts(1),
@@ -147,14 +148,14 @@ async function fetchHomaStakingPool(api: ApiPromise) {
       targetUnbondingToFreeRatio: FPNum(stakingPool.params.targetUnbondingToFreeRatio),
     },
     defaultExchangeRate: FPNum(stakingPool.defaultExchangeRate),
-    liquidTotalIssuance: FPNum(stakingPool.liquidIssuance),
+    liquidTotalIssuance: FPNum(stakingPool.liquidIssuance, decimalsDOT),
     currentEra: stakingPool.currentEra.toNumber(),
     bondingDuration: stakingPool.bondingDuration.toNumber(),
     ledger: {
-      toUnbondNextEra: stakingPool.ledger.toUnbondNextEra.map((e: any) => FPNum(e)),
-      bonded: FPNum(stakingPool.ledger.bonded),
-      unbondingToFree: FPNum(stakingPool.ledger.unbondingToFree),
-      freePool: FPNum(stakingPool.ledger.freePool),
+      toUnbondNextEra: stakingPool.ledger.toUnbondNextEra.map((e: any) => FPNum(e, decimalsDOT)),
+      bonded: FPNum(stakingPool.ledger.bonded, decimalsDOT),
+      unbondingToFree: FPNum(stakingPool.ledger.unbondingToFree, decimalsDOT),
+      freePool: FPNum(stakingPool.ledger.freePool, decimalsDOT),
     },
   });
   homaStakingPool = poolInfo;
@@ -193,7 +194,7 @@ async function fetchHomaUserInfo(api: ApiPromise, address: string) {
     },
   ];
   for (let i = start + 1; i < start + duration + 2; i++) {
-    const claimed = (await api.query.stakingPool.claimedUnbond(address, i)) as any;
+    const claimed = (await api.query.stakingPool.unbondings(address, i)) as any;
     if (claimed.gtn(0)) {
       claims[claims.length] = {
         era: i,
