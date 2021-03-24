@@ -67,8 +67,8 @@ class _TransferPageState extends State<TransferPage> {
         _accountTo.address,
         // params.currencyId
         _token.contains('-')
-            ? {'DEXShare': _token.toUpperCase().split('-')}
-            : {'Token': _token.toUpperCase()},
+            ? {'DEXShare': _token.toUpperCase().split('-'), 'decimals': decimals}
+            : {'Token': _token.toUpperCase(), 'decimals': decimals},
         // params.amount
         Fmt.tokenInt(_amountCtrl.text.trim(), decimals).toString(),
       ];

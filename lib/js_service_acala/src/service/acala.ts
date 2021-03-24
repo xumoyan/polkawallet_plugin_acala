@@ -24,7 +24,6 @@ async function calcTokenSwapAmount(api: ApiPromise, input: number, output: numbe
 
   return new Promise((resolve, reject) => {
     swapper.swap(i, o, mode, (res: any) => {
-      console.log(res);
       resolve({
         amount: output === null ? res.output.balance.toNumber(6) : res.input.balance.toNumber(6),
         path: res.path,
@@ -192,7 +191,7 @@ async function fetchHomaUserInfo(api: ApiPromise, address: string) {
   const nextEraIndex = start + duration;
   const claims = [];
   let nextEraAdded = false;
-  for (let i = start + 1; i < start + duration + 2; i++) {
+  for (let i = start; i < start + duration + 2; i++) {
     const claimed = (await api.query.stakingPool.unbondings(address, i)) as any;
     if (claimed.gtn(0)) {
       claims[claims.length] = {

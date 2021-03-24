@@ -79,7 +79,7 @@ abstract class _AssetsStore with Store {
           List.of(tx['params'][1]['DEXShare']).join('-').toUpperCase(),
       "amount": Fmt.balance(
         tx['params'][2],
-        acala_price_decimals,
+        tx['params'][1]['decimals'] ?? acala_price_decimals,
       ),
     });
     txs.add(TransferData.fromJson(txData));

@@ -7,11 +7,11 @@ const node_list = [
     'ss58': 42,
     'endpoint': 'wss://mandala6.laminar.codes',
   },
-  // {
-  //   'name': 'Mandala TC5 Node 1 (Hosted by OnFinality)',
-  //   'ss58': 42,
-  //   'endpoint': 'wss://node-6714447553777491968.jm.onfinality.io/ws',
-  // },
+  {
+    'name': 'Mandala TC5 Node 1 (Hosted by OnFinality)',
+    'ss58': 42,
+    'endpoint': 'wss://node-6775973502614921216.rz.onfinality.io/ws',
+  },
   // {
   //   'name': 'Mandala TC5 Node 2 (Hosted by OnFinality)',
   //   'ss58': 42,
