@@ -1,8 +1,10 @@
 import { StakingPool } from "@acala-network/sdk-homa";
-import { FixedPointNumber, TokenPair, TokenBalance, Token, DexShare } from "@acala-network/sdk-core";
+import { FixedPointNumber, TokenBalance, Token, DexShare } from "@acala-network/sdk-core";
 import { SwapPromise } from "@acala-network/sdk-swap";
 import { ApiPromise } from "@polkadot/api";
 import { tokensForAcala, tokensForKarura } from "../constants/acala";
+
+const decimalsDOT = 10;
 
 let swapper: SwapPromise;
 /**
@@ -118,11 +120,11 @@ function FPNum(input: any, decimals?: number) {
   return FixedPointNumber.fromInner(input.toString(), decimals);
 }
 
-async function _calacFreeList(api: ApiPromise, start: number, duration: number) {
+async function _calacFreeList(api: ApiPromise, start: number, duration: number, decimalsDOT: number) {
   const list = [];
   for (let i = start; i < start + duration; i++) {
     const result = await api.query.stakingPool.unbonding(i);
-    const free = FixedPointNumber.fromInner(result[0]).minus(FixedPointNumber.fromInner(result[1]));
+    const free = FixedPointNumber.fromInner(result[0], decimalsDOT).minus(FixedPointNumber.fromInner(result[1], decimalsDOT));
     list.push({
       era: i,
       free: free.toNumber(),
@@ -134,13 +136,13 @@ async function _calacFreeList(api: ApiPromise, start: number, duration: number) 
 let homaStakingPool;
 
 async function fetchHomaStakingPool(api: ApiPromise) {
-  const decimalsDOT = 10;
   const [stakingPool, { mockRewardRate }] = (await Promise.all([
     (api.derive as any).homa.stakingPool(),
     api.query.polkadotBridge.subAccounts(1),
   ])) as any;
 
   const poolInfo = new StakingPool({
+    decimal: decimalsDOT,
     params: {
       baseFeeRate: FPNum(stakingPool.params.baseFeeRate),
       targetMaxFreeUnbondedRatio: FPNum(stakingPool.params.targetMaxFreeUnbondedRatio),
@@ -160,7 +162,7 @@ async function fetchHomaStakingPool(api: ApiPromise) {
   });
   homaStakingPool = poolInfo;
 
-  const freeList = await _calacFreeList(api, stakingPool.currentEra.toNumber() + 1, stakingPool.bondingDuration.toNumber());
+  const freeList = await _calacFreeList(api, stakingPool.currentEra.toNumber() + 1, stakingPool.bondingDuration.toNumber(), decimalsDOT);
   const eraLength = api.consts.polkadotBridge.eraLength as any;
   const expectedBlockTime = api.consts.babe.expectedBlockTime;
   const unbondingDuration = expectedBlockTime.toNumber() * eraLength.toNumber() * stakingPool.bondingDuration.toNumber();
@@ -173,11 +175,11 @@ async function fetchHomaStakingPool(api: ApiPromise) {
     defaultExchangeRate: FPNum(stakingPool.defaultExchangeRate).toNumber(),
     bondingDuration: stakingPool.bondingDuration.toNumber(),
     currentEra: stakingPool.currentEra.toNumber(),
-    communalBonded: poolInfo.ledger.bondedBelongToLiquidHolders.toNumber(),
-    communalTotal: poolInfo.ledger.total.toNumber(),
-    communalFreeRatio: poolInfo.ledger.freePoolRatio.toNumber(),
-    unbondingToFreeRatio: poolInfo.ledger.unbondingToFreeRatio.toNumber(),
-    communalBondedRatio: poolInfo.ledger.bondedBelongToLiquidHolders.div(poolInfo.ledger.total).toNumber(),
+    communalBonded: poolInfo.bondedBelongToLiquidHolders.toNumber(),
+    communalTotal: poolInfo.totalBelongToLiquidHolders.toNumber(),
+    freePool: poolInfo.freePool.toNumber(),
+    unbondingToFree: poolInfo.unbondingToFree.toNumber(),
+    communalBondedRatio: poolInfo.bondedBelongToLiquidHolders.div(poolInfo.total).toNumber(),
     liquidExchangeRate: poolInfo.liquidExchangeRate().toNumber(),
   };
 }
@@ -187,21 +189,28 @@ async function fetchHomaUserInfo(api: ApiPromise, address: string) {
   const start = stakingPool.currentEra.toNumber() + 1;
   const duration = stakingPool.bondingDuration.toNumber();
   const nextEraUnbund = (await api.query.stakingPool.nextEraUnbonds(address)) as any;
-  const claims = [
-    {
-      era: start,
-      claimed: nextEraUnbund,
-    },
-  ];
+  const nextEraIndex = start + duration;
+  const claims = [];
+  let nextEraAdded = false;
   for (let i = start + 1; i < start + duration + 2; i++) {
     const claimed = (await api.query.stakingPool.unbondings(address, i)) as any;
     if (claimed.gtn(0)) {
       claims[claims.length] = {
         era: i,
-        claimed,
+        claimed: i === nextEraIndex ? claimed + nextEraUnbund : claimed,
       };
+      if (i === nextEraIndex) {
+        nextEraAdded = true;
+      }
     }
   }
+  if (nextEraUnbund.gtn(0) && !nextEraAdded) {
+    claims[claims.length] = {
+      era: nextEraIndex,
+      claimed: nextEraUnbund,
+    };
+  }
+
   const unbonded = await (api.rpc as any).stakingPool.getAvailableUnbonded(address);
   return {
     unbonded: unbonded.amount || 0,
@@ -211,7 +220,7 @@ async function fetchHomaUserInfo(api: ApiPromise, address: string) {
 
 async function queryHomaRedeemAmount(api: ApiPromise, amount: number, redeemType: number, targetEra: number) {
   if (redeemType == 0) {
-    const res = await homaStakingPool.getStakingAmountInRedeemByFreeUnbonded(new FixedPointNumber(amount));
+    const res = await homaStakingPool.getStakingAmountInRedeemByFreeUnbonded(new FixedPointNumber(amount, decimalsDOT));
     return {
       demand: res.demand.toNumber(),
       fee: res.fee.toNumber(),
@@ -219,10 +228,10 @@ async function queryHomaRedeemAmount(api: ApiPromise, amount: number, redeemType
     };
   } else if (redeemType == 1) {
     const unbonding = await api.query.stakingPool.unbonding(targetEra);
-    const res = await homaStakingPool.getStakingAmountInClaimUnbonding(new FixedPointNumber(amount), targetEra, {
-      unbonding: FixedPointNumber.fromInner(unbonding[0].toString()),
-      claimedUnbonding: FixedPointNumber.fromInner(unbonding[1].toString()),
-      initialClaimedUnbonding: FixedPointNumber.fromInner(unbonding[2].toString()),
+    const res = await homaStakingPool.getStakingAmountInClaimUnbonding(new FixedPointNumber(amount, decimalsDOT), targetEra, {
+      unbonding: FPNum(unbonding[0], decimalsDOT),
+      claimedUnbonding: FPNum(unbonding[1], decimalsDOT),
+      initialClaimedUnbonding: FPNum(unbonding[2], decimalsDOT),
     });
     return {
       atEra: res.atEra,
@@ -231,7 +240,7 @@ async function queryHomaRedeemAmount(api: ApiPromise, amount: number, redeemType
       received: res.received.toNumber(),
     };
   } else if (redeemType == 2) {
-    const res = await homaStakingPool.getStakingAmountInRedeemByUnbond(new FixedPointNumber(amount));
+    const res = await homaStakingPool.getStakingAmountInRedeemByUnbond(new FixedPointNumber(amount, decimalsDOT));
     return {
       atEra: res.atEra,
       amount: res.amount.toNumber(),

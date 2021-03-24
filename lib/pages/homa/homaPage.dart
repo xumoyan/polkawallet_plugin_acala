@@ -177,19 +177,14 @@ class _HomaPageState extends State<HomaPage> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.center,
                                       title: dic['homa.pool.free'],
-                                      content: Fmt.doubleFormat(
-                                        (pool.communalTotal ?? 0) *
-                                            (pool.communalFreeRatio ?? 0),
-                                      ),
+                                      content: Fmt.doubleFormat(pool.freePool),
                                     ),
                                     InfoItem(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.center,
                                       title: dic['homa.pool.unbonding'],
                                       content: Fmt.doubleFormat(
-                                        (pool.communalTotal ?? 0) *
-                                            (pool.unbondingToFreeRatio ?? 0),
-                                      ),
+                                          pool.unbondingToFree),
                                     ),
                                     InfoItem(
                                       crossAxisAlignment:

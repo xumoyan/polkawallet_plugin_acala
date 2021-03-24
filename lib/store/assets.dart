@@ -33,12 +33,28 @@ abstract class _AssetsStore with Store {
   List<NFTData> nft = [];
 
   @action
-  void setTokenBalanceMap(List<TokenBalanceData> list) {
+  void setTokenBalanceMap(List<TokenBalanceData> list, String pubKey,
+      {bool shouldCache = true}) {
     final data = Map<String, TokenBalanceData>();
+    final dataForCache = {};
     list.forEach((e) {
       data[e.symbol] = e;
+
+      dataForCache[e.symbol] = {
+        'name': e.name,
+        'symbol': e.symbol,
+        'decimals': e.decimals,
+        'amount': e.amount,
+        'detailPageRoute': e.detailPageRoute,
+      };
     });
     tokenBalanceMap = data;
+
+    if (shouldCache) {
+      final cached = cache.tokens.val;
+      cached[pubKey] = dataForCache;
+      cache.tokens.val = cached;
+    }
   }
 
   @action
@@ -83,13 +99,29 @@ abstract class _AssetsStore with Store {
   void loadCache(String pubKey) {
     if (pubKey == null || pubKey.isEmpty) return;
 
-    final cached = cache.transferTxs.val;
-    final list = cached[pubKey] as List;
+    final cachedTxs = cache.transferTxs.val;
+    final list = cachedTxs[pubKey] as List;
     if (list != null) {
       txs = ObservableList<TransferData>.of(
           list.map((e) => TransferData.fromJson(Map<String, dynamic>.from(e))));
     } else {
       txs = ObservableList<TransferData>();
+    }
+
+    final cachedTokens = cache.tokens.val;
+    if (cachedTokens != null && cachedTokens[pubKey] != null) {
+      final tokens = cachedTokens[pubKey].values.toList();
+      setTokenBalanceMap(
+          List<TokenBalanceData>.from(tokens.map((e) => TokenBalanceData(
+              name: e['name'],
+              symbol: e['symbol'],
+              decimals: e['decimals'],
+              amount: e['amount'],
+              detailPageRoute: e['detailPageRoute']))),
+          pubKey,
+          shouldCache: false);
+    } else {
+      tokenBalanceMap = Map<String, TokenBalanceData>();
     }
   }
 }

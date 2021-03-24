@@ -26,3 +26,5 @@ const acala_stable_coin = 'AUSD';
 const acala_stable_coin_view = 'aUSD';
 const acala_token_ren_btc = 'RENBTC';
 const acala_token_ren_btc_view = 'renBTC';
+const acala_token_polka_btc = 'POLKABTC';
+const acala_token_polka_btc_view = 'polkaBTC';

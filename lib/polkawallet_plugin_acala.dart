@@ -82,6 +82,8 @@ class PluginAcala extends PolkawalletPlugin {
         'packages/polkawallet_plugin_acala/assets/images/tokens/RENBTC.png'),
     'XBTC': Image.asset(
         'packages/polkawallet_plugin_acala/assets/images/tokens/XBTC.png'),
+    'POLKABTC': Image.asset(
+        'packages/polkawallet_plugin_acala/assets/images/tokens/POLKABTC.png'),
     'PLM': Image.asset(
         'packages/polkawallet_plugin_acala/assets/images/tokens/PLM.png'),
     'PHA': Image.asset(
@@ -95,6 +97,9 @@ class PluginAcala extends PolkawalletPlugin {
         'AUSD-LDOT': TokenIcon('AUSD-LDOT', _basicIcons),
         'AUSD-XBTC': TokenIcon('AUSD-XBTC', _basicIcons),
         'AUSD-RENBTC': TokenIcon('AUSD-RENBTC', _basicIcons),
+        'AUSD-POLKABTC': TokenIcon('AUSD-POLKABTC', _basicIcons),
+        'AUSD-PHA': TokenIcon('AUSD-PHA', _basicIcons),
+        'AUSD-PLM': TokenIcon('AUSD-PLM', _basicIcons),
         'ACA-AUSD': TokenIcon('ACA-AUSD', _basicIcons),
       };
 
@@ -164,10 +169,9 @@ class PluginAcala extends PolkawalletPlugin {
 
   Future<void> _subscribeTokenBalances(KeyPairData acc) async {
     _api.assets.subscribeTokenBalances(basic.name, acc.address, (data) {
-      _store.assets.setTokenBalanceMap(data);
+      _store.assets.setTokenBalanceMap(data, acc.pubKey);
 
-      data.removeWhere((e) => e.symbol.contains('-') && e.amount == '0');
-      balances.setTokens(data);
+      _updateTokenBalances(data);
     });
 
     final airdrops = await _api.assets.queryAirdropTokens(acc.address);
@@ -178,16 +182,28 @@ class PluginAcala extends PolkawalletPlugin {
     _store.assets.setNFTs(nft);
   }
 
+  void _updateTokenBalances(List<TokenBalanceData> data) {
+    data.removeWhere((e) => e.symbol.contains('-') && e.amount == '0');
+    balances.setTokens(data);
+  }
+
   void _loadCacheData(KeyPairData acc) {
-    balances.setTokens([]);
     balances.setExtraTokens([]);
     _store.assets.setNFTs([]);
 
-    _store.assets.loadCache(acc.pubKey);
-    _store.loan.loadCache(acc.pubKey);
-    _store.swap.loadCache(acc.pubKey);
-    _store.earn.loadCache(acc.pubKey);
-    _store.homa.loadCache(acc.pubKey);
+    try {
+      _store.assets.loadCache(acc.pubKey);
+      _updateTokenBalances(_store.assets.tokenBalanceMap.values.toList());
+
+      _store.loan.loadCache(acc.pubKey);
+      _store.swap.loadCache(acc.pubKey);
+      _store.earn.loadCache(acc.pubKey);
+      _store.homa.loadCache(acc.pubKey);
+      print('acala plugin cache data loaded');
+    } catch (err) {
+      print(err);
+      print('load acala cache data failed');
+    }
   }
 
   @override

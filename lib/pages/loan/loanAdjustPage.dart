@@ -463,27 +463,33 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
                                   hintText: assetDic['amount'],
                                   labelText:
                                       '${assetDic['amount']} (${assetDic['amount.available']}: $availableView $symbol)',
-                                  suffix: params.actionType == LoanAdjustPage.actionTypeDeposit ? GestureDetector(
-                                    child: Text(
-                                      dic['loan.max'],
-                                      style: TextStyle(
-                                          color:
-                                              Theme.of(context).primaryColor),
-                                    ),
-                                    onTap: () async {
-                                      setState(() {
-                                        _amountCollateral = available;
-                                        _amountCtrl.text = availableView;
-                                      });
-                                      _onAmount1Change(
-                                        availableView,
-                                        loan.type,
-                                        price,
-                                        collateralDecimals,
-                                        max: available,
-                                      );
-                                    },
-                                  ):null,
+                                  suffix: params.actionType ==
+                                          LoanAdjustPage.actionTypeDeposit
+                                      ? GestureDetector(
+                                          child: Text(
+                                            dic['loan.max'],
+                                            style: TextStyle(
+                                                color: Theme.of(context)
+                                                    .primaryColor),
+                                          ),
+                                          onTap: () async {
+                                            setState(() {
+                                              _amountCollateral = available;
+                                              _amountCtrl.text =
+                                                  Fmt.bigIntToDouble(available,
+                                                          collateralDecimals)
+                                                      .toString();
+                                            });
+                                            _onAmount1Change(
+                                              availableView,
+                                              loan.type,
+                                              price,
+                                              collateralDecimals,
+                                              max: available,
+                                            );
+                                          },
+                                        )
+                                      : null,
                                 ),
                                 inputFormatters: [
                                   UI.decimalInputFormatter(collateralDecimals)
@@ -510,30 +516,34 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
                                   hintText: assetDic['amount'],
                                   labelText:
                                       '${assetDic['amount']}(${dic['loan.max']}: $maxToBorrowView)',
-                                  suffix: params.actionType == LoanAdjustPage.actionTypePayback ? GestureDetector(
-                                    child: Text(
-                                      dic['loan.max'],
-                                      style: TextStyle(
-                                          color:
-                                              Theme.of(context).primaryColor),
-                                    ),
-                                    onTap: () async {
-                                      double max = NumberFormat(",##0.00")
-                                          .parse(maxToBorrowView);
-                                      setState(() {
-                                        _amountDebit = maxToBorrow;
-                                        _amountCtrl2.text = max.toString();
-                                      });
-                                      _onAmount2Change(
-                                        maxToBorrowView,
-                                        loan.type,
-                                        stableCoinPrice,
-                                        stableCoinDecimals,
-                                        showCheckbox,
-                                        debits: maxToBorrow,
-                                      );
-                                    },
-                                  ):null,
+                                  suffix: params.actionType ==
+                                          LoanAdjustPage.actionTypePayback
+                                      ? GestureDetector(
+                                          child: Text(
+                                            dic['loan.max'],
+                                            style: TextStyle(
+                                                color: Theme.of(context)
+                                                    .primaryColor),
+                                          ),
+                                          onTap: () async {
+                                            double max = NumberFormat(",##0.00")
+                                                .parse(maxToBorrowView);
+                                            setState(() {
+                                              _amountDebit = maxToBorrow;
+                                              _amountCtrl2.text =
+                                                  max.toString();
+                                            });
+                                            _onAmount2Change(
+                                              maxToBorrowView,
+                                              loan.type,
+                                              stableCoinPrice,
+                                              stableCoinDecimals,
+                                              showCheckbox,
+                                              debits: maxToBorrow,
+                                            );
+                                          },
+                                        )
+                                      : null,
                                 ),
                                 inputFormatters: [
                                   UI.decimalInputFormatter(stableCoinDecimals)

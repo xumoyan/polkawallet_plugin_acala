@@ -16,8 +16,8 @@ StakingPoolInfoData _$StakingPoolInfoDataFromJson(Map<String, dynamic> json) {
         ?.toList()
     ..claimFeeRatio = (json['claimFeeRatio'] as num)?.toDouble()
     ..unbondingDuration = (json['unbondingDuration'] as num)?.toDouble()
-    ..communalFreeRatio = (json['communalFreeRatio'] as num)?.toDouble()
-    ..unbondingToFreeRatio = (json['unbondingToFreeRatio'] as num)?.toDouble()
+    ..freePool = (json['freePool'] as num)?.toDouble()
+    ..unbondingToFree = (json['unbondingToFree'] as num)?.toDouble()
     ..liquidTokenIssuance = json['liquidTokenIssuance'] as String
     ..defaultExchangeRate = (json['defaultExchangeRate'] as num)?.toDouble()
     ..maxClaimFee = (json['maxClaimFee'] as num)?.toDouble()
@@ -36,8 +36,8 @@ Map<String, dynamic> _$StakingPoolInfoDataToJson(
       'freeList': instance.freeList,
       'claimFeeRatio': instance.claimFeeRatio,
       'unbondingDuration': instance.unbondingDuration,
-      'communalFreeRatio': instance.communalFreeRatio,
-      'unbondingToFreeRatio': instance.unbondingToFreeRatio,
+      'freePool': instance.freePool,
+      'unbondingToFree': instance.unbondingToFree,
       'liquidTokenIssuance': instance.liquidTokenIssuance,
       'defaultExchangeRate': instance.defaultExchangeRate,
       'maxClaimFee': instance.maxClaimFee,

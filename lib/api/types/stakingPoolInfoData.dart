@@ -13,8 +13,8 @@ abstract class _StakingPoolInfoData {
   List<StakingPoolFreeItemData> freeList;
   double claimFeeRatio;
   double unbondingDuration;
-  double communalFreeRatio;
-  double unbondingToFreeRatio;
+  double freePool;
+  double unbondingToFree;
   String liquidTokenIssuance;
   double defaultExchangeRate;
   double maxClaimFee;

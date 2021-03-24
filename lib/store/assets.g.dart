@@ -72,11 +72,12 @@ mixin _$AssetsStore on _AssetsStore, Store {
   final _$_AssetsStoreActionController = ActionController(name: '_AssetsStore');
 
   @override
-  void setTokenBalanceMap(List<TokenBalanceData> list) {
+  void setTokenBalanceMap(List<TokenBalanceData> list, String pubKey,
+      {bool shouldCache = true}) {
     final _$actionInfo = _$_AssetsStoreActionController.startAction(
         name: '_AssetsStore.setTokenBalanceMap');
     try {
-      return super.setTokenBalanceMap(list);
+      return super.setTokenBalanceMap(list, pubKey, shouldCache: shouldCache);
     } finally {
       _$_AssetsStoreActionController.endAction(_$actionInfo);
     }

@@ -41,18 +41,28 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
   bool _withStake = false;
 
   Future<void> _refreshData() async {
+    final symbols = widget.plugin.networkState.tokenSymbol;
+    final decimals = widget.plugin.networkState.tokenDecimals;
+
     final String poolId = ModalRoute.of(context).settings.arguments;
+    final tokenPair = poolId.toUpperCase().split('-');
+
+    final token = tokenPair.firstWhere((e) => e != acala_stable_coin);
+    final stableCoinDecimals = decimals[symbols.indexOf(acala_stable_coin)];
+    final tokenDecimals = decimals[symbols.indexOf(token)];
+    final decimalsLeft = tokenPair[0] == acala_stable_coin
+        ? stableCoinDecimals
+        : tokenDecimals;
+    final decimalsRight = tokenPair[0] == acala_stable_coin
+        ? tokenDecimals
+        : stableCoinDecimals;
+
     await widget.plugin.service.earn.queryDexPoolInfo(poolId);
 
-    final output = await widget.plugin.api.swap.queryTokenSwapAmount(
-      '1',
-      null,
-      poolId.toUpperCase().split('-'),
-      '0.005',
-    );
+    final poolInfo = widget.plugin.store.earn.dexPoolInfoMap[poolId];
     if (mounted) {
       setState(() {
-        _price = output.amount;
+        _price = Fmt.bigIntToDouble(poolInfo.amountRight, decimalsRight) / Fmt.bigIntToDouble(poolInfo.amountLeft, decimalsLeft);
       });
       _timer = Timer(Duration(seconds: 10), () {
         if (mounted) {
@@ -194,9 +204,9 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
         double userShare = 0;
         double userShareNew = 0;
 
-        double amountToken = 0;
-        double amountStableCoin = 0;
-        double amountTokenUser = 0;
+        double amountLeft = 0;
+        double amountRight = 0;
+        double amountLeftUser = 0;
         BigInt balanceLeftUser = tokenPair[0] == 'ACA'
             ? Fmt.balanceInt(
                 widget.plugin.balances.native.freeBalance.toString())
@@ -211,17 +221,16 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
         if (poolInfo != null) {
           userShare = poolInfo.proportion;
 
-          amountToken = Fmt.bigIntToDouble(poolInfo.amountToken, tokenDecimals);
-          amountStableCoin =
-              Fmt.bigIntToDouble(poolInfo.amountStableCoin, stableCoinDecimals);
-          amountTokenUser = amountToken * userShare;
+          amountLeft = Fmt.bigIntToDouble(poolInfo.amountLeft, decimalsLeft);
+          amountRight = Fmt.bigIntToDouble(poolInfo.amountRight, decimalsRight);
+          amountLeftUser = amountLeft * userShare;
 
           String input = _amountLeftCtrl.text.trim();
           try {
             final double amountInput =
                 double.parse(input.isEmpty ? '0' : input);
             userShareNew =
-                (amountInput + amountTokenUser) / (amountInput + amountToken);
+                (amountInput + amountLeftUser) / (amountInput + amountLeft);
           } catch (_) {
             // parse double failed
           }
@@ -423,7 +432,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                             ),
                           ),
                           Text(
-                            '${Fmt.doubleFormat(amountToken)} ${tokenPair[0]}\n+ ${Fmt.doubleFormat(amountStableCoin)} ${tokenPair[1]}',
+                            '${Fmt.doubleFormat(amountLeft)} ${tokenPair[0]}\n+ ${Fmt.doubleFormat(amountRight)} ${tokenPair[1]}',
                             textAlign: TextAlign.right,
                           ),
                         ],

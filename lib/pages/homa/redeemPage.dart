@@ -197,9 +197,6 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
 
         final pool = widget.plugin.store.homa.stakingPoolInfo;
 
-        final availableNow = pool.communalTotal *
-            pool.communalFreeRatio *
-            pool.liquidExchangeRate;
         double available = 0;
         String eraSelectText = dic['homa.era'];
         String eraSelectTextTail = '';
@@ -277,7 +274,7 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
                                       } catch (err) {
                                         return dicAssets['amount.error'];
                                       }
-                                      if (amt >=
+                                      if (amt >
                                           Fmt.bigIntToDouble(
                                               balance, liquidDecimal)) {
                                         return dicAssets['amount.low'];
@@ -285,7 +282,7 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
                                       final input = double.parse(v.trim()) *
                                           pool.liquidExchangeRate;
                                       if (_radioSelect == 0 &&
-                                          input > availableNow) {
+                                          input > pool.freePool) {
                                         return dic['homa.pool.low'];
                                       }
                                       if (_radioSelect == 1 &&
@@ -408,7 +405,7 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
                               child: Text(dic['homa.now']),
                             ),
                             Text(
-                              '(${dic['homa.redeem.free']}: ${Fmt.priceFloor(availableNow)} $stakeSymbol)',
+                              '(${dic['homa.redeem.free']}: ${Fmt.priceFloor(pool.freePool)} $stakeSymbol)',
                               style: TextStyle(fontSize: 14),
                             ),
                           ],

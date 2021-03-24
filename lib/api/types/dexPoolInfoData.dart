@@ -8,8 +8,8 @@ class DexPoolInfoData extends _DexPoolInfoData {
   static DexPoolInfoData fromJson(Map<String, dynamic> json) {
     DexPoolInfoData data = DexPoolInfoData();
     data.token = json['token'];
-    data.amountToken = Fmt.balanceInt(json['pool'][0].toString());
-    data.amountStableCoin = Fmt.balanceInt(json['pool'][1].toString());
+    data.amountLeft = Fmt.balanceInt(json['pool'][0].toString());
+    data.amountRight = Fmt.balanceInt(json['pool'][1].toString());
     data.sharesTotal = Fmt.balanceInt(json['sharesTotal'].toString());
     data.shares = Fmt.balanceInt(json['shares'].toString());
     data.proportion = double.parse(json['proportion'].toString());
@@ -24,8 +24,8 @@ class DexPoolInfoData extends _DexPoolInfoData {
 
 abstract class _DexPoolInfoData {
   String token;
-  BigInt amountToken;
-  BigInt amountStableCoin;
+  BigInt amountLeft;
+  BigInt amountRight;
   BigInt sharesTotal;
   BigInt shares;
   LPRewardData reward;
@@ -41,7 +41,8 @@ class LPRewardData {
 
 @JsonSerializable()
 class DexPoolData extends _DexPoolData {
-  static DexPoolData fromJson(Map<String, dynamic> json) => _$DexPoolDataFromJson(json);
+  static DexPoolData fromJson(Map<String, dynamic> json) =>
+      _$DexPoolDataFromJson(json);
   Map<String, dynamic> toJson() => _$DexPoolDataToJson(this);
 }
 

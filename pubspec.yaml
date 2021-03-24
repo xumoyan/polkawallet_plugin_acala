@@ -68,6 +68,7 @@ flutter:
     - assets/images/tokens/LKSM.png
     - assets/images/tokens/RENBTC.png
     - assets/images/tokens/XBTC.png
+    - assets/images/tokens/POLKABTC.png
     - assets/images/tokens/PLM.png
     - assets/images/tokens/PHA.png
 

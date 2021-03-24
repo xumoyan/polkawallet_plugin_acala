@@ -187,9 +187,14 @@ class _EarnPageState extends State<EarnPage> {
     final symbols = widget.plugin.networkState.tokenSymbol;
     final decimals = widget.plugin.networkState.tokenDecimals;
     final pair = _tab.toUpperCase().split('-');
-    final token = pair.firstWhere((e) => e != 'AUSD');
-    final stableCoinDecimals = decimals[symbols.indexOf('AUSD')];
-    final tokenDecimals = decimals[symbols.indexOf(token)];
+    final stableCoinIndex = pair.indexOf(acala_stable_coin);
+    final stableCoinDecimals = decimals[symbols.indexOf(acala_stable_coin)];
+    final tokenDecimals =
+        decimals[symbols.indexOf(stableCoinIndex == 0 ? pair[1] : pair[0])];
+    final leftDecimal =
+        stableCoinIndex == 0 ? stableCoinDecimals : tokenDecimals;
+    final rightDecimal =
+        stableCoinIndex == 0 ? tokenDecimals : stableCoinDecimals;
     final shareDecimals = stableCoinDecimals >= tokenDecimals
         ? stableCoinDecimals
         : tokenDecimals;
@@ -227,11 +232,11 @@ class _EarnPageState extends State<EarnPage> {
             poolShare = share / issuance;
 
             final lpAmount =
-                Fmt.bigIntToDouble(poolInfo.amountToken, tokenDecimals) *
+                Fmt.bigIntToDouble(poolInfo.amountLeft, leftDecimal) *
                     poolShare;
-            final lpAmount2 = Fmt.bigIntToDouble(
-                    poolInfo.amountStableCoin, stableCoinDecimals) *
-                poolShare;
+            final lpAmount2 =
+                Fmt.bigIntToDouble(poolInfo.amountRight, rightDecimal) *
+                    poolShare;
             final pair = _tab.split('-');
             lpAmountString =
                 '${Fmt.priceFloor(lpAmount)} ${PluginFmt.tokenView(pair[0])} + ${Fmt.priceFloor(lpAmount2, lengthFixed: 4)} ${PluginFmt.tokenView(pair[1])}';
