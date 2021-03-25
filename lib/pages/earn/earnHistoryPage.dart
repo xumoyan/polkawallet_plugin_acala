@@ -75,12 +75,10 @@ class EarnHistoryPage extends StatelessWidget {
                         '${Fmt.priceFloorBigInt(detail.amountShare, shareDecimals, lengthFixed: 0)} ${PluginFmt.tokenView(poolId)}';
                     break;
                   case TxDexLiquidityData.actionRewardIncentive:
-                    amount =
-                        '${Fmt.priceCeilBigInt(detail.amountLeft, decimals[symbols.indexOf('ACA')])} ACA';
+                    amount = '${detail.amountReward} ACA';
                     break;
                   case TxDexLiquidityData.actionRewardSaving:
-                    amount =
-                        '${Fmt.priceCeilBigInt(detail.amountRight, stableCoinDecimals)} $acala_stable_coin_view';
+                    amount = '${detail.amountReward} $acala_stable_coin_view';
                     break;
                   case TxDexLiquidityData.actionStake:
                     amount =

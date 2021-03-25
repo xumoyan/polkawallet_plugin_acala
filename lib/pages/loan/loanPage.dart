@@ -76,6 +76,7 @@ class _LoanPageState extends State<LoanPage> {
 
         final Color cardColor = Theme.of(context).cardColor;
         final Color primaryColor = Theme.of(context).primaryColor;
+
         return Scaffold(
           backgroundColor: Theme.of(context).cardColor,
           appBar: AppBar(

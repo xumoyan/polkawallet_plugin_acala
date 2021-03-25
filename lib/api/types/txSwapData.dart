@@ -14,10 +14,12 @@ class TxSwapData extends _TxSwapData {
     data.tokenReceive = tokenPair[1];
     data.amountPay = Fmt.priceCeilBigInt(
         Fmt.balanceInt(json['params'][isExactInput ? 1 : 2]),
-        tokenPair[0]['decimal']);
+        tokenPair[0]['decimal'],
+        lengthMax: 4);
     data.amountReceive = Fmt.priceFloorBigInt(
         Fmt.balanceInt(json['params'][isExactInput ? 2 : 1]),
-        tokenPair[1]['decimal']);
+        tokenPair[1]['decimal'],
+        lengthMax: 4);
     data.time = DateTime.fromMillisecondsSinceEpoch(json['time']);
     return data;
   }

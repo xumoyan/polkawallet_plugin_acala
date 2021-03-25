@@ -73,7 +73,6 @@ class _EarnPageState extends State<EarnPage> {
   }
 
   Future<void> _onWithdrawReward(LPRewardData reward) async {
-    final decimals = widget.plugin.networkState.tokenDecimals[0];
     final symbol = widget.plugin.networkState.tokenSymbol[0];
     final incentiveReward = Fmt.priceFloor(reward.incentive, lengthFixed: 4);
     final savingReward = Fmt.priceFloor(reward.saving, lengthFixed: 4);

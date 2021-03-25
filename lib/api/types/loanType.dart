@@ -44,7 +44,7 @@ class LoanType extends _LoanType {
   }
 
   double calcCollateralRatio(BigInt debitInUSD, BigInt collateralInUSD) {
-    if (debitInUSD < minimumDebitValue) {
+    if (debitInUSD + BigInt.two < minimumDebitValue) {
       return double.minPositive;
     }
     return collateralInUSD / debitInUSD;

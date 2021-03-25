@@ -21,10 +21,10 @@ class TxDexLiquidityData extends _TxDexLiquidityData {
         data.amountShare = Fmt.balanceInt(json['params'][1]);
         break;
       case actionRewardIncentive:
-        data.amountLeft = Fmt.balanceInt(json['params'][1]);
+        data.amountReward = json['params'][1];
         break;
       case actionRewardSaving:
-        data.amountRight = Fmt.balanceInt(json['params'][2]);
+        data.amountReward = json['params'][2];
         break;
       case actionStake:
       case actionUnStake:
@@ -40,6 +40,7 @@ abstract class _TxDexLiquidityData {
   String hash;
   String currencyId;
   String action;
+  String amountReward;
   BigInt amountLeft;
   BigInt amountRight;
   BigInt amountShare;
