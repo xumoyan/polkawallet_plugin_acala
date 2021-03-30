@@ -39,7 +39,9 @@ class _SwapPageState extends State<SwapPage> {
   final TextEditingController _amountReceiveCtrl = new TextEditingController();
   final TextEditingController _amountSlippageCtrl = new TextEditingController();
 
-  final FocusNode _slippageFocusNode = FocusNode();
+  final _payFocusNode = FocusNode();
+  final _receiveFocusNode = FocusNode();
+  final _slippageFocusNode = FocusNode();
 
   double _slippage = 0.005;
   String _slippageError;
@@ -59,8 +61,15 @@ class _SwapPageState extends State<SwapPage> {
       _swapPair = [_swapPair[1], _swapPair[0]];
       _amountPayCtrl.text = _amountReceiveCtrl.text;
       _amountReceiveCtrl.text = pay;
-      _swapMode = _swapMode == 0 ? 1: 0;
+      _swapMode = _swapMode == 0 ? 1 : 0;
     });
+    if (_payFocusNode.hasFocus) {
+      _payFocusNode.unfocus();
+      _receiveFocusNode.requestFocus();
+    } else if (_receiveFocusNode.hasFocus) {
+      _receiveFocusNode.unfocus();
+      _payFocusNode.requestFocus();
+    }
     await _updateSwapAmount();
   }
 
@@ -332,6 +341,9 @@ class _SwapPageState extends State<SwapPage> {
               : _swapOutput.amount * (1 + _slippage);
         }
 
+        final showExchangeRate = _amountPayCtrl.text.isNotEmpty &&
+            _amountReceiveCtrl.text.isNotEmpty;
+
         final primary = Theme.of(context).primaryColor;
         final grey = Theme.of(context).unselectedWidgetColor;
 
@@ -373,6 +385,7 @@ class _SwapPageState extends State<SwapPage> {
                                           onTap: () => _selectCurrencyPay(),
                                         ),
                                         TextFormField(
+                                          focusNode: _payFocusNode,
                                           decoration: InputDecoration(
                                             hintText: dic['dex.pay'],
                                             labelText: dic['dex.pay'],
@@ -459,6 +472,7 @@ class _SwapPageState extends State<SwapPage> {
                                           onTap: () => _selectCurrencyReceive(),
                                         ),
                                         TextFormField(
+                                          focusNode: _receiveFocusNode,
                                           decoration: InputDecoration(
                                             hintText: dic['dex.receive'],
                                             labelText: dic['dex.receive'],
@@ -510,41 +524,47 @@ class _SwapPageState extends State<SwapPage> {
                                 ],
                               ),
                             ),
-                            Divider(),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: <Widget>[
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: <Widget>[
-                                    Text(
-                                      dic['dex.rate'],
-                                      style: TextStyle(
-                                          color: Theme.of(context)
-                                              .unselectedWidgetColor),
-                                    ),
-                                    Text(
-                                        '1 ${PluginFmt.tokenView(_swapPair[0])} = ${_swapRatio.toStringAsFixed(6)} ${PluginFmt.tokenView(_swapPair[1])}'),
-                                  ],
-                                ),
-                                GestureDetector(
-                                  child: Container(
-                                    child: Column(
-                                      children: <Widget>[
-                                        Icon(Icons.history, color: primary),
-                                        Text(
-                                          dic['loan.txs'],
-                                          style: TextStyle(
-                                              color: primary, fontSize: 14),
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                  onTap: () => Navigator.of(context)
-                                      .pushNamed(SwapHistoryPage.route),
-                                ),
-                              ],
-                            ),
+                            showExchangeRate ? Divider() : Container(),
+                            showExchangeRate
+                                ? Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: <Widget>[
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: <Widget>[
+                                          Text(
+                                            dic['dex.rate'],
+                                            style: TextStyle(
+                                                color: Theme.of(context)
+                                                    .unselectedWidgetColor),
+                                          ),
+                                          Text(
+                                              '1 ${PluginFmt.tokenView(_swapPair[0])} = ${_swapRatio.toStringAsFixed(6)} ${PluginFmt.tokenView(_swapPair[1])}'),
+                                        ],
+                                      ),
+                                      GestureDetector(
+                                        child: Container(
+                                          child: Column(
+                                            children: <Widget>[
+                                              Icon(Icons.history,
+                                                  color: primary),
+                                              Text(
+                                                dic['loan.txs'],
+                                                style: TextStyle(
+                                                    color: primary,
+                                                    fontSize: 14),
+                                              )
+                                            ],
+                                          ),
+                                        ),
+                                        onTap: () => Navigator.of(context)
+                                            .pushNamed(SwapHistoryPage.route),
+                                      ),
+                                    ],
+                                  )
+                                : Container(),
                             (_swapOutput.path?.length ?? 0) > 2
                                 ? Column(
                                     crossAxisAlignment:
