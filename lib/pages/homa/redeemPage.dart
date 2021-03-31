@@ -205,11 +205,14 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
           available = item.free * pool.liquidExchangeRate;
           eraSelectText += ': ${item.era}';
           eraSelectTextTail =
-              '(≈ ${(item.era - pool.currentEra).toInt()}${dic['homa.redeem.day']}, ${dicAssets['amount.available']}: ${Fmt.priceFloor(pool.freeList[_eraSelected].free, lengthMax: 4)} $stakeSymbol)';
+              '(≈ ${(item.era - pool.currentEra).toInt()}${dic['homa.redeem.day']}, ${dicAssets['amount.available']}: ${Fmt.priceFloor(pool.freeList[_eraSelected].free)} $stakeSymbol)';
         }
 
         final primary = Theme.of(context).primaryColor;
         final grey = Theme.of(context).unselectedWidgetColor;
+
+        final textStyleGray = TextStyle(fontSize: 13, color: grey);
+        final textStyle = TextStyle(fontSize: 13);
 
         return Scaffold(
           appBar: AppBar(title: Text(dic['homa.redeem']), centerTitle: true),
@@ -387,8 +390,10 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: <Widget>[
-                            Text('${dic['homa.redeem.fee']}:'),
-                            Text('(≈ ${Fmt.doubleFormat(_fee)} $stakeSymbol)'),
+                            Text('${dic['homa.redeem.fee']}:',
+                                style: textStyle),
+                            Text('(≈ ${Fmt.doubleFormat(_fee)} $stakeSymbol)',
+                                style: textStyle),
                           ],
                         ),
                       ),
@@ -402,11 +407,11 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
                               onChanged: (v) => _onRadioChange(v),
                             ),
                             Expanded(
-                              child: Text(dic['homa.now']),
+                              child: Text(dic['homa.now'], style: textStyle),
                             ),
                             Text(
                               '(${dic['homa.redeem.free']}: ${Fmt.priceFloor(pool.freePool)} $stakeSymbol)',
-                              style: TextStyle(fontSize: 14),
+                              style: textStyle,
                             ),
                           ],
                         ),
@@ -424,15 +429,15 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
                               child: Text(
                                 eraSelectText,
                                 style: pool.freeList.length == 0
-                                    ? TextStyle(color: grey)
-                                    : null,
+                                    ? textStyleGray
+                                    : textStyle,
                               ),
                             ),
                             Text(
                               eraSelectTextTail,
                               style: pool.freeList.length == 0
-                                  ? TextStyle(color: grey)
-                                  : null,
+                                  ? textStyleGray
+                                  : textStyle,
                             ),
                           ],
                         ),
@@ -447,11 +452,11 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
                               onChanged: (v) => _onRadioChange(v),
                             ),
                             Expanded(
-                              child: Text(dic['homa.unbond']),
+                              child: Text(dic['homa.unbond'], style: textStyle),
                             ),
                             Text(
                               '(${pool.bondingDuration.toInt() + 1} Era ≈ ${(pool.unbondingDuration / 1000 ~/ SECONDS_OF_DAY) + 1} ${dic['homa.redeem.day']})',
-                              style: TextStyle(fontSize: 14),
+                              style: textStyle,
                             ),
                           ],
                         ),

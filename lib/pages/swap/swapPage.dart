@@ -437,7 +437,8 @@ class _SwapPageState extends State<SwapPage> {
                                             '${dicAssets['balance']}: ${Fmt.token(balance, pairDecimals[0])} ${PluginFmt.tokenView(_swapPair[0])}',
                                             style: TextStyle(
                                                 color: Theme.of(context)
-                                                    .unselectedWidgetColor),
+                                                    .unselectedWidgetColor,
+                                                fontSize: 14),
                                           ),
                                         ),
                                       ],
@@ -578,15 +579,16 @@ class _SwapPageState extends State<SwapPage> {
                                       Row(
                                         children: _swapOutput.path.map((e) {
                                           return CurrencyWithIcon(
-                                            e['symbol'],
+                                            PluginFmt.tokenView(e['symbol']),
                                             TokenIcon(
                                               e['symbol'],
                                               widget.plugin.tokenIcons,
                                               small: true,
                                             ),
-                                            textStyle: Theme.of(context)
-                                                .textTheme
-                                                .headline4,
+                                            textStyle: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                                color: grey),
                                             trailing: e ==
                                                     _swapOutput.path[_swapOutput
                                                             .path.length -
@@ -594,10 +596,10 @@ class _SwapPageState extends State<SwapPage> {
                                                 ? null
                                                 : Padding(
                                                     padding: EdgeInsets.only(
-                                                        left: 8, right: 8),
+                                                        left: 4, right: 4),
                                                     child: Icon(
                                                         Icons.arrow_forward_ios,
-                                                        size: 16),
+                                                        size: 14),
                                                   ),
                                           );
                                         }).toList(),
