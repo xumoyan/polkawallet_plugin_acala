@@ -13,6 +13,12 @@ class NFTPage extends StatelessWidget {
 
   static const String route = '/acala/nft';
 
+  final _images = {
+    'Acala Old Friend': 'https://acala.subdao.com/nft/mandala-old-friends.jpeg',
+    'Karura Crowdloan Waitlist Prize':
+        'https://acala.subdao.com/nft/karura-waitlist-1th-100th.jpg',
+  };
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -35,7 +41,7 @@ class NFTPage extends StatelessWidget {
                     child: Column(
                       children: [
                         Image.network(
-                            'https://ipfs.io/${list[i].image?.substring(7)}'),
+                            '${_images[list[i].name]}?imageView/0/w/600'),
                         Padding(
                           padding: EdgeInsets.all(24),
                           child: Row(

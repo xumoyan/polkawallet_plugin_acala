@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:polkawallet_plugin_acala/api/types/txHomaData.dart';
 import 'package:polkawallet_plugin_acala/pages/homa/homaHistoryPage.dart';
@@ -77,8 +78,7 @@ class _MintPageState extends State<MintPage> {
         res['amountPay'] = pay;
         res['amountReceive'] = receive;
         res['params'] = params;
-        widget.plugin.store.homa
-            .addHomaTx(res, widget.keyring.current.pubKey);
+        widget.plugin.store.homa.addHomaTx(res, widget.keyring.current.pubKey);
         Navigator.of(context).pushNamed(HomaHistoryPage.route);
       }
     }
@@ -168,8 +168,7 @@ class _MintPageState extends State<MintPage> {
                                       ),
                                     ),
                                     inputFormatters: [
-                                      UI.decimalInputFormatter(
-                                          stakeDecimal)
+                                      UI.decimalInputFormatter(stakeDecimal)
                                     ],
                                     controller: _amountPayCtrl,
                                     keyboardType:
@@ -216,7 +215,8 @@ class _MintPageState extends State<MintPage> {
                                 children: <Widget>[
                                   CurrencyWithIcon(
                                     liquidToken,
-                                    TokenIcon(liquidToken, widget.plugin.tokenIcons),
+                                    TokenIcon(
+                                        liquidToken, widget.plugin.tokenIcons),
                                     textStyle:
                                         Theme.of(context).textTheme.headline4,
                                   ),
