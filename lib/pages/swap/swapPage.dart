@@ -348,7 +348,17 @@ class _SwapPageState extends State<SwapPage> {
         final grey = Theme.of(context).unselectedWidgetColor;
 
         return Scaffold(
-          appBar: AppBar(title: Text(dic['dex.title']), centerTitle: true),
+          appBar: AppBar(
+            title: Text(dic['dex.title']),
+            centerTitle: true,
+            actions: [
+              IconButton(
+                icon: Icon(Icons.history),
+                onPressed: () =>
+                    Navigator.of(context).pushNamed(SwapHistoryPage.route),
+              )
+            ],
+          ),
           body: SafeArea(
             child: ListView(
               padding: EdgeInsets.fromLTRB(8, 16, 8, 16),
@@ -527,42 +537,18 @@ class _SwapPageState extends State<SwapPage> {
                             ),
                             showExchangeRate ? Divider() : Container(),
                             showExchangeRate
-                                ? Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                ? Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: <Widget>[
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: <Widget>[
-                                          Text(
-                                            dic['dex.rate'],
-                                            style: TextStyle(
-                                                color: Theme.of(context)
-                                                    .unselectedWidgetColor),
-                                          ),
-                                          Text(
-                                              '1 ${PluginFmt.tokenView(_swapPair[0])} = ${_swapRatio.toStringAsFixed(6)} ${PluginFmt.tokenView(_swapPair[1])}'),
-                                        ],
+                                      Text(
+                                        dic['dex.rate'],
+                                        style: TextStyle(
+                                            color: Theme.of(context)
+                                                .unselectedWidgetColor),
                                       ),
-                                      GestureDetector(
-                                        child: Container(
-                                          child: Column(
-                                            children: <Widget>[
-                                              Icon(Icons.history,
-                                                  color: primary),
-                                              Text(
-                                                dic['loan.txs'],
-                                                style: TextStyle(
-                                                    color: primary,
-                                                    fontSize: 14),
-                                              )
-                                            ],
-                                          ),
-                                        ),
-                                        onTap: () => Navigator.of(context)
-                                            .pushNamed(SwapHistoryPage.route),
-                                      ),
+                                      Text(
+                                          '1 ${PluginFmt.tokenView(_swapPair[0])} = ${_swapRatio.toStringAsFixed(6)} ${PluginFmt.tokenView(_swapPair[1])}'),
                                     ],
                                   )
                                 : Container(),

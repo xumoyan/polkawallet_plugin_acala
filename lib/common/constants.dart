@@ -8,15 +8,10 @@ const node_list = [
     'endpoint': 'wss://mandala6.laminar.codes',
   },
   {
-    'name': 'Mandala TC5 Node 1 (Hosted by OnFinality)',
+    'name': 'Mandala TC6 Node 1 (Hosted by OnFinality)',
     'ss58': 42,
     'endpoint': 'wss://node-6775973502614921216.rz.onfinality.io/ws',
   },
-  // {
-  //   'name': 'Mandala TC5 Node 2 (Hosted by OnFinality)',
-  //   'ss58': 42,
-  //   'endpoint': 'wss://node-6714447553211260928.rz.onfinality.io/ws',
-  // },
 ];
 
 const acala_plugin_cache_key = 'plugin_acala';

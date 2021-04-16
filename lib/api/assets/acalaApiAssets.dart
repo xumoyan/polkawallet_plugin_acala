@@ -67,10 +67,14 @@ class AcalaApiAssets {
     final ls = await service.queryAirdropTokens(address);
     if (ls['tokens'] != null) {
       List.of(ls['tokens']).asMap().forEach((i, v) {
+        int decimal = decimalsAll[symbolAll.indexOf(v)];
+        if (v == 'ACA') {
+          decimal = 12;
+        }
         res.add(TokenBalanceData(
             name: 'pre$v',
             symbol: v,
-            decimals: decimalsAll[symbolAll.indexOf(v)],
+            decimals: decimal,
             amount: ls['amount'][i].toString()));
       });
     }

@@ -1,5 +1,5 @@
 const Map<String, String> zhDex = {
-  'acala': 'Acala 稳定币平台',
+  'acala': 'Acala Defi 中心',
   'airdrop': '空投',
   'transfer': '转账',
   'receive': '收款',
