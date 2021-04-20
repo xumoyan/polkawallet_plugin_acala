@@ -1,5 +1,4 @@
 import { ApiPromise } from "@polkadot/api";
-import { SubstrateNetworkKeys } from "../constants/networkSpect";
 
 /**
  * subscribe messages of network state.
@@ -32,11 +31,5 @@ export async function getNetworkConst(api: ApiPromise) {
  */
 export async function getNetworkProperties(api: ApiPromise) {
   const chainProperties = await api.rpc.system.properties();
-  return api.genesisHash.toHuman() == SubstrateNetworkKeys.POLKADOT
-    ? api.registry.createType("ChainProperties", {
-        ...chainProperties,
-        tokenDecimals: [10],
-        tokenSymbol: ["DOT"],
-      })
-    : chainProperties;
+  return { ...chainProperties.toJSON(), genesisHash: api.genesisHash };
 }

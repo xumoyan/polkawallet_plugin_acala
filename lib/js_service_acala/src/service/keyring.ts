@@ -3,7 +3,8 @@ import { hexToU8a, u8aToHex, isHex, stringToU8a } from "@polkadot/util";
 import BN from "bn.js";
 import { parseQrCode, getSigner, makeTx, getSubmittable } from "../utils/QrSigner";
 import metaDataMap from "../constants/networkMetadata";
-import { TypeRegistry, Metadata } from "@polkadot/types";
+import { TypeRegistry } from "@polkadot/types";
+import { Metadata } from "@polkadot/metadata";
 
 import { Keyring } from "@polkadot/keyring";
 import { KeypairType } from "@polkadot/util-crypto/types";

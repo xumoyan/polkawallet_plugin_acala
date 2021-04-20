@@ -37,6 +37,7 @@ import 'package:polkawallet_sdk/plugin/index.dart';
 import 'package:polkawallet_sdk/plugin/store/balances.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_sdk/storage/types/keyPairData.dart';
+import 'package:polkawallet_ui/components/tokenIcon.dart';
 import 'package:polkawallet_ui/pages/accountQrCodePage.dart';
 import 'package:polkawallet_ui/pages/txConfirmPage.dart';
 
@@ -44,6 +45,7 @@ class PluginAcala extends PolkawalletPlugin {
   @override
   final basic = PluginBasicData(
     name: 'acala-tc6',
+    genesisHash: acala_genesis_hash,
     ss58: 42,
     primaryColor: Colors.indigo,
     gradientColor: Color(0xFF4B68F9),

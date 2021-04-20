@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:polkawallet_plugin_acala/pages/currencySelectPage.dart';
-import 'package:polkawallet_plugin_acala/pages/loan/loanPage.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
@@ -14,6 +13,7 @@ import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_ui/components/addressInputField.dart';
 import 'package:polkawallet_ui/components/currencyWithIcon.dart';
 import 'package:polkawallet_ui/components/roundedButton.dart';
+import 'package:polkawallet_ui/components/tokenIcon.dart';
 import 'package:polkawallet_ui/components/txButton.dart';
 import 'package:polkawallet_ui/pages/scanPage.dart';
 import 'package:polkawallet_sdk/storage/types/keyPairData.dart';
@@ -67,7 +67,10 @@ class _TransferPageState extends State<TransferPage> {
         _accountTo.address,
         // params.currencyId
         _token.contains('-')
-            ? {'DEXShare': _token.toUpperCase().split('-'), 'decimals': decimals}
+            ? {
+                'DEXShare': _token.toUpperCase().split('-'),
+                'decimals': decimals
+              }
             : {'Token': _token.toUpperCase(), 'decimals': decimals},
         // params.amount
         Fmt.tokenInt(_amountCtrl.text.trim(), decimals).toString(),

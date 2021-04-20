@@ -16,6 +16,8 @@ const node_list = [
 
 const acala_plugin_cache_key = 'plugin_acala';
 
+const acala_genesis_hash =
+    '0x5fad1818cb637f0737771f27db0c28e7f669305ea71d84299291370d6723809c';
 const acala_price_decimals = 18;
 const acala_stable_coin = 'AUSD';
 const acala_stable_coin_view = 'aUSD';
