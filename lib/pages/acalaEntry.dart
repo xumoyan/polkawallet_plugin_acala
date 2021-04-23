@@ -137,10 +137,10 @@ class _AcalaEntryState extends State<AcalaEntry> {
                     padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
                     children: <Widget>[
                       Container(
-                        height: 56,
-                        margin: EdgeInsets.only(bottom: 24),
+                        height: 68,
+                        margin: EdgeInsets.only(bottom: 16),
                         child: SvgPicture.asset(
-                            'packages/polkawallet_plugin_acala/assets/images/logo.svg'),
+                            'packages/polkawallet_plugin_acala/assets/images/logo1.svg'),
                       ),
                       Padding(
                         padding: EdgeInsets.only(bottom: 16),
@@ -150,8 +150,9 @@ class _AcalaEntryState extends State<AcalaEntry> {
                             dic['loan.brief'],
                             SvgPicture.asset(
                               'packages/polkawallet_plugin_acala/assets/images/loan.svg',
-                              height: 56,
+                              height: 88,
                             ),
+                            color: Colors.transparent,
                           ),
                           onTap: () =>
                               Navigator.of(context).pushNamed(LoanPage.route),
@@ -164,9 +165,10 @@ class _AcalaEntryState extends State<AcalaEntry> {
                             dic['dex.title'],
                             dic['dex.brief'],
                             SvgPicture.asset(
-                              'packages/polkawallet_plugin_acala/assets/images/exchange.svg',
-                              height: 56,
+                              'packages/polkawallet_plugin_acala/assets/images/swap.svg',
+                              height: 88,
                             ),
+                            color: Colors.transparent,
                           ),
                           onTap: () =>
                               Navigator.of(context).pushNamed(SwapPage.route),
@@ -180,8 +182,9 @@ class _AcalaEntryState extends State<AcalaEntry> {
                             dic['earn.brief'],
                             SvgPicture.asset(
                               'packages/polkawallet_plugin_acala/assets/images/deposit.svg',
-                              height: 56,
+                              height: 88,
                             ),
+                            color: Colors.transparent,
                           ),
                           onTap: () =>
                               Navigator.of(context).pushNamed(EarnPage.route),
@@ -193,10 +196,11 @@ class _AcalaEntryState extends State<AcalaEntry> {
                           child: EntryPageCard(
                             dic['homa.title'],
                             dic['homa.brief'],
-                            SvgPicture.asset(
-                              'packages/polkawallet_plugin_acala/assets/images/swap.svg',
-                              height: 56,
+                            Image.asset(
+                              'packages/polkawallet_plugin_acala/assets/images/liquid_dot.png',
+                              height: 88,
                             ),
+                            color: Colors.transparent,
                           ),
                           onTap: () =>
                               Navigator.of(context).pushNamed(HomaPage.route),
@@ -213,9 +217,9 @@ class _AcalaEntryState extends State<AcalaEntry> {
                                       dic['$e.brief'],
                                       SvgPicture.asset(
                                         'packages/polkawallet_plugin_acala/assets/images/$e.svg',
-                                        color: Colors.white,
-                                        height: 56,
+                                        height: 88,
                                       ),
+                                      color: Colors.transparent,
                                     ),
                                     onTap: () => Navigator.of(context)
                                         .pushNamed(_liveModuleRoutes[e]),

@@ -51,10 +51,13 @@ class PluginAcala extends PolkawalletPlugin {
     gradientColor: Color(0xFF4B68F9),
     backgroundImage:
         AssetImage('packages/polkawallet_plugin_acala/assets/images/bg.png'),
-    icon:
-        Image.asset('packages/polkawallet_plugin_acala/assets/images/logo.png'),
-    iconDisabled: Image.asset(
-        'packages/polkawallet_plugin_acala/assets/images/logo_gray.png'),
+    icon: SvgPicture.asset(
+        'packages/polkawallet_plugin_acala/assets/images/logo.svg'),
+    iconDisabled: SvgPicture.asset(
+      'packages/polkawallet_plugin_acala/assets/images/logo.svg',
+      color: Color(0xFF9E9E9E),
+      width: 24,
+    ),
     jsCodeVersion: 20101,
   );
 
