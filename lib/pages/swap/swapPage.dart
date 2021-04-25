@@ -5,11 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:polkawallet_plugin_acala/api/types/swapOutputData.dart';
 import 'package:polkawallet_plugin_acala/common/constants.dart';
-import 'package:polkawallet_plugin_acala/pages/currencySelectPage.dart';
+import 'package:polkawallet_plugin_acala/pages/swap/swapTokenInput.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/swapHistoryPage.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
+import 'package:polkawallet_sdk/plugin/store/balances.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
 import 'package:polkawallet_ui/components/currencyWithIcon.dart';
@@ -34,7 +35,6 @@ class SwapPage extends StatefulWidget {
 }
 
 class _SwapPageState extends State<SwapPage> {
-  final _formKey = GlobalKey<FormState>();
   final TextEditingController _amountPayCtrl = new TextEditingController();
   final TextEditingController _amountReceiveCtrl = new TextEditingController();
   final TextEditingController _amountSlippageCtrl = new TextEditingController();
@@ -43,6 +43,7 @@ class _SwapPageState extends State<SwapPage> {
   final _receiveFocusNode = FocusNode();
   final _slippageFocusNode = FocusNode();
 
+  String _error;
   double _slippage = 0.005;
   String _slippageError;
   List<String> _swapPair = [];
@@ -80,30 +81,40 @@ class _SwapPageState extends State<SwapPage> {
     return tokens;
   }
 
-  Future<void> _selectCurrencyPay() async {
-    final currencyOptions = _getSwapTokens();
-    currencyOptions.retainWhere((i) => i != _swapPair[0] && i != _swapPair[1]);
-    var selected = await Navigator.of(context)
-        .pushNamed(CurrencySelectPage.route, arguments: currencyOptions);
-    if (selected != null) {
-      setState(() {
-        _swapPair = [selected, _swapPair[1]];
-      });
-      await _updateSwapAmount();
+  bool _onCheckBalance() {
+    final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
+    final v = _amountPayCtrl.text.trim();
+    TokenBalanceData balance;
+    if (_swapPair.length > 0) {
+      if (_swapPair[0] == 'ACA') {
+        balance = TokenBalanceData(
+            symbol: _swapPair[0],
+            decimals: widget.plugin.networkState.tokenDecimals[0],
+            amount:
+                (widget.plugin.balances.native?.freeBalance ?? 0).toString());
+      } else if (_getSwapTokens().length > 0) {
+        balance = widget
+            .plugin.store.assets.tokenBalanceMap[_swapPair[0].toUpperCase()];
+      }
     }
-  }
 
-  Future<void> _selectCurrencyReceive() async {
-    final currencyOptions = _getSwapTokens();
-    currencyOptions.retainWhere((i) => i != _swapPair[0] && i != _swapPair[1]);
-    var selected = await Navigator.of(context)
-        .pushNamed(CurrencySelectPage.route, arguments: currencyOptions);
-    if (selected != null) {
-      setState(() {
-        _swapPair = [_swapPair[0], selected];
-      });
-      await _updateSwapAmount();
+    String error;
+    try {
+      if (v.isEmpty || double.parse(v) == 0) {
+        error = dic['amount.error'];
+      }
+    } catch (err) {
+      error = dic['amount.error'];
     }
+    if (double.parse(v.trim()) >
+        Fmt.bigIntToDouble(
+            Fmt.balanceInt(balance?.amount ?? '0'), balance.decimals)) {
+      error = dic['amount.low'];
+    }
+    setState(() {
+      _error = error;
+    });
+    return error == null;
   }
 
   void _onSupplyAmountChange(String v) {
@@ -178,7 +189,7 @@ class _SwapPageState extends State<SwapPage> {
         _swapOutput = output;
       });
       if (!init && target.isNotEmpty) {
-        _formKey.currentState.validate();
+        _onCheckBalance();
       }
     } else if (target == null) {
       final output = await widget.plugin.api.swap.queryTokenSwapAmount(
@@ -197,7 +208,7 @@ class _SwapPageState extends State<SwapPage> {
         _swapOutput = output;
       });
       if (!init && supply.isNotEmpty) {
-        _formKey.currentState.validate();
+        _onCheckBalance();
       }
     }
   }
@@ -241,7 +252,7 @@ class _SwapPageState extends State<SwapPage> {
   }
 
   Future<void> _onSubmit(List<int> pairDecimals, double minMax) async {
-    if (_formKey.currentState.validate()) {
+    if (_onCheckBalance()) {
       final pay = _amountPayCtrl.text.trim();
       final receive = _amountReceiveCtrl.text.trim();
       final params = [
@@ -312,26 +323,46 @@ class _SwapPageState extends State<SwapPage> {
     return Observer(
       builder: (BuildContext context) {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
-        final dicAssets =
-            I18n.of(context).getDic(i18n_full_dic_acala, 'common');
         final symbols = widget.plugin.networkState.tokenSymbol;
         final decimals = widget.plugin.networkState.tokenDecimals;
+
         final pairDecimals = [8, 8];
+        final currencyOptions = _getSwapTokens();
         if (_swapPair.length > 0) {
           pairDecimals
               .replaceRange(0, 1, [decimals[symbols.indexOf(_swapPair[0])]]);
           pairDecimals
               .replaceRange(1, 2, [decimals[symbols.indexOf(_swapPair[1])]]);
+
+          currencyOptions
+              .retainWhere((i) => i != _swapPair[0] && i != _swapPair[1]);
         }
 
-        BigInt balance = BigInt.zero;
-        if (_swapPair.length > 0 && _swapPair[0] == 'ACA') {
-          balance = Fmt.balanceInt(
-              (widget.plugin.balances.native?.freeBalance ?? 0).toString());
-        } else if (_getSwapTokens().length > 0 && _swapPair.length > 0) {
-          balance = Fmt.balanceInt(widget.plugin.store.assets
-                  .tokenBalanceMap[_swapPair[0].toUpperCase()]?.amount ??
-              '0');
+        TokenBalanceData payBalance;
+        TokenBalanceData receiveBalance;
+        if (_swapPair.length > 0) {
+          if (_swapPair[0] == 'ACA') {
+            payBalance = TokenBalanceData(
+                symbol: _swapPair[0],
+                decimals: widget.plugin.networkState.tokenDecimals[0],
+                amount: (widget.plugin.balances.native?.freeBalance ?? 0)
+                    .toString());
+            receiveBalance = widget.plugin.store.assets
+                .tokenBalanceMap[_swapPair[1].toUpperCase()];
+          } else if (_swapPair[1] == 'ACA') {
+            receiveBalance = TokenBalanceData(
+                symbol: _swapPair[1],
+                decimals: widget.plugin.networkState.tokenDecimals[0],
+                amount: (widget.plugin.balances.native?.freeBalance ?? 0)
+                    .toString());
+            payBalance = widget.plugin.store.assets
+                .tokenBalanceMap[_swapPair[0].toUpperCase()];
+          } else if (_getSwapTokens().length > 0) {
+            payBalance = widget.plugin.store.assets
+                .tokenBalanceMap[_swapPair[0].toUpperCase()];
+            receiveBalance = widget.plugin.store.assets
+                .tokenBalanceMap[_swapPair[1].toUpperCase()];
+          }
         }
 
         double minMax = 0;
@@ -369,189 +400,85 @@ class _SwapPageState extends State<SwapPage> {
                       ? Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
-                            Form(
-                              key: _formKey,
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: <Widget>[
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: <Widget>[
-                                        GestureDetector(
-                                          child: CurrencyWithIcon(
-                                            PluginFmt.tokenView(_swapPair[0]),
-                                            TokenIcon(_swapPair[0],
-                                                widget.plugin.tokenIcons),
-                                            textStyle: Theme.of(context)
-                                                .textTheme
-                                                .headline4,
-                                            trailing:
-                                                Icon(Icons.keyboard_arrow_down),
-                                          ),
-                                          onTap: () => _selectCurrencyPay(),
-                                        ),
-                                        TextFormField(
-                                          focusNode: _payFocusNode,
-                                          decoration: InputDecoration(
-                                            hintText: dic['dex.pay'],
-                                            labelText: dic['dex.pay'],
-                                            suffix: GestureDetector(
-                                              child: Icon(
-                                                CupertinoIcons
-                                                    .clear_thick_circled,
-                                                color: Theme.of(context)
-                                                    .disabledColor,
-                                                size: 18,
-                                              ),
-                                              onTap: () {
-                                                WidgetsBinding.instance
-                                                    .addPostFrameCallback((_) =>
-                                                        _amountPayCtrl.clear());
-                                              },
-                                            ),
-                                          ),
-                                          inputFormatters: [
-                                            UI.decimalInputFormatter(
-                                                pairDecimals[0])
-                                          ],
-                                          controller: _amountPayCtrl,
-                                          keyboardType:
-                                              TextInputType.numberWithOptions(
-                                                  decimal: true),
-                                          validator: (v) {
-                                            try {
-                                              if (v.isEmpty ||
-                                                  double.parse(v) == 0) {
-                                                return dicAssets[
-                                                    'amount.error'];
-                                              }
-                                            } catch (err) {
-                                              return dicAssets['amount.error'];
-                                            }
-                                            if (double.parse(v.trim()) >
-                                                Fmt.bigIntToDouble(
-                                                    balance, pairDecimals[0])) {
-                                              return dicAssets['amount.low'];
-                                            }
-                                            return null;
-                                          },
-                                          onChanged: _onSupplyAmountChange,
-                                        ),
-                                        Padding(
-                                          padding: EdgeInsets.only(top: 8),
-                                          child: Text(
-                                            '${dicAssets['balance']}: ${Fmt.token(balance, pairDecimals[0])} ${PluginFmt.tokenView(_swapPair[0])}',
-                                            style: TextStyle(
-                                                color: Theme.of(context)
-                                                    .unselectedWidgetColor,
-                                                fontSize: 14),
-                                          ),
-                                        ),
-                                      ],
+                            SwapTokenInput(
+                              title: dic['dex.pay'],
+                              inputCtrl: _amountPayCtrl,
+                              focusNode: _payFocusNode,
+                              balance: payBalance,
+                              tokenOptions: currencyOptions,
+                              tokenIconsMap: widget.plugin.tokenIcons,
+                              onInputChange: _onSupplyAmountChange,
+                              onTokenChange: (String token) {
+                                if (token != null) {
+                                  setState(() {
+                                    _swapPair = [token, _swapPair[1]];
+                                  });
+                                  _updateSwapAmount();
+                                }
+                              },
+                              onSetMax: (v) => print('set max clicked: $v'),
+                            ),
+                            Container(
+                              height: 12,
+                              margin: EdgeInsets.only(left: 16, top: 2),
+                              child: _error == null
+                                  ? null
+                                  : Text(
+                                      _error,
+                                      style: TextStyle(
+                                          fontSize: 12, color: Colors.red),
+                                    ),
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                GestureDetector(
+                                  child: Padding(
+                                    padding: EdgeInsets.fromLTRB(8, 2, 8, 0),
+                                    child: Icon(
+                                      Icons.arrow_downward,
+                                      color: Theme.of(context).primaryColor,
+                                      size: 18,
                                     ),
                                   ),
-                                  GestureDetector(
-                                    child: Padding(
-                                      padding: EdgeInsets.fromLTRB(8, 2, 8, 0),
-                                      child: Icon(
-                                        Icons.repeat,
-                                        color: Theme.of(context).primaryColor,
-                                      ),
-                                    ),
-                                    onTap: () => _switchPair(),
-                                  ),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: <Widget>[
-                                        GestureDetector(
-                                          child: CurrencyWithIcon(
-                                            PluginFmt.tokenView(_swapPair[1]),
-                                            TokenIcon(_swapPair[1],
-                                                widget.plugin.tokenIcons),
-                                            textStyle: Theme.of(context)
-                                                .textTheme
-                                                .headline4,
-                                            trailing:
-                                                Icon(Icons.keyboard_arrow_down),
-                                          ),
-                                          onTap: () => _selectCurrencyReceive(),
-                                        ),
-                                        TextFormField(
-                                          focusNode: _receiveFocusNode,
-                                          decoration: InputDecoration(
-                                            hintText: dic['dex.receive'],
-                                            labelText: dic['dex.receive'],
-                                            suffix: GestureDetector(
-                                              child: Icon(
-                                                CupertinoIcons
-                                                    .clear_thick_circled,
-                                                color: Theme.of(context)
-                                                    .disabledColor,
-                                                size: 18,
-                                              ),
-                                              onTap: () {
-                                                WidgetsBinding.instance
-                                                    .addPostFrameCallback((_) =>
-                                                        _amountReceiveCtrl
-                                                            .clear());
-                                              },
-                                            ),
-                                          ),
-                                          inputFormatters: [
-                                            UI.decimalInputFormatter(
-                                                pairDecimals[1])
-                                          ],
-                                          controller: _amountReceiveCtrl,
-                                          keyboardType:
-                                              TextInputType.numberWithOptions(
-                                                  decimal: true),
-                                          validator: (v) {
-                                            try {
-                                              if (v.isEmpty ||
-                                                  double.parse(v) == 0) {
-                                                return dicAssets[
-                                                    'amount.error'];
-                                              }
-                                            } catch (err) {
-                                              return dicAssets['amount.error'];
-                                            }
-                                            // check if pool has sufficient assets
-//                                    if (true) {
-//                                      return dicAssets['amount.low'];
-//                                    }
-                                            return null;
-                                          },
-                                          onChanged: _onTargetAmountChange,
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                ],
+                                  onTap: () => _switchPair(),
+                                )
+                              ],
+                            ),
+                            Container(
+                              margin: EdgeInsets.only(top: 12, bottom: 12),
+                              child: SwapTokenInput(
+                                title: dic['dex.receive'],
+                                inputCtrl: _amountReceiveCtrl,
+                                focusNode: _receiveFocusNode,
+                                balance: receiveBalance,
+                                tokenOptions: currencyOptions,
+                                tokenIconsMap: widget.plugin.tokenIcons,
+                                onInputChange: _onTargetAmountChange,
+                                onTokenChange: (String token) {
+                                  if (token != null) {
+                                    setState(() {
+                                      _swapPair = [_swapPair[0], token];
+                                    });
+                                    _updateSwapAmount();
+                                  }
+                                },
                               ),
                             ),
-                            showExchangeRate ? Divider() : Container(),
-                            showExchangeRate
-                                ? Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: <Widget>[
-                                      Text(
-                                        dic['dex.rate'],
-                                        style: TextStyle(
-                                            color: Theme.of(context)
-                                                .unselectedWidgetColor),
-                                      ),
-                                      Text(
-                                          '1 ${PluginFmt.tokenView(_swapPair[0])} = ${_swapRatio.toStringAsFixed(6)} ${PluginFmt.tokenView(_swapPair[1])}'),
-                                    ],
-                                  )
-                                : Container(),
+                            Container(
+                              margin: EdgeInsets.only(left: 16, right: 16),
+                              child: showExchangeRate
+                                  ? Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: <Widget>[
+                                        Text(dic['dex.rate']),
+                                        Text(
+                                            '1 ${PluginFmt.tokenView(_swapPair[0])} = ${_swapRatio.toStringAsFixed(6)} ${PluginFmt.tokenView(_swapPair[1])}'),
+                                      ],
+                                    )
+                                  : null,
+                            ),
                             (_swapOutput.path?.length ?? 0) > 2
                                 ? Column(
                                     crossAxisAlignment:
