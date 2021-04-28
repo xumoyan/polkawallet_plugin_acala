@@ -230,11 +230,13 @@ class _AcalaEntryState extends State<AcalaEntry> {
                           : Container(),
                       Row(
                         children: [
-                          RaisedButton(
-                            color: Theme.of(context).primaryColor,
-                            shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(40))),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              primary: Theme.of(context).primaryColor,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(40))),
+                            ),
                             child: Row(
                               children: [
                                 _faucetSubmitting

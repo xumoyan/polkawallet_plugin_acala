@@ -10,14 +10,13 @@ import 'package:polkawallet_plugin_acala/pages/swap/swapHistoryPage.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
+import 'package:polkawallet_sdk/api/types/txInfoData.dart';
 import 'package:polkawallet_sdk/plugin/store/balances.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
-import 'package:polkawallet_ui/components/currencyWithIcon.dart';
 import 'package:polkawallet_ui/components/outlinedButtonSmall.dart';
 import 'package:polkawallet_ui/components/roundedButton.dart';
 import 'package:polkawallet_ui/components/roundedCard.dart';
-import 'package:polkawallet_ui/components/tokenIcon.dart';
 import 'package:polkawallet_ui/components/txButton.dart';
 import 'package:polkawallet_ui/pages/txConfirmPage.dart';
 import 'package:polkawallet_ui/utils/format.dart';
@@ -45,16 +44,31 @@ class _SwapPageState extends State<SwapPage> {
 
   String _error;
   double _slippage = 0.005;
+  bool _slippageSettingVisable = false;
   String _slippageError;
   List<String> _swapPair = [];
   int _swapMode = 0; // 0 for 'EXACT_INPUT' and 1 for 'EXACT_OUTPUT'
   double _swapRatio = 0;
   SwapOutputData _swapOutput = SwapOutputData();
 
+  TxFeeEstimateResult _fee;
+  BigInt _maxInput;
+
   // use a _timer to update page data consistently
   Timer _timer;
   // use another _timer to control swap amount query
   Timer _delayTimer;
+
+  Future<void> _getTxFee({bool reload = false}) async {
+    final sender = TxSenderData(
+        widget.keyring.current.address, widget.keyring.current.pubKey);
+    final txInfo = TxInfoData('balances', 'transfer', sender);
+    final fee = await widget.plugin.sdk.api.tx
+        .estimateFees(txInfo, [widget.keyring.current.address, '10000000000']);
+    setState(() {
+      _fee = fee;
+    });
+  }
 
   Future<void> _switchPair() async {
     final pay = _amountPayCtrl.text;
@@ -106,10 +120,12 @@ class _SwapPageState extends State<SwapPage> {
     } catch (err) {
       error = dic['amount.error'];
     }
-    if (double.parse(v.trim()) >
-        Fmt.bigIntToDouble(
-            Fmt.balanceInt(balance?.amount ?? '0'), balance.decimals)) {
-      error = dic['amount.low'];
+    if (error == null) {
+      if (double.parse(v) >
+          Fmt.bigIntToDouble(
+              Fmt.balanceInt(balance?.amount ?? '0'), balance.decimals)) {
+        error = dic['amount.low'];
+      }
     }
     setState(() {
       _error = error;
@@ -119,48 +135,47 @@ class _SwapPageState extends State<SwapPage> {
 
   void _onSupplyAmountChange(String v) {
     String supply = v.trim();
-    if (supply.isEmpty) {
-      return;
-    }
     setState(() {
       _swapMode = 0;
+      _maxInput = null;
     });
 
-    if (_delayTimer != null) {
-      _delayTimer.cancel();
-    }
-    _delayTimer = Timer(Duration(seconds: 1), () {
-      _calcSwapAmount(supply, null);
-    });
+    _onInputChange(supply);
   }
 
   void _onTargetAmountChange(String v) {
     String target = v.trim();
-    if (target.isEmpty) {
-      return;
-    }
     setState(() {
       _swapMode = 1;
+      _maxInput = null;
     });
 
+    _onInputChange(target);
+  }
+
+  void _onInputChange(String input) {
     if (_delayTimer != null) {
       _delayTimer.cancel();
     }
     _delayTimer = Timer(Duration(seconds: 1), () {
-      _calcSwapAmount(null, target);
+      if (_swapMode == 0) {
+        _calcSwapAmount(input, null);
+      } else {
+        _calcSwapAmount(null, input);
+      }
     });
   }
 
-  Future<void> _updateSwapAmount() async {
+  Future<void> _updateSwapAmount({bool init = false}) async {
     if (_swapMode == 0) {
-      await _calcSwapAmount(_amountPayCtrl.text.trim(), null);
+      await _calcSwapAmount(_amountPayCtrl.text.trim(), null, init: init);
     } else {
-      await _calcSwapAmount(null, _amountReceiveCtrl.text.trim());
+      await _calcSwapAmount(null, _amountReceiveCtrl.text.trim(), init: init);
     }
   }
 
   void _setUpdateTimer() {
-    _updateSwapAmount();
+    _updateSwapAmount(init: true);
 
     _timer = Timer(Duration(seconds: 10), () {
       _updateSwapAmount();
@@ -180,15 +195,19 @@ class _SwapPageState extends State<SwapPage> {
         _slippage.toString(),
       );
       setState(() {
-        if (!init && target.isNotEmpty) {
-          _amountPayCtrl.text = output.amount.toString();
+        if (!init) {
+          if (target.isNotEmpty) {
+            _amountPayCtrl.text = output.amount.toString();
+          } else {
+            _amountPayCtrl.text = '';
+          }
         }
         _swapRatio = target.isEmpty
             ? output.amount
             : double.parse(target) / output.amount;
         _swapOutput = output;
       });
-      if (!init && target.isNotEmpty) {
+      if (!init) {
         _onCheckBalance();
       }
     } else if (target == null) {
@@ -199,25 +218,35 @@ class _SwapPageState extends State<SwapPage> {
         _slippage.toString(),
       );
       setState(() {
-        if (!init && supply.isNotEmpty) {
-          _amountReceiveCtrl.text = output.amount.toString();
+        if (!init) {
+          if (supply.isNotEmpty) {
+            _amountReceiveCtrl.text = output.amount.toString();
+          } else {
+            _amountReceiveCtrl.text = '';
+          }
         }
         _swapRatio = supply.isEmpty
             ? output.amount
             : output.amount / double.parse(supply);
         _swapOutput = output;
       });
-      if (!init && supply.isNotEmpty) {
+      if (!init) {
         _onCheckBalance();
       }
     }
+  }
+
+  void _onSetSlippage() {
+    setState(() {
+      _slippageSettingVisable = !_slippageSettingVisable;
+    });
   }
 
   void _onSlippageChange(String v) {
     final Map dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
     try {
       double value = double.parse(v.trim());
-      if (value > 50 || value < 0.1) {
+      if (value >= 50 || value < 0.1) {
         setState(() {
           _slippageError = dic['dex.slippage.error'];
         });
@@ -239,6 +268,7 @@ class _SwapPageState extends State<SwapPage> {
       _slippageFocusNode.unfocus();
       setState(() {
         _amountSlippageCtrl.text = '';
+        _slippageError = null;
       });
     }
     setState(() {
@@ -251,17 +281,36 @@ class _SwapPageState extends State<SwapPage> {
     }
   }
 
+  void _onSetMax(BigInt max, int decimals) {
+    final amount = Fmt.bigIntToDouble(max, decimals).toStringAsFixed(6);
+    setState(() {
+      _swapMode = 0;
+      _amountPayCtrl.text = amount;
+      _maxInput = max;
+    });
+    _onInputChange(amount);
+  }
+
   Future<void> _onSubmit(List<int> pairDecimals, double minMax) async {
     if (_onCheckBalance()) {
       final pay = _amountPayCtrl.text.trim();
       final receive = _amountReceiveCtrl.text.trim();
+
+      BigInt input = Fmt.tokenInt(
+          _swapMode == 0 ? pay : receive, pairDecimals[_swapMode == 0 ? 0 : 1]);
+      if (_maxInput != null) {
+        input = _maxInput;
+        // keep tx fee for ACA swap
+        if (_swapMode == 0 && _swapPair[0] == 'ACA') {
+          input -= BigInt.two * Fmt.balanceInt(_fee.partialFee.toString());
+        }
+      }
+
       final params = [
         _swapOutput.path
             .map((e) => ({'Token': e['symbol'], 'decimal': e['decimal']}))
             .toList(),
-        Fmt.tokenInt(_swapMode == 0 ? pay : receive,
-                pairDecimals[_swapMode == 0 ? 0 : 1])
-            .toString(),
+        input.toString(),
         Fmt.tokenInt(minMax.toString(), pairDecimals[_swapMode == 0 ? 1 : 0])
             .toString(),
       ];
@@ -295,6 +344,8 @@ class _SwapPageState extends State<SwapPage> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _getTxFee();
+
       final currencyIds = _getSwapTokens();
       if (currencyIds.length > 0) {
         setState(() {
@@ -377,6 +428,7 @@ class _SwapPageState extends State<SwapPage> {
 
         final primary = Theme.of(context).primaryColor;
         final grey = Theme.of(context).unselectedWidgetColor;
+        final labelStyle = TextStyle(color: grey, fontSize: 13);
 
         return Scaffold(
           appBar: AppBar(
@@ -416,7 +468,7 @@ class _SwapPageState extends State<SwapPage> {
                                   _updateSwapAmount();
                                 }
                               },
-                              onSetMax: (v) => print('set max clicked: $v'),
+                              onSetMax: (v) => _onSetMax(v, pairDecimals[0]),
                             ),
                             Container(
                               height: 12,
@@ -446,7 +498,7 @@ class _SwapPageState extends State<SwapPage> {
                               ],
                             ),
                             Container(
-                              margin: EdgeInsets.only(top: 12, bottom: 12),
+                              margin: EdgeInsets.only(top: 12),
                               child: SwapTokenInput(
                                 title: dic['dex.receive'],
                                 inputCtrl: _amountReceiveCtrl,
@@ -465,161 +517,216 @@ class _SwapPageState extends State<SwapPage> {
                                 },
                               ),
                             ),
-                            Container(
-                              margin: EdgeInsets.only(left: 16, right: 16),
-                              child: showExchangeRate
-                                  ? Row(
+                            showExchangeRate
+                                ? Container(
+                                    margin: EdgeInsets.only(
+                                        left: 16, top: 12, right: 16),
+                                    child: Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
                                       children: <Widget>[
-                                        Text(dic['dex.rate']),
+                                        Text(dic['dex.rate'],
+                                            style: labelStyle),
                                         Text(
                                             '1 ${PluginFmt.tokenView(_swapPair[0])} = ${_swapRatio.toStringAsFixed(6)} ${PluginFmt.tokenView(_swapPair[1])}'),
                                       ],
-                                    )
-                                  : null,
-                            ),
-                            (_swapOutput.path?.length ?? 0) > 2
-                                ? Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Divider(),
-                                      Text(dic['dex.route'],
-                                          style: TextStyle(
-                                              color: Theme.of(context)
-                                                  .unselectedWidgetColor)),
-                                      Row(
-                                        children: _swapOutput.path.map((e) {
-                                          return CurrencyWithIcon(
-                                            PluginFmt.tokenView(e['symbol']),
-                                            TokenIcon(
-                                              e['symbol'],
-                                              widget.plugin.tokenIcons,
-                                              small: true,
-                                            ),
-                                            textStyle: TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.bold,
-                                                color: grey),
-                                            trailing: e ==
-                                                    _swapOutput.path[_swapOutput
-                                                            .path.length -
-                                                        1]
-                                                ? null
-                                                : Padding(
-                                                    padding: EdgeInsets.only(
-                                                        left: 4, right: 4),
-                                                    child: Icon(
-                                                        Icons.arrow_forward_ios,
-                                                        size: 14),
-                                                  ),
-                                          );
-                                        }).toList(),
-                                      )
-                                    ],
+                                    ),
                                   )
-                                : Container()
+                                : Container(),
+                            Container(
+                              margin:
+                                  EdgeInsets.only(left: 16, top: 12, right: 16),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: <Widget>[
+                                  Expanded(
+                                      child: Text(dic['dex.slippage'],
+                                          style: labelStyle)),
+                                  GestureDetector(
+                                      child: Row(
+                                        children: [
+                                          Text(
+                                            Fmt.ratio(_slippage),
+                                            style: TextStyle(color: primary),
+                                          ),
+                                          Icon(Icons.settings_outlined,
+                                              color: primary, size: 16)
+                                        ],
+                                      ),
+                                      onTap: _onSetSlippage),
+                                  // GestureDetector(
+                                  //     child: ,
+                                  //     onTap: _onSetSlippage)
+                                ],
+                              ),
+                            ),
+                            _slippageSettingVisable
+                                ? Container(
+                                    margin: EdgeInsets.only(
+                                        left: 8, right: 8, top: 8),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: <Widget>[
+                                        OutlinedButtonSmall(
+                                          content: '0.1 %',
+                                          active: _slippage == 0.001,
+                                          onPressed: () =>
+                                              _updateSlippage(0.001),
+                                        ),
+                                        OutlinedButtonSmall(
+                                          content: '0.5 %',
+                                          active: _slippage == 0.005,
+                                          onPressed: () =>
+                                              _updateSlippage(0.005),
+                                        ),
+                                        OutlinedButtonSmall(
+                                          content: '1 %',
+                                          active: _slippage == 0.01,
+                                          onPressed: () =>
+                                              _updateSlippage(0.01),
+                                        ),
+                                        Expanded(
+                                          child: Column(
+                                            children: <Widget>[
+                                              CupertinoTextField(
+                                                padding: EdgeInsets.fromLTRB(
+                                                    12, 4, 12, 2),
+                                                placeholder: I18n.of(context)
+                                                    .getDic(i18n_full_dic_acala,
+                                                        'common')['custom'],
+                                                placeholderStyle: TextStyle(
+                                                    fontSize: 12,
+                                                    height: 1.5,
+                                                    color: grey),
+                                                inputFormatters: [
+                                                  UI.decimalInputFormatter(6)
+                                                ],
+                                                keyboardType: TextInputType
+                                                    .numberWithOptions(
+                                                        decimal: true),
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.all(
+                                                          Radius.circular(24)),
+                                                  border: Border.all(
+                                                      color: _slippageFocusNode
+                                                              .hasFocus
+                                                          ? primary
+                                                          : grey),
+                                                ),
+                                                controller: _amountSlippageCtrl,
+                                                focusNode: _slippageFocusNode,
+                                                onChanged: _onSlippageChange,
+                                                suffix: Container(
+                                                  padding:
+                                                      EdgeInsets.only(right: 8),
+                                                  child: Text(
+                                                    '%',
+                                                    style: TextStyle(
+                                                        color:
+                                                            _slippageFocusNode
+                                                                    .hasFocus
+                                                                ? primary
+                                                                : grey),
+                                                  ),
+                                                ),
+                                              ),
+                                              _slippageError != null
+                                                  ? Text(
+                                                      _slippageError,
+                                                      style: TextStyle(
+                                                          color: Colors.red,
+                                                          fontSize: 10),
+                                                    )
+                                                  : Container()
+                                            ],
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  )
+                                : Container(),
                           ],
                         )
                       : CupertinoActivityIndicator(),
                 ),
-                RoundedCard(
-                  margin: EdgeInsets.only(top: 16),
-                  padding: EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Container(
-                        margin: EdgeInsets.only(bottom: 4),
-                        child: Text(
-                          dic['dex.slippage'],
-                          style: TextStyle(
-                              color: Theme.of(context).unselectedWidgetColor),
-                        ),
-                      ),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          OutlinedButtonSmall(
-                            content: '0.1 %',
-                            active: _slippage == 0.001,
-                            onPressed: () => _updateSlippage(0.001),
-                          ),
-                          OutlinedButtonSmall(
-                            content: '0.5 %',
-                            active: _slippage == 0.005,
-                            onPressed: () => _updateSlippage(0.005),
-                          ),
-                          OutlinedButtonSmall(
-                            content: '1 %',
-                            active: _slippage == 0.01,
-                            onPressed: () => _updateSlippage(0.01),
-                          ),
-                          Expanded(
-                            child: Column(
-                              children: <Widget>[
-                                CupertinoTextField(
-                                  padding: EdgeInsets.fromLTRB(12, 4, 12, 4),
-                                  placeholder: dic['custom'],
-                                  inputFormatters: [
-                                    UI.decimalInputFormatter(6)
-                                  ],
-                                  keyboardType: TextInputType.numberWithOptions(
-                                      decimal: true),
-                                  decoration: BoxDecoration(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(24)),
-                                    border: Border.all(
-                                        width: 0.5,
-                                        color: _slippageFocusNode.hasFocus
-                                            ? primary
-                                            : grey),
-                                  ),
-                                  controller: _amountSlippageCtrl,
-                                  focusNode: _slippageFocusNode,
-                                  onChanged: _onSlippageChange,
-                                  suffix: Container(
-                                    padding: EdgeInsets.only(right: 8),
+                showExchangeRate && _amountPayCtrl.text.isNotEmpty
+                    ? RoundedCard(
+                        margin: EdgeInsets.only(top: 16),
+                        padding: EdgeInsets.all(16),
+                        child: Column(
+                          children: <Widget>[
+                            Container(
+                              margin: EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: <Widget>[
+                                  Expanded(
                                     child: Text(
-                                      '%',
-                                      style: TextStyle(
-                                          color: _slippageFocusNode.hasFocus
-                                              ? primary
-                                              : grey),
-                                    ),
+                                        dic[_swapMode == 0
+                                            ? 'dex.min'
+                                            : 'dex.max'],
+                                        style: labelStyle),
                                   ),
-                                ),
-                                _slippageError != null
-                                    ? Text(
-                                        _slippageError,
-                                        style: TextStyle(
-                                            color: Colors.red, fontSize: 12),
-                                      )
-                                    : Container()
-                              ],
+                                  Text(
+                                      '${minMax.toStringAsFixed(6)} ${_swapMode == 0 ? _swapOutput.output : _swapOutput.input}'),
+                                ],
+                              ),
                             ),
-                          )
-                        ],
-                      ),
-                      _amountPayCtrl.text.isNotEmpty
-                          ? Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Divider(),
-                                Text(
-                                    dic[_swapMode == 0 ? 'dex.min' : 'dex.max'],
-                                    style: TextStyle(
-                                        color: Theme.of(context)
-                                            .unselectedWidgetColor)),
-                                Text(
-                                    '${minMax.toStringAsFixed(6)} ${_swapMode == 0 ? _swapOutput.output : _swapOutput.input}'),
-                              ],
-                            )
-                          : Container(),
-                    ],
-                  ),
-                ),
+                            Container(
+                              margin: EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: <Widget>[
+                                  Expanded(
+                                    child: Text(dic['dex.impact'],
+                                        style: labelStyle),
+                                  ),
+                                  Text(
+                                      '<${Fmt.ratio(_swapOutput.priceImpact)}'),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              margin: EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: <Widget>[
+                                  Expanded(
+                                    child:
+                                        Text(dic['dex.fee'], style: labelStyle),
+                                  ),
+                                  Text(
+                                      '${_swapOutput.fee} ${PluginFmt.tokenView(_swapPair[0])}'),
+                                ],
+                              ),
+                            ),
+                            (_swapOutput.path?.length ?? 0) > 2
+                                ? Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Text(dic['dex.route'],
+                                            style: labelStyle),
+                                      ),
+                                      Text(_swapOutput.path
+                                          .map((i) =>
+                                              PluginFmt.tokenView(i['symbol']))
+                                          .toList()
+                                          .join(' > ')),
+                                    ],
+                                  )
+                                : Container()
+                          ],
+                        ),
+                      )
+                    : Container(),
                 Padding(
                   padding: EdgeInsets.only(top: 24),
                   child: RoundedButton(

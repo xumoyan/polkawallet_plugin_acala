@@ -10,6 +10,8 @@ class SwapOutputData extends _SwapOutputData {
 abstract class _SwapOutputData {
   List path;
   double amount;
+  double priceImpact;
+  double fee;
   String input;
   String output;
 }

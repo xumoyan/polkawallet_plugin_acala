@@ -50,13 +50,14 @@ class SwapTokenInput extends StatelessWidget {
     final tokenView = PluginFmt.tokenView(balance.symbol);
     final max = Fmt.balanceInt(balance.amount);
 
-    final inputStyle = TextStyle(fontSize: 22, fontWeight: FontWeight.bold);
+    final colorGray = Theme.of(context).unselectedWidgetColor;
+    final colorLightGray = Theme.of(context).disabledColor;
 
     return Container(
       padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.all(Radius.circular(16)),
-        border: Border.all(color: Theme.of(context).disabledColor, width: 0.5),
+        border: Border.all(color: colorLightGray, width: 0.5),
       ),
       child: Column(
         children: [
@@ -68,9 +69,7 @@ class SwapTokenInput extends StatelessWidget {
                 Text(title ?? ''),
                 Text(
                   '${dicAssets['balance']}: ${Fmt.token(max, balance.decimals)} $tokenView',
-                  style: TextStyle(
-                      color: Theme.of(context).unselectedWidgetColor,
-                      fontSize: 14),
+                  style: TextStyle(color: colorGray, fontSize: 14),
                 )
               ],
             ),
@@ -81,21 +80,24 @@ class SwapTokenInput extends StatelessWidget {
                 focusNode: focusNode,
                 decoration: InputDecoration(
                   hintText: '0.0',
-                  hintStyle: inputStyle,
+                  hintStyle: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: colorLightGray),
                   errorStyle: TextStyle(height: 0.3),
                   suffix: onSetMax == null
                       ? null
                       : GestureDetector(
                           child: Padding(
                             padding: EdgeInsets.only(right: 8),
-                            child: TextTag(dic['dex.max']),
+                            child: TextTag(dic['loan.max']),
                           ),
                           onTap: () => onSetMax(max),
                         ),
                   contentPadding: EdgeInsets.all(0),
                   border: InputBorder.none,
                 ),
-                style: inputStyle,
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 inputFormatters: [UI.decimalInputFormatter(balance.decimals)],
                 controller: inputCtrl,
                 keyboardType: TextInputType.numberWithOptions(decimal: true),

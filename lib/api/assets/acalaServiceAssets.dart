@@ -27,9 +27,9 @@ class AcalaServiceAssets {
 
     final dexPairs = await plugin.api.swap.getTokenPairs();
     dexPairs.forEach((e) {
-      final LPToken = e.tokens.map((i) => i['token']).toList();
+      final lpToken = e.tokens.map((i) => i['token']).toList();
       plugin.sdk.api
-          .unsubscribeMessage('$tokenBalanceChannel${LPToken.join('')}');
+          .unsubscribeMessage('$tokenBalanceChannel${lpToken.join('')}');
     });
   }
 
@@ -52,18 +52,18 @@ class AcalaServiceAssets {
     });
     final dexPairs = await plugin.api.swap.getTokenPairs();
     dexPairs.forEach((e) {
-      final LPToken = e.tokens.map((i) => i['token']).toList();
-      final channel = '$tokenBalanceChannel${LPToken.join('')}';
+      final lpToken = e.tokens.map((i) => i['token']).toList();
+      final channel = '$tokenBalanceChannel${lpToken.join('')}';
       plugin.sdk.api.subscribeMessage(
         'api.query.tokens.accounts',
         [
           address,
-          {'DEXShare': LPToken}
+          {'DEXShare': lpToken}
         ],
         channel,
         (Map data) {
           callback({
-            'symbol': LPToken.join('-'),
+            'symbol': lpToken.join('-'),
             'decimals': e.decimals,
             'balance': data
           });

@@ -1,6 +1,5 @@
 import 'package:mobx/mobx.dart';
 import 'package:polkawallet_plugin_acala/api/types/txSwapData.dart';
-import 'package:polkawallet_plugin_acala/common/constants.dart';
 import 'package:polkawallet_plugin_acala/store/cache/storeCache.dart';
 
 part 'swap.g.dart';

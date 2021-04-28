@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:polkawallet_plugin_acala/api/types/swapOutputData.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 
 class AcalaServiceSwap {

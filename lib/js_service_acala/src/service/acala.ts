@@ -5,6 +5,15 @@ import { ApiPromise } from "@polkadot/api";
 import { tokensForAcala, tokensForKarura } from "../constants/acala";
 
 const decimalsDOT = 10;
+const ONE = FixedPointNumber.ONE;
+
+function _computeExchangeFee(path: Token[], fee: FixedPointNumber) {
+  return ONE.minus(
+    path.slice(1).reduce((acc) => {
+      return acc.times(ONE.minus(fee));
+    }, ONE)
+  );
+}
 
 let swapper: SwapPromise;
 /**
@@ -17,19 +26,26 @@ async function calcTokenSwapAmount(api: ApiPromise, input: number, output: numbe
 
   const inputToken = Token.fromCurrencyId(api.createType("CurrencyId" as any, { token: swapPair[0] }));
   const outputToken = Token.fromCurrencyId(api.createType("CurrencyId" as any, { token: swapPair[1] }));
-  const i = new TokenBalance(inputToken, new FixedPointNumber(input || 0, inputToken.decimal));
-  const o = new TokenBalance(outputToken, new FixedPointNumber(output || 0, outputToken.decimal));
+  const i = new FixedPointNumber(input || 0, inputToken.decimal);
+  const o = new FixedPointNumber(output || 0, outputToken.decimal);
 
   const mode = output === null ? "EXACT_INPUT" : "EXACT_OUTPUT";
 
   return new Promise((resolve, reject) => {
-    swapper.swap(i, o, mode, (res: any) => {
-      resolve({
-        amount: output === null ? res.output.balance.toNumber(6) : res.input.balance.toNumber(6),
-        path: res.path,
-        input: res.input.token.toString(),
-        output: res.output.token.toString(),
-      });
+    const exchangeFee = api.consts.dex.getExchangeFee as any;
+
+    swapper.swap([inputToken, outputToken], output === null ? i : o, mode, (res: any) => {
+      const feeRate = new FixedPointNumber(exchangeFee[0].toString()).div(new FixedPointNumber(exchangeFee[1].toString()));
+      if (res.input) {
+        resolve({
+          amount: output === null ? res.output.balance.toNumber(6) : res.input.balance.toNumber(6),
+          priceImpact: res.priceImpact.toNumber(6),
+          fee: res.input.balance.times(_computeExchangeFee(res.path, feeRate)).toNumber(6),
+          path: res.path,
+          input: res.input.token.toString(),
+          output: res.output.token.toString(),
+        });
+      }
     });
   });
 }
