@@ -1,6 +1,7 @@
 const Map<String, String> enCommon = {
   'acala': 'Acala Platform',
   'transfer': 'Transfer',
+  'receive': 'Receive',
   'cancel': 'Cancel',
   'ok': 'Ok',
   'success': 'Success',
