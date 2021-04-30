@@ -11,6 +11,7 @@ import 'package:polkawallet_plugin_acala/common/constants.dart';
 import 'package:polkawallet_plugin_acala/pages/acalaEntry.dart';
 import 'package:polkawallet_plugin_acala/pages/assets/tokenDetailPage.dart';
 import 'package:polkawallet_plugin_acala/pages/assets/transferPage.dart';
+import 'package:polkawallet_plugin_acala/pages/assets/transferDetailPage.dart';
 import 'package:polkawallet_plugin_acala/pages/currencySelectPage.dart';
 import 'package:polkawallet_plugin_acala/pages/earn/LPStakePage.dart';
 import 'package:polkawallet_plugin_acala/pages/earn/addLiquidityPage.dart';
@@ -29,6 +30,7 @@ import 'package:polkawallet_plugin_acala/pages/nft/nftPage.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/swapHistoryPage.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/swapPage.dart';
 import 'package:polkawallet_plugin_acala/service/index.dart';
+import 'package:polkawallet_plugin_acala/service/graphql.dart';
 import 'package:polkawallet_plugin_acala/store/cache/storeCache.dart';
 import 'package:polkawallet_plugin_acala/store/index.dart';
 import 'package:polkawallet_sdk/api/types/networkParams.dart';
@@ -132,8 +134,15 @@ class PluginAcala extends PolkawalletPlugin {
       CurrencySelectPage.route: (_) => CurrencySelectPage(this),
       AccountQrCodePage.route: (_) => AccountQrCodePage(this, keyring),
 
-      TokenDetailPage.route: (_) => TokenDetailPage(this, keyring),
+      TokenDetailPage.route: (_) => ClientProvider(
+            child: Builder(
+              builder: (_) => TokenDetailPage(this, keyring),
+            ),
+            uri: GraphQLConfig['httpUri'],
+            subscriptionUri: GraphQLConfig['wsUri'],
+          ),
       TransferPage.route: (_) => TransferPage(this, keyring),
+      TransferDetailPage.route: (_) => TransferDetailPage(this, keyring),
 
       // loan pages
       LoanPage.route: (_) => LoanPage(this, keyring),

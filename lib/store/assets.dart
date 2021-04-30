@@ -1,11 +1,8 @@
 import 'package:mobx/mobx.dart';
 import 'package:polkawallet_plugin_acala/api/types/nftData.dart';
 import 'package:polkawallet_plugin_acala/api/types/transferData.dart';
-import 'package:polkawallet_plugin_acala/common/constants.dart';
 import 'package:polkawallet_plugin_acala/store/cache/storeCache.dart';
 import 'package:polkawallet_sdk/plugin/store/balances.dart';
-import 'package:polkawallet_sdk/storage/types/keyPairData.dart';
-import 'package:polkawallet_ui/utils/format.dart';
 
 part 'assets.g.dart';
 
@@ -68,45 +65,14 @@ abstract class _AssetsStore with Store {
   }
 
   @action
-  void addTx(Map tx, KeyPairData acc) {
-    final txData = Map<String, dynamic>.of({
-      "block_timestamp": int.parse(tx['time'].toString().substring(0, 10)),
-      "hash": tx['hash'],
-      "success": true,
-      "from": acc.address,
-      "to": tx['params'][0],
-      "token": tx['params'][1]['Token'] ??
-          List.of(tx['params'][1]['DEXShare']).join('-').toUpperCase(),
-      "amount": Fmt.balance(
-        tx['params'][2],
-        tx['params'][1]['decimals'] ?? acala_price_decimals,
-      ),
-    });
-    txs.add(TransferData.fromJson(txData));
-
-    final cached = cache.transferTxs.val;
-    List list = cached[acc.pubKey];
-    if (list != null) {
-      list.add(txData);
-    } else {
-      list = [txData];
-    }
-    cached[acc.pubKey] = list;
-    cache.transferTxs.val = cached;
+  void setTxs(List list, int decimals) {
+    txs = list.map((i) => TransferData.fromJson(i as Map, decimals))
+        .toList();
   }
 
   @action
   void loadCache(String pubKey) {
     if (pubKey == null || pubKey.isEmpty) return;
-
-    final cachedTxs = cache.transferTxs.val;
-    final list = cachedTxs[pubKey] as List;
-    if (list != null) {
-      txs = ObservableList<TransferData>.of(
-          list.map((e) => TransferData.fromJson(Map<String, dynamic>.from(e))));
-    } else {
-      txs = ObservableList<TransferData>();
-    }
 
     final cachedTokens = cache.tokens.val;
     if (cachedTokens != null && cachedTokens[pubKey] != null) {

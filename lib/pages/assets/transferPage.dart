@@ -89,10 +89,6 @@ class _TransferPageState extends State<TransferPage> {
             params: params,
           ))) as Map;
       if (res != null) {
-        res['params'] = params;
-        res['time'] = DateTime.now().millisecondsSinceEpoch;
-
-        widget.plugin.store.assets.addTx(res, widget.keyring.current);
         Navigator.of(context).pop(res);
       }
     }

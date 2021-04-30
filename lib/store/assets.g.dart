@@ -106,11 +106,11 @@ mixin _$AssetsStore on _AssetsStore, Store {
   }
 
   @override
-  void addTx(Map<dynamic, dynamic> tx, KeyPairData acc) {
+  void setTxs(List<dynamic> list, int decimals) {
     final _$actionInfo =
-        _$_AssetsStoreActionController.startAction(name: '_AssetsStore.addTx');
+        _$_AssetsStoreActionController.startAction(name: '_AssetsStore.setTxs');
     try {
-      return super.addTx(tx, acc);
+      return super.setTxs(list, decimals);
     } finally {
       _$_AssetsStoreActionController.endAction(_$actionInfo);
     }

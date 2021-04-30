@@ -81,7 +81,7 @@ class SwapTokenInput extends StatelessWidget {
                 decoration: InputDecoration(
                   hintText: '0.0',
                   hintStyle: TextStyle(
-                      fontSize: 22,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: colorLightGray),
                   errorStyle: TextStyle(height: 0.3),
@@ -97,7 +97,7 @@ class SwapTokenInput extends StatelessWidget {
                   contentPadding: EdgeInsets.all(0),
                   border: InputBorder.none,
                 ),
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 inputFormatters: [UI.decimalInputFormatter(balance.decimals)],
                 controller: inputCtrl,
                 keyboardType: TextInputType.numberWithOptions(decimal: true),

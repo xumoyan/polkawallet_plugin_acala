@@ -101,6 +101,13 @@ class _SwapPageState extends State<SwapPage> {
     TokenBalanceData balance;
     if (_swapPair.length > 0) {
       if (_swapPair[0] == 'ACA') {
+        if (_maxInput != null) {
+          setState(() {
+            _error = null;
+          });
+          return true;
+        }
+
         balance = TokenBalanceData(
             symbol: _swapPair[0],
             decimals: widget.plugin.networkState.tokenDecimals[0],
@@ -157,7 +164,7 @@ class _SwapPageState extends State<SwapPage> {
     if (_delayTimer != null) {
       _delayTimer.cancel();
     }
-    _delayTimer = Timer(Duration(seconds: 1), () {
+    _delayTimer = Timer(Duration(milliseconds: 500), () {
       if (_swapMode == 0) {
         _calcSwapAmount(input, null);
       } else {
@@ -450,7 +457,7 @@ class _SwapPageState extends State<SwapPage> {
                   padding: EdgeInsets.all(16),
                   child: _swapPair.length == 2
                       ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: <Widget>[
                             SwapTokenInput(
                               title: dic['dex.pay'],
@@ -471,31 +478,27 @@ class _SwapPageState extends State<SwapPage> {
                               onSetMax: (v) => _onSetMax(v, pairDecimals[0]),
                             ),
                             Container(
-                              height: 12,
                               margin: EdgeInsets.only(left: 16, top: 2),
                               child: _error == null
                                   ? null
-                                  : Text(
-                                      _error,
-                                      style: TextStyle(
-                                          fontSize: 12, color: Colors.red),
-                                    ),
+                                  : Row(children: [
+                                      Text(
+                                        _error,
+                                        style: TextStyle(
+                                            fontSize: 12, color: Colors.red),
+                                      )
+                                    ]),
                             ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                GestureDetector(
-                                  child: Padding(
-                                    padding: EdgeInsets.fromLTRB(8, 2, 8, 0),
-                                    child: Icon(
-                                      Icons.arrow_downward,
-                                      color: Theme.of(context).primaryColor,
-                                      size: 18,
-                                    ),
-                                  ),
-                                  onTap: () => _switchPair(),
-                                )
-                              ],
+                            GestureDetector(
+                              child: Padding(
+                                padding: EdgeInsets.fromLTRB(8, 10, 8, 0),
+                                child: Icon(
+                                  Icons.arrow_downward,
+                                  color: Theme.of(context).primaryColor,
+                                  size: 18,
+                                ),
+                              ),
+                              onTap: () => _switchPair(),
                             ),
                             Container(
                               margin: EdgeInsets.only(top: 12),

@@ -1,6 +1,7 @@
 const Map<String, String> zhCommon = {
   'acala': 'Acala 金融平台',
   'transfer': '转账',
+  'receive': '收款',
   'cancel': '取消',
   'ok': '确定',
   'success': '成功',

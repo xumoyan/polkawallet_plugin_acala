@@ -2,10 +2,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:polkawallet_plugin_acala/api/types/transferData.dart';
 import 'package:polkawallet_plugin_acala/pages/assets/transferPage.dart';
+import 'package:polkawallet_plugin_acala/pages/assets/transferDetailPage.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
+import 'package:polkawallet_plugin_acala/common/constants.dart';
 import 'package:polkawallet_sdk/plugin/store/balances.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
@@ -46,9 +49,6 @@ class TokenDetailPage extends StatelessWidget {
             final balance = Fmt.balanceInt(
                 plugin.store.assets.tokenBalanceMap[token.symbol]?.amount ??
                     '0');
-
-            final txs = plugin.store.assets.txs.reversed.toList();
-            txs.retainWhere((i) => i.token.toUpperCase() == token.symbol);
             return Column(
               children: <Widget>[
                 Stack(
@@ -92,20 +92,46 @@ class TokenDetailPage extends StatelessWidget {
                 Expanded(
                   child: Container(
                     color: titleColor,
-                    child: ListView.builder(
-                      itemCount: txs.length + 1,
-                      itemBuilder: (_, i) {
-                        if (i == txs.length) {
-                          return ListTail(
-                              isEmpty: txs.length == 0, isLoading: false);
-                        }
-                        return TransferListItem(
-                          data: txs[i],
-                          token: token.symbol,
-                          isOut: true,
-                        );
-                      },
-                    ),
+                    child: Query(
+                        options: QueryOptions(
+                          document: gql(graphTransferQuery),
+                          variables: <String, String>{
+                            'account': keyring.current.address,
+                            'token': token.symbol,
+                          },
+                        ),
+                        builder: (
+                          QueryResult result, {
+                          Future<QueryResult> Function() refetch,
+                          FetchMore fetchMore,
+                        }) {
+                          if (result.data == null) {
+                            return Container(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [CupertinoActivityIndicator()],
+                              ),
+                            );
+                          }
+                          final txs = List.of(result.data['transfers']['nodes'])
+                              .map((i) => TransferData.fromJson(
+                                  i as Map, token.decimals))
+                              .toList();
+                          return ListView.builder(
+                            itemCount: txs.length + 1,
+                            itemBuilder: (_, i) {
+                              if (i == txs.length) {
+                                return ListTail(
+                                    isEmpty: txs.length == 0, isLoading: false);
+                              }
+                              return TransferListItem(
+                                data: txs[i],
+                                token: token.symbol,
+                                isOut: txs[i].from == keyring.current.address,
+                              );
+                            },
+                          );
+                        }),
                   ),
                 ),
                 Container(
@@ -133,8 +159,8 @@ class TokenDetailPage extends StatelessWidget {
                           child: RoundedButton(
                             icon: SizedBox(
                               height: 20,
-                              child:
-                                  Image.asset('assets/images/assets_send.png'),
+                              child: Image.asset(
+                                  'packages/polkawallet_plugin_acala/assets/images/assets_send.png'),
                             ),
                             text: dic['transfer'],
                             color: colorOut,
@@ -179,33 +205,23 @@ class TransferListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final address = isOut ? data.to : data.from;
-    final title =
-        Fmt.address(address) ?? data.extrinsicIndex ?? Fmt.address(data.hash);
+    final title = Fmt.address(address) ?? Fmt.address(data.hash);
     final colorFailed = Theme.of(context).unselectedWidgetColor;
-    final amount = Fmt.priceFloor(double.parse(data.amount), lengthFixed: 4);
     return ListTile(
-      leading: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          data.success
-              ? isOut
-                  ? SvgPicture.asset('assets/images/assets_up.svg', width: 32)
-                  : SvgPicture.asset('assets/images/assets_down.svg', width: 32)
-              : SvgPicture.asset('assets/images/tx_failed.svg', width: 32)
-        ],
-      ),
+      leading: SvgPicture.asset(
+          'packages/polkawallet_plugin_acala/assets/images/${data.isSuccess ? isOut ? 'assets_up' : 'assets_down' : 'tx_failed'}.svg',
+          width: 32),
       title: Text('$title${crossChain != null ? ' ($crossChain)' : ''}'),
-      subtitle: Text(Fmt.dateTime(
-          DateTime.fromMillisecondsSinceEpoch(data.blockTimestamp * 1000))),
+      subtitle: Text(Fmt.dateTime(DateTime.parse(data.timestamp))),
       trailing: Container(
         width: 110,
         child: Row(
           children: <Widget>[
             Expanded(
               child: Text(
-                '${isOut ? '-' : '+'} $amount',
+                '${isOut ? '-' : '+'} ${data.amount}',
                 style: TextStyle(
-                    color: data.success
+                    color: data.isSuccess
                         ? isOut
                             ? colorOut
                             : colorIn
@@ -217,6 +233,13 @@ class TransferListItem extends StatelessWidget {
           ],
         ),
       ),
+      onTap: () {
+        Navigator.pushNamed(
+          context,
+          TransferDetailPage.route,
+          arguments: data,
+        );
+      },
     );
   }
 }

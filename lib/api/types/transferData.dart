@@ -1,32 +1,28 @@
-import 'package:json_annotation/json_annotation.dart';
+import 'package:polkawallet_ui/utils/format.dart';
 
-part 'transferData.g.dart';
-
-@JsonSerializable()
 class TransferData extends _TransferData {
-  static TransferData fromJson(Map<String, dynamic> json) =>
-      _$TransferDataFromJson(json);
-  static Map<String, dynamic> toJson(TransferData data) =>
-      _$TransferDataToJson(data);
+  static TransferData fromJson(Map json, int decimals) {
+    final res = TransferData();
+    res.from = json['from']['id'];
+    res.to = json['to']['id'];
+    res.token = json['token']['id'];
+    res.amount = Fmt.balance(json['amount'].toString(), decimals);
+    res.block = json['extrinsic']['block']['number'].toString();
+    res.hash = json['extrinsic']['id'];
+    res.timestamp =
+        (json['extrinsic']['timestamp'] as String).replaceAll(' ', '');
+    res.isSuccess = json['isSuccess'];
+    return res;
+  }
 }
 
 abstract class _TransferData {
-  @JsonKey(name: 'block_num')
-  int blockNum = 0;
-
-  @JsonKey(name: 'block_timestamp')
-  int blockTimestamp = 0;
-
-  @JsonKey(name: 'extrinsic_index')
-  String extrinsicIndex = "";
-
-  String fee = "";
-
+  String block;
   String from = "";
   String to = "";
   String amount = "";
   String token = "";
   String hash = "";
-  String module = "";
-  bool success = true;
+  String timestamp = "";
+  bool isSuccess = true;
 }
