@@ -84,7 +84,7 @@ const graphSwapQuery = r'''
         { section: {equalTo: "dex"} },
         { signerId: { equalTo: $account } }
       ]
-    }, orderBy: TIMESTAMP_DESC, first: 10) {
+    }, orderBy: TIMESTAMP_DESC, first: 20) {
       nodes {
         id
         method

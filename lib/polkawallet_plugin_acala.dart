@@ -28,6 +28,7 @@ import 'package:polkawallet_plugin_acala/pages/loan/loanHistoryPage.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanPage.dart';
 import 'package:polkawallet_plugin_acala/pages/nft/nftPage.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/swapHistoryPage.dart';
+import 'package:polkawallet_plugin_acala/pages/swap/swapDetailPage.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/swapPage.dart';
 import 'package:polkawallet_plugin_acala/service/index.dart';
 import 'package:polkawallet_plugin_acala/service/graphql.dart';
@@ -148,10 +149,23 @@ class PluginAcala extends PolkawalletPlugin {
       LoanPage.route: (_) => LoanPage(this, keyring),
       LoanCreatePage.route: (_) => LoanCreatePage(this, keyring),
       LoanAdjustPage.route: (_) => LoanAdjustPage(this, keyring),
-      LoanHistoryPage.route: (_) => LoanHistoryPage(this, keyring),
+      LoanHistoryPage.route: (_) => ClientProvider(
+            child: Builder(
+              builder: (_) => LoanHistoryPage(this, keyring),
+            ),
+            uri: GraphQLConfig['httpUri'],
+            subscriptionUri: GraphQLConfig['wsUri'],
+          ),
       // swap pages
       SwapPage.route: (_) => SwapPage(this, keyring),
-      SwapHistoryPage.route: (_) => SwapHistoryPage(this, keyring),
+      SwapHistoryPage.route: (_) => ClientProvider(
+            child: Builder(
+              builder: (_) => SwapHistoryPage(this, keyring),
+            ),
+            uri: GraphQLConfig['httpUri'],
+            subscriptionUri: GraphQLConfig['wsUri'],
+          ),
+      SwapDetailPage.route: (_) => SwapDetailPage(this, keyring),
       // earn pages
       EarnPage.route: (_) => EarnPage(this, keyring),
       EarnHistoryPage.route: (_) => EarnHistoryPage(this, keyring),
@@ -210,7 +224,6 @@ class PluginAcala extends PolkawalletPlugin {
       _updateTokenBalances(_store.assets.tokenBalanceMap.values.toList());
 
       _store.loan.loadCache(acc.pubKey);
-      _store.swap.loadCache(acc.pubKey);
       _store.earn.loadCache(acc.pubKey);
       _store.homa.loadCache(acc.pubKey);
       print('acala plugin cache data loaded');

@@ -337,11 +337,7 @@ class _SwapPageState extends State<SwapPage> {
             params: params,
           ))) as Map;
       if (res != null) {
-        res['params'] = params;
-        res['time'] = DateTime.now().millisecondsSinceEpoch;
-        res['mode'] = _swapMode;
-
-        widget.plugin.store.swap.addSwapTx(res, widget.keyring.current.pubKey);
+        Navigator.of(context).pushNamed(SwapHistoryPage.route);
       }
     }
   }
