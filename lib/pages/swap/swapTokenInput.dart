@@ -47,7 +47,6 @@ class SwapTokenInput extends StatelessWidget {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
     final dicAssets = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
 
-    final tokenView = PluginFmt.tokenView(balance.symbol);
     final max = Fmt.balanceInt(balance.amount);
 
     final colorGray = Theme.of(context).unselectedWidgetColor;
@@ -66,11 +65,20 @@ class SwapTokenInput extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(title ?? ''),
+                Expanded(child: Text(title ?? '')),
                 Text(
-                  '${dicAssets['balance']}: ${Fmt.token(max, balance.decimals)} $tokenView',
+                  '${dicAssets['balance']}: ${Fmt.token(max, balance.decimals)}',
                   style: TextStyle(color: colorGray, fontSize: 14),
-                )
+                ),
+                onSetMax == null
+                    ? Container()
+                    : GestureDetector(
+                        child: Padding(
+                          padding: EdgeInsets.only(left: 8),
+                          child: TextTag(dic['loan.max']),
+                        ),
+                        onTap: () => onSetMax(max),
+                      )
               ],
             ),
           ),
@@ -85,15 +93,6 @@ class SwapTokenInput extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                       color: colorLightGray),
                   errorStyle: TextStyle(height: 0.3),
-                  suffix: onSetMax == null
-                      ? null
-                      : GestureDetector(
-                          child: Padding(
-                            padding: EdgeInsets.only(right: 8),
-                            child: TextTag(dic['loan.max']),
-                          ),
-                          onTap: () => onSetMax(max),
-                        ),
                   contentPadding: EdgeInsets.all(0),
                   border: InputBorder.none,
                 ),
@@ -106,12 +105,16 @@ class SwapTokenInput extends StatelessWidget {
             ),
             GestureDetector(
               child: CurrencyWithIcon(
-                tokenView,
+                PluginFmt.tokenView(balance.symbol),
                 TokenIcon(balance.symbol, tokenIconsMap, small: true),
                 textStyle: Theme.of(context).textTheme.headline4,
-                trailing: Icon(Icons.keyboard_arrow_down),
+                trailing: onTokenChange != null
+                    ? Icon(Icons.keyboard_arrow_down)
+                    : null,
               ),
-              onTap: () => _selectCurrencyPay(context),
+              onTap: onTokenChange != null
+                  ? () => _selectCurrencyPay(context)
+                  : null,
             )
           ])
         ],

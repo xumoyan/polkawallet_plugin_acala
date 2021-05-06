@@ -18,7 +18,7 @@ const Map<String, String> zhCommon = {
   'balance': '余额',
   'currency': '币种',
   'currency.select': '选择币种',
-  'make': '添加转账',
+  'make': '发起转账',
   'staking': '质押',
   'governance': '治理',
   'node.connecting': '正在连接远程节点...',

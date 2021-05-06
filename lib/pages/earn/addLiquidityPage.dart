@@ -4,20 +4,21 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:polkawallet_plugin_acala/common/constants.dart';
+import 'package:polkawallet_plugin_acala/pages/swap/swapTokenInput.dart';
 import 'package:polkawallet_plugin_acala/api/types/txLiquidityData.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
+import 'package:polkawallet_plugin_acala/utils/format.dart';
+import 'package:polkawallet_sdk/api/types/txInfoData.dart';
+import 'package:polkawallet_sdk/plugin/store/balances.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
-import 'package:polkawallet_ui/components/currencyWithIcon.dart';
 import 'package:polkawallet_ui/components/roundedButton.dart';
 import 'package:polkawallet_ui/components/roundedCard.dart';
 import 'package:polkawallet_ui/components/tapTooltip.dart';
-import 'package:polkawallet_ui/components/tokenIcon.dart';
 import 'package:polkawallet_ui/components/txButton.dart';
 import 'package:polkawallet_ui/pages/txConfirmPage.dart';
 import 'package:polkawallet_ui/utils/format.dart';
-import 'package:polkawallet_ui/utils/index.dart';
 
 class AddLiquidityPage extends StatefulWidget {
   AddLiquidityPage(this.plugin, this.keyring);
@@ -40,6 +41,12 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
   double _price = 0;
   bool _withStake = false;
 
+  TxFeeEstimateResult _fee;
+  BigInt _maxInputLeft;
+  BigInt _maxInputRight;
+  String _errorLeft;
+  String _errorRight;
+
   Future<void> _refreshData() async {
     final symbols = widget.plugin.networkState.tokenSymbol;
     final decimals = widget.plugin.networkState.tokenDecimals;
@@ -50,19 +57,18 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
     final token = tokenPair.firstWhere((e) => e != acala_stable_coin);
     final stableCoinDecimals = decimals[symbols.indexOf(acala_stable_coin)];
     final tokenDecimals = decimals[symbols.indexOf(token)];
-    final decimalsLeft = tokenPair[0] == acala_stable_coin
-        ? stableCoinDecimals
-        : tokenDecimals;
-    final decimalsRight = tokenPair[0] == acala_stable_coin
-        ? tokenDecimals
-        : stableCoinDecimals;
+    final decimalsLeft =
+        tokenPair[0] == acala_stable_coin ? stableCoinDecimals : tokenDecimals;
+    final decimalsRight =
+        tokenPair[0] == acala_stable_coin ? tokenDecimals : stableCoinDecimals;
 
     await widget.plugin.service.earn.queryDexPoolInfo(poolId);
 
     final poolInfo = widget.plugin.store.earn.dexPoolInfoMap[poolId];
     if (mounted) {
       setState(() {
-        _price = Fmt.bigIntToDouble(poolInfo.amountRight, decimalsRight) / Fmt.bigIntToDouble(poolInfo.amountLeft, decimalsLeft);
+        _price = Fmt.bigIntToDouble(poolInfo.amountRight, decimalsRight) /
+            Fmt.bigIntToDouble(poolInfo.amountLeft, decimalsLeft);
       });
       _timer = Timer(Duration(seconds: 10), () {
         if (mounted) {
@@ -85,7 +91,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
       _amountRightCtrl.text =
           (double.parse(supply) * _price).toStringAsFixed(6);
     });
-    _formKey.currentState.validate();
+    _onValidate();
   }
 
   Future<void> _onTargetAmountChange(String v) async {
@@ -100,11 +106,94 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
     setState(() {
       _amountLeftCtrl.text = (double.parse(target) / _price).toStringAsFixed(6);
     });
-    _formKey.currentState.validate();
+    _onValidate();
+  }
+
+  String _onValidateInput(int index) {
+    if (index == 0 && _maxInputLeft != null) return null;
+    if (index == 1 && _maxInputRight != null) return null;
+
+    final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
+    final String poolId = ModalRoute.of(context).settings.arguments;
+    final tokenPair = poolId.toUpperCase().split('-');
+    final v =
+        index == 0 ? _amountLeftCtrl.text.trim() : _amountRightCtrl.text.trim();
+    TokenBalanceData balance;
+    if (index == 0 && tokenPair[0] == 'ACA') {
+      balance = TokenBalanceData(
+          symbol: tokenPair[0],
+          decimals: widget.plugin.networkState.tokenDecimals[0],
+          amount: (widget.plugin.balances.native?.freeBalance ?? 0).toString());
+    } else {
+      balance = widget
+          .plugin.store.assets.tokenBalanceMap[tokenPair[index].toUpperCase()];
+    }
+
+    String error;
+    try {
+      if (v.isEmpty || double.parse(v) == 0) {
+        error = dic['amount.error'];
+      }
+    } catch (err) {
+      error = dic['amount.error'];
+    }
+    if (error == null) {
+      if (double.parse(v) >
+          Fmt.bigIntToDouble(
+              Fmt.balanceInt(balance?.amount ?? '0'), balance.decimals)) {
+        error = dic['amount.low'];
+      }
+    }
+    return error;
+  }
+
+  bool _onValidate() {
+    final errorLeft = _onValidateInput(0);
+    print(errorLeft);
+    if (errorLeft != null) {
+      setState(() {
+        _errorLeft = errorLeft;
+        _errorRight = null;
+      });
+      return false;
+    }
+    final errorRight = _onValidateInput(1);
+    if (errorRight != null) {
+      setState(() {
+        _errorLeft = null;
+        _errorRight = errorRight;
+      });
+      return false;
+    }
+    setState(() {
+      _errorLeft = null;
+      _errorRight = null;
+    });
+    return true;
+  }
+
+  void _onSetLeftMax(BigInt max, int decimals) {
+    final amount = Fmt.bigIntToDouble(max, decimals).toStringAsFixed(6);
+    setState(() {
+      _amountLeftCtrl.text = amount;
+      _maxInputLeft = max;
+      _maxInputRight = null;
+    });
+    _onSupplyAmountChange(amount);
+  }
+
+  void _onSetRightMax(BigInt max, int decimals) {
+    final amount = Fmt.bigIntToDouble(max, decimals).toStringAsFixed(6);
+    setState(() {
+      _amountRightCtrl.text = amount;
+      _maxInputLeft = null;
+      _maxInputRight = max;
+    });
+    _onTargetAmountChange(amount);
   }
 
   Future<void> _onSubmit() async {
-    if (_formKey.currentState.validate()) {
+    if (_onValidate()) {
       final symbols = widget.plugin.networkState.tokenSymbol;
       final decimals = widget.plugin.networkState.tokenDecimals;
 
@@ -181,13 +270,15 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
     return Observer(
       builder: (BuildContext context) {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
-        final dicAssets =
-            I18n.of(context).getDic(i18n_full_dic_acala, 'common');
         final symbols = widget.plugin.networkState.tokenSymbol;
         final decimals = widget.plugin.networkState.tokenDecimals;
 
         final String poolId = ModalRoute.of(context).settings.arguments;
         final tokenPair = poolId.toUpperCase().split('-');
+        final tokenPairView = [
+          PluginFmt.tokenView(tokenPair[0]),
+          PluginFmt.tokenView(tokenPair[1])
+        ];
 
         final token = tokenPair.firstWhere((e) => e != acala_stable_coin);
         final stableCoinDecimals = decimals[symbols.indexOf(acala_stable_coin)];
@@ -199,23 +290,36 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
             ? tokenDecimals
             : stableCoinDecimals;
 
-        final double inputWidth = MediaQuery.of(context).size.width / 3;
-
         double userShare = 0;
         double userShareNew = 0;
 
         double amountLeft = 0;
         double amountRight = 0;
         double amountLeftUser = 0;
-        BigInt balanceLeftUser = tokenPair[0] == 'ACA'
-            ? Fmt.balanceInt(
-                widget.plugin.balances.native.freeBalance.toString())
-            : Fmt.balanceInt(widget.plugin.store.assets
-                    .tokenBalanceMap[tokenPair[0].toUpperCase()]?.amount ??
-                '0');
-        BigInt balanceRightUser = Fmt.balanceInt(widget.plugin.store.assets
-                .tokenBalanceMap[tokenPair[1].toUpperCase()]?.amount ??
-            '0');
+
+        TokenBalanceData balanceLeftUser;
+        TokenBalanceData balanceRightUser;
+        if (tokenPair[0] == 'ACA') {
+          balanceLeftUser = TokenBalanceData(
+              symbol: tokenPair[0],
+              decimals: widget.plugin.networkState.tokenDecimals[0],
+              amount:
+                  (widget.plugin.balances.native?.freeBalance ?? 0).toString());
+          balanceRightUser =
+              widget.plugin.store.assets.tokenBalanceMap[tokenPair[1]];
+        } else if (tokenPair[1] == 'ACA') {
+          balanceRightUser = TokenBalanceData(
+              symbol: tokenPair[1],
+              decimals: widget.plugin.networkState.tokenDecimals[0],
+              amount: (widget.plugin.balances.native?.freeBalance ?? 0));
+          balanceLeftUser =
+              widget.plugin.store.assets.tokenBalanceMap[tokenPair[0]];
+        } else {
+          balanceLeftUser =
+              widget.plugin.store.assets.tokenBalanceMap[tokenPair[0]];
+          balanceRightUser =
+              widget.plugin.store.assets.tokenBalanceMap[tokenPair[1]];
+        }
 
         final poolInfo = widget.plugin.store.earn.dexPoolInfoMap[poolId];
         if (poolInfo != null) {
@@ -242,171 +346,65 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
           appBar: AppBar(title: Text(dic['earn.deposit']), centerTitle: true),
           body: SafeArea(
             child: ListView(
-              padding: EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(8, 16, 8, 32),
               children: <Widget>[
                 RoundedCard(
                   padding: EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
+                      SwapTokenInput(
+                        title: 'token 1',
+                        inputCtrl: _amountLeftCtrl,
+                        balance: balanceLeftUser,
+                        tokenIconsMap: widget.plugin.tokenIcons,
+                        onInputChange: _onSupplyAmountChange,
+                        onSetMax: (v) =>
+                            _onSetLeftMax(v, balanceLeftUser.decimals),
+                      ),
+                      Container(
+                        margin: EdgeInsets.only(left: 16, top: 2),
+                        child: _errorLeft == null
+                            ? null
+                            : Row(children: [
+                                Text(
+                                  _errorLeft,
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.red),
+                                )
+                              ]),
+                      ),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: <Widget>[
-                          Container(
-                            width: inputWidth,
-                            child: CurrencyWithIcon(
-                              tokenPair[0],
-                              TokenIcon(tokenPair[0], widget.plugin.tokenIcons),
-                              textStyle: Theme.of(context).textTheme.headline4,
-                            ),
-                          ),
-                          Expanded(
-                            child: Icon(
-                              Icons.add,
-                            ),
-                          ),
-                          Container(
-                            width: inputWidth,
-                            child: CurrencyWithIcon(
-                              tokenPair[1],
-                              TokenIcon(tokenPair[1], widget.plugin.tokenIcons),
-                              textStyle: Theme.of(context).textTheme.headline4,
-                            ),
-                          ),
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.add,
+                            color: Theme.of(context).primaryColor,
+                          )
                         ],
                       ),
-                      Form(
-                        key: _formKey,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Container(
-                              width: inputWidth,
-                              child: TextFormField(
-                                decoration: InputDecoration(
-                                  hintText: dicAssets['amount'],
-                                  labelText: dicAssets['amount'],
-                                  suffix: GestureDetector(
-                                    child: Icon(
-                                      CupertinoIcons.clear_thick_circled,
-                                      color: Theme.of(context).disabledColor,
-                                      size: 18,
-                                    ),
-                                    onTap: () {
-                                      WidgetsBinding.instance
-                                          .addPostFrameCallback(
-                                              (_) => _amountLeftCtrl.clear());
-                                    },
-                                  ),
-                                ),
-                                inputFormatters: [
-                                  UI.decimalInputFormatter(decimalsLeft)
-                                ],
-                                controller: _amountLeftCtrl,
-                                keyboardType: TextInputType.numberWithOptions(
-                                    decimal: true),
-                                validator: (v) {
-                                  try {
-                                    if (v.trim().isEmpty ||
-                                        double.parse(v.trim()) == 0) {
-                                      return dicAssets['amount.error'];
-                                    }
-                                  } catch (err) {
-                                    return dicAssets['amount.error'];
-                                  }
-                                  if (Fmt.tokenInt(v.trim(), decimalsLeft) >
-                                      balanceLeftUser) {
-                                    return dicAssets['amount.low'];
-                                  }
-                                  return null;
-                                },
-                                onChanged: (v) => _onSupplyAmountChange(v),
-                              ),
-                            ),
-                            Container(
-                              width: inputWidth,
-                              child: TextFormField(
-                                decoration: InputDecoration(
-                                  hintText: dicAssets['amount'],
-                                  labelText: dicAssets['amount'],
-                                  suffix: GestureDetector(
-                                    child: Icon(
-                                      CupertinoIcons.clear_thick_circled,
-                                      color: Theme.of(context).disabledColor,
-                                      size: 18,
-                                    ),
-                                    onTap: () {
-                                      WidgetsBinding.instance
-                                          .addPostFrameCallback(
-                                              (_) => _amountRightCtrl.clear());
-                                    },
-                                  ),
-                                ),
-                                inputFormatters: [
-                                  UI.decimalInputFormatter(decimalsRight)
-                                ],
-                                controller: _amountRightCtrl,
-                                keyboardType: TextInputType.numberWithOptions(
-                                    decimal: true),
-                                validator: (v) {
-                                  try {
-                                    if (v.trim().isEmpty ||
-                                        double.parse(v.trim()) == 0) {
-                                      return dicAssets['amount.error'];
-                                    }
-                                  } catch (err) {
-                                    return dicAssets['amount.error'];
-                                  }
-                                  if (Fmt.tokenInt(v.trim(), decimalsRight) >
-                                      balanceRightUser) {
-                                    return dicAssets['amount.low'];
-                                  }
-                                  return null;
-                                },
-                                onChanged: (v) => _onTargetAmountChange(v),
-                              ),
-                            )
-                          ],
-                        ),
+                      SwapTokenInput(
+                        title: 'token 2',
+                        inputCtrl: _amountRightCtrl,
+                        balance: balanceRightUser,
+                        tokenIconsMap: widget.plugin.tokenIcons,
+                        onInputChange: _onTargetAmountChange,
+                        onSetMax: (v) =>
+                            _onSetRightMax(v, balanceRightUser.decimals),
                       ),
-                      Padding(
-                        padding: EdgeInsets.only(top: 8),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: <Widget>[
-                            Container(
-                              width: inputWidth,
-                              child: Text(
-                                '${dicAssets['balance']}: ${Fmt.priceFloorBigInt(
-                                  balanceLeftUser,
-                                  decimalsLeft,
-                                  lengthFixed: 4,
-                                )}',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: colorGray,
-                                ),
-                              ),
-                            ),
-                            Container(
-                              width: inputWidth,
-                              child: Text(
-                                '${dicAssets['balance']}: ${Fmt.priceFloorBigInt(
-                                  balanceRightUser,
-                                  decimalsRight,
-                                  lengthFixed: 4,
-                                )}',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: colorGray,
-                                ),
-                              ),
-                            )
-                          ],
-                        ),
+                      Container(
+                        margin: EdgeInsets.only(left: 16, top: 2),
+                        child: _errorRight == null
+                            ? null
+                            : Row(children: [
+                                Text(
+                                  _errorRight,
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.red),
+                                )
+                              ]),
                       ),
-                      Divider(),
+                      Divider(height: 24),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: <Widget>[
@@ -418,10 +416,18 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                               ),
                             ),
                           ),
-                          Text(
-                              '1 ${tokenPair[0]} = ${Fmt.doubleFormat(_price, length: 6)} ${tokenPair[1]}'),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                  '1 ${tokenPairView[0]} = ${Fmt.doubleFormat(_price, length: 6)} ${tokenPairView[1]}'),
+                              Text(
+                                  '1 ${tokenPairView[1]} = ${Fmt.doubleFormat(1 / _price, length: 6)} ${tokenPairView[0]}')
+                            ],
+                          ),
                         ],
                       ),
+                      Divider(),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: <Widget>[
@@ -432,7 +438,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                             ),
                           ),
                           Text(
-                            '${Fmt.doubleFormat(amountLeft)} ${tokenPair[0]}\n+ ${Fmt.doubleFormat(amountRight)} ${tokenPair[1]}',
+                            '${Fmt.doubleFormat(amountLeft)} ${tokenPairView[0]}\n+ ${Fmt.doubleFormat(amountRight)} ${tokenPairView[1]}',
                             textAlign: TextAlign.right,
                           ),
                         ],

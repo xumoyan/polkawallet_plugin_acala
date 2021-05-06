@@ -354,10 +354,17 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
                               ),
                             ),
                           ),
-                          Text(
-                              '1 ${pairView[0]} = ${Fmt.doubleFormat(_price)} ${pairView[1]}'),
+                          Column(
+                              children: [
+                                Text(
+                                    '1 ${pairView[0]} = ${Fmt.doubleFormat(_price)} ${pairView[1]}'),
+                                Text(
+                                    '1 ${pairView[1]} = ${Fmt.doubleFormat(1/_price)} ${pairView[0]}'),
+                              ]
+                          )
                         ],
                       ),
+                      Divider(),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: <Widget>[

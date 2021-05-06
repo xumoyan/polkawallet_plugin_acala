@@ -96,18 +96,18 @@ class _SwapPageState extends State<SwapPage> {
   }
 
   bool _onCheckBalance() {
+    if (_maxInput != null) {
+      setState(() {
+        _error = null;
+      });
+      return true;
+    }
+
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
     final v = _amountPayCtrl.text.trim();
     TokenBalanceData balance;
     if (_swapPair.length > 0) {
       if (_swapPair[0] == 'ACA') {
-        if (_maxInput != null) {
-          setState(() {
-            _error = null;
-          });
-          return true;
-        }
-
         balance = TokenBalanceData(
             symbol: _swapPair[0],
             decimals: widget.plugin.networkState.tokenDecimals[0],

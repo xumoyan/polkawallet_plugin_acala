@@ -151,8 +151,7 @@ class _ProfileContentState extends State<ProfileContent> {
         widget.keyring,
         keyType: KeyType.mnemonic,
         key:
-            // 'wing know chapter eight shed lens mandate lake twenty useless bless glory',
-            'second throw patch mix leaf call scare surface enlist pet exhibit hammer',
+            'wing know chapter eight shed lens mandate lake twenty useless bless glory',
         name: 'testName01',
         password: 'a123456',
       );

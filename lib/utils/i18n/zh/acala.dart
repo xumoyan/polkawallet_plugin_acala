@@ -18,7 +18,7 @@ const Map<String, String> zhDex = {
   'dex.fee': '交易费',
   'dex.impact': '价格影响',
   'loan.title': '自助借贷',
-  'loan.brief': '将您的数字资产（如：DOT、XBTC）锁定在 Acala 平台作为质押，可以借出相应数量的 aUSD。',
+  'loan.brief': '将您的数字资产（如：DOT）质押在 Acala 平台，可以借出相应数量的 aUSD。',
   'loan.borrowed': '债务',
   'loan.collateral': '质押',
   'loan.borrow': '借贷',
