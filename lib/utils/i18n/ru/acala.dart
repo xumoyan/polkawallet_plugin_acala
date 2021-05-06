@@ -20,7 +20,7 @@ const Map<String, String> enDex = {
   'dex.impact': 'Price impact',
   'loan.title': 'Self Serviced Loan',
   'loan.brief':
-      'Lock your digital assets(i.e. DOT, XBTC) in Acala platform to borrow equivalent aUSD.',
+      'Lock your digital assets(i.e. DOT) in Acala platform to borrow equivalent aUSD.',
   'loan.borrowed': 'My Debt',
   'loan.collateral': 'Collateral',
   'loan.borrow': 'Borrow',
@@ -55,7 +55,7 @@ const Map<String, String> enDex = {
   'earn.title': 'Deposit & Earn',
   'earn.brief':
       'Deposit your digital assets and stable coins into the liquid pool to earn interests and rewards',
-  'earn.deposit': 'Deposit Liquidity',
+  'earn.deposit': 'Add Liquidity',
   'earn.withdraw': 'Withdraw Liquidity',
   'earn.get': 'Withdraw Rewards',
   'earn.reward.year': 'Annualized Rewards',
