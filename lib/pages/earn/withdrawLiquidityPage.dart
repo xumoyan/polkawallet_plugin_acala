@@ -4,7 +4,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:polkawallet_plugin_acala/api/types/txLiquidityData.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/common/constants.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
@@ -105,12 +104,6 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
             params: params,
           ))) as Map;
       if (res != null) {
-        res['action'] = TxDexLiquidityData.actionWithdraw;
-        res['params'] = [poolId, params[2]];
-        res['time'] = DateTime.now().millisecondsSinceEpoch;
-
-        widget.plugin.store.earn
-            .addDexLiquidityTx(res, widget.keyring.current.pubKey);
         Navigator.of(context).pop(res);
       }
     }
@@ -354,14 +347,12 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
                               ),
                             ),
                           ),
-                          Column(
-                              children: [
-                                Text(
-                                    '1 ${pairView[0]} = ${Fmt.doubleFormat(_price)} ${pairView[1]}'),
-                                Text(
-                                    '1 ${pairView[1]} = ${Fmt.doubleFormat(1/_price)} ${pairView[0]}'),
-                              ]
-                          )
+                          Column(children: [
+                            Text(
+                                '1 ${pairView[0]} = ${Fmt.doubleFormat(_price)} ${pairView[1]}'),
+                            Text(
+                                '1 ${pairView[1]} = ${Fmt.doubleFormat(1 / _price)} ${pairView[0]}'),
+                          ])
                         ],
                       ),
                       Divider(),
@@ -370,7 +361,7 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
                         children: <Widget>[
                           Expanded(
                             child: Text(
-                              dic['earn${_fromPool?'.stake':''}.pool'],
+                              dic['earn${_fromPool ? '.stake' : ''}.pool'],
                               style: TextStyle(
                                 color: Theme.of(context).unselectedWidgetColor,
                               ),

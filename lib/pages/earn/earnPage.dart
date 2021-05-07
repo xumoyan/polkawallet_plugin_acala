@@ -5,7 +5,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:polkawallet_plugin_acala/api/types/dexPoolInfoData.dart';
-import 'package:polkawallet_plugin_acala/api/types/txLiquidityData.dart';
 import 'package:polkawallet_plugin_acala/common/constants.dart';
 import 'package:polkawallet_plugin_acala/pages/earn/LPStakePage.dart';
 import 'package:polkawallet_plugin_acala/pages/earn/addLiquidityPage.dart';
@@ -72,7 +71,7 @@ class _EarnPageState extends State<EarnPage> {
     );
   }
 
-  Future<void> _onWithdrawReward(LPRewardData reward) async {
+  void _onWithdrawReward(LPRewardData reward) {
     final symbol = widget.plugin.networkState.tokenSymbol[0];
     final incentiveReward = Fmt.priceFloor(reward.incentive, lengthFixed: 4);
     final savingReward = Fmt.priceFloor(reward.saving, lengthFixed: 4);
@@ -83,7 +82,7 @@ class _EarnPageState extends State<EarnPage> {
         'api.tx.incentives.claimRewards({DexIncentive: {DEXShare: $pool}})',
         'api.tx.incentives.claimRewards({DexSaving: {DEXShare: $pool}})',
       ];
-      final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
+      Navigator.of(context).pushNamed(TxConfirmPage.route,
           arguments: TxConfirmParams(
             module: 'utility',
             call: 'batch',
@@ -96,29 +95,9 @@ class _EarnPageState extends State<EarnPage> {
             },
             params: [],
             rawParams: '[[${params.join(',')}]]',
-          ))) as Map;
-      if (res != null) {
-        res['time'] = DateTime.now().millisecondsSinceEpoch;
-        final tx1 = {
-          'hash': res['hash'],
-          'time': res['time'],
-          'action': TxDexLiquidityData.actionRewardIncentive,
-          'params': [_tab, incentiveReward, '']
-        };
-        final tx2 = {
-          'hash': res['hash'],
-          'time': res['time'],
-          'action': TxDexLiquidityData.actionRewardSaving,
-          'params': [_tab, '', savingReward]
-        };
-
-        widget.plugin.store.earn
-            .addDexLiquidityTx(tx1, widget.keyring.current.pubKey);
-        widget.plugin.store.earn
-            .addDexLiquidityTx(tx2, widget.keyring.current.pubKey);
-      }
+          ));
     } else if (reward.incentive > 0) {
-      final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
+      Navigator.of(context).pushNamed(TxConfirmPage.route,
           arguments: TxConfirmParams(
             module: 'incentives',
             call: 'claimRewards',
@@ -130,16 +109,9 @@ class _EarnPageState extends State<EarnPage> {
             },
             params: [],
             rawParams: '[{DexIncentive: {DEXShare: $pool}}]',
-          ))) as Map;
-      if (res != null) {
-        res['time'] = DateTime.now().millisecondsSinceEpoch;
-        res['action'] = TxDexLiquidityData.actionRewardIncentive;
-        res['params'] = [_tab, incentiveReward, ''];
-        widget.plugin.store.earn
-            .addDexLiquidityTx(res, widget.keyring.current.pubKey);
-      }
+          ));
     } else if (reward.saving > 0) {
-      final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
+      Navigator.of(context).pushNamed(TxConfirmPage.route,
           arguments: TxConfirmParams(
             module: 'incentives',
             call: 'claimRewards',
@@ -151,14 +123,7 @@ class _EarnPageState extends State<EarnPage> {
             },
             params: [],
             rawParams: '[{DexSaving: {DEXShare: $pool}}]',
-          ))) as Map;
-      if (res != null) {
-        res['time'] = DateTime.now().millisecondsSinceEpoch;
-        res['action'] = TxDexLiquidityData.actionRewardSaving;
-        res['params'] = [_tab, '', savingReward];
-        widget.plugin.store.earn
-            .addDexLiquidityTx(res, widget.keyring.current.pubKey);
-      }
+          ));
     }
   }
 

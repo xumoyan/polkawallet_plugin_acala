@@ -1,48 +1,70 @@
+import 'dart:convert';
+
 import 'package:polkawallet_ui/utils/format.dart';
+import 'package:polkawallet_plugin_acala/common/constants.dart';
+import 'package:polkawallet_plugin_acala/utils/format.dart';
 
 class TxDexLiquidityData extends _TxDexLiquidityData {
-  static const String actionDeposit = 'deposit';
-  static const String actionWithdraw = 'withdraw';
-  static const String actionRewardIncentive = 'rewardIncentive';
-  static const String actionRewardSaving = 'rewardSaving';
-  static const String actionStake = 'stake';
-  static const String actionUnStake = 'unStake';
-  static TxDexLiquidityData fromJson(Map<String, dynamic> json) {
-    TxDexLiquidityData data = TxDexLiquidityData();
-    data.hash = json['hash'];
-    data.action = json['action'];
-    data.currencyId = json['params'][0];
+  static const String actionDeposit = 'addLiquidity';
+  static const String actionWithdraw = 'removeLiquidity';
+  static TxDexLiquidityData fromJson(
+      Map<String, dynamic> json, List<String> symbols, List<int> decimals) {
+    final args = jsonDecode(json['args']);
+
+    final data = TxDexLiquidityData();
+    data.block = json['extrinsic']['block']['number'];
+    data.hash = json['extrinsic']['id'];
+
+    if (json['method'] == 'claimRewards') {
+      data.action = Map.of(args[0]).keys.toList()[0];
+    } else {
+      data.action = json['method'];
+    }
+
+    final pair = [args[0]['token'], args[1]['token']];
+    final pairView = pair.map((e) => PluginFmt.tokenView(e)).toList();
+    final poolId = pair.join('-');
+    final shareTokenView = PluginFmt.tokenView(poolId);
+
+    final token = pair.firstWhere((e) => e != acala_stable_coin);
+    final stableCoinDecimals = decimals[symbols.indexOf(acala_stable_coin)];
+    final tokenDecimals = decimals[symbols.indexOf(token)];
+    final shareDecimals = stableCoinDecimals >= tokenDecimals
+        ? stableCoinDecimals
+        : tokenDecimals;
+    final decimalsLeft =
+        pair[0] == acala_stable_coin ? stableCoinDecimals : tokenDecimals;
+    final decimalsRight =
+        pair[0] == acala_stable_coin ? tokenDecimals : stableCoinDecimals;
+
     switch (data.action) {
       case actionDeposit:
-        data.amountLeft = Fmt.balanceInt(json['params'][1]);
-        data.amountRight = Fmt.balanceInt(json['params'][2]);
+        data.amountLeft =
+            '${Fmt.balance(args[2].toString(), decimalsLeft)} ${pairView[0]}';
+        data.amountRight =
+            '${Fmt.balance(args[3].toString(), decimalsRight)} ${pairView[1]}';
+        data.withStake = args[4];
         break;
       case actionWithdraw:
-        data.amountShare = Fmt.balanceInt(json['params'][1]);
-        break;
-      case actionRewardIncentive:
-        data.amountReward = json['params'][1];
-        break;
-      case actionRewardSaving:
-        data.amountReward = json['params'][2];
-        break;
-      case actionStake:
-      case actionUnStake:
-        data.amountShare = Fmt.balanceInt(json['params'][1]);
+        data.amountShare =
+            '${Fmt.balance(args[2].toString(), shareDecimals)} $shareTokenView';
+        data.withStake = args[3];
         break;
     }
-    data.time = DateTime.fromMillisecondsSinceEpoch(json['time']);
+    data.time = json['extrinsic']['timestamp'] as String;
+    data.isSuccess = json['isSuccess'];
     return data;
   }
 }
 
 abstract class _TxDexLiquidityData {
+  String block;
   String hash;
-  String currencyId;
   String action;
-  String amountReward;
-  BigInt amountLeft;
-  BigInt amountRight;
-  BigInt amountShare;
-  DateTime time;
+  String amountLeft;
+  String amountRight;
+  String amountShare;
+  String time;
+  bool isSuccess = true;
+  bool withStake = false;
 }

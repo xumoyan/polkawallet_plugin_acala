@@ -33,7 +33,6 @@ class AddLiquidityPage extends StatefulWidget {
 }
 
 class _AddLiquidityPageState extends State<AddLiquidityPage> {
-  final _formKey = GlobalKey<FormState>();
   final TextEditingController _amountLeftCtrl = new TextEditingController();
   final TextEditingController _amountRightCtrl = new TextEditingController();
 
@@ -233,12 +232,6 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
             params: params,
           ))) as Map;
       if (res != null) {
-        res['action'] = TxDexLiquidityData.actionDeposit;
-        res['params'] = [poolId, params[2], params[3]];
-        res['time'] = DateTime.now().millisecondsSinceEpoch;
-
-        widget.plugin.store.earn
-            .addDexLiquidityTx(res, widget.keyring.current.pubKey);
         Navigator.of(context).pop(res);
       }
     }

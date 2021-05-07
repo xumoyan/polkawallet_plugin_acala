@@ -91,14 +91,6 @@ class _LPStakePage extends State<LPStakePage> {
           ],
         ))) as Map;
     if (res != null) {
-      res['action'] = isStake
-          ? TxDexLiquidityData.actionStake
-          : TxDexLiquidityData.actionUnStake;
-      res['params'] = [params.poolId, amount.toString()];
-      res['time'] = DateTime.now().millisecondsSinceEpoch;
-
-      widget.plugin.store.earn
-          .addDexLiquidityTx(res, widget.keyring.current.pubKey);
       Navigator.of(context).pop(res);
     }
   }

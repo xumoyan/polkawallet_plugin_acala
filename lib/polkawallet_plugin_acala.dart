@@ -16,6 +16,8 @@ import 'package:polkawallet_plugin_acala/pages/currencySelectPage.dart';
 import 'package:polkawallet_plugin_acala/pages/earn/LPStakePage.dart';
 import 'package:polkawallet_plugin_acala/pages/earn/addLiquidityPage.dart';
 import 'package:polkawallet_plugin_acala/pages/earn/earnHistoryPage.dart';
+import 'package:polkawallet_plugin_acala/pages/earn/earnDetailPage.dart';
+import 'package:polkawallet_plugin_acala/pages/earn/liquidityDetailPage.dart';
 import 'package:polkawallet_plugin_acala/pages/earn/earnPage.dart';
 import 'package:polkawallet_plugin_acala/pages/earn/withdrawLiquidityPage.dart';
 import 'package:polkawallet_plugin_acala/pages/homa/homaHistoryPage.dart';
@@ -168,7 +170,15 @@ class PluginAcala extends PolkawalletPlugin {
       SwapDetailPage.route: (_) => SwapDetailPage(this, keyring),
       // earn pages
       EarnPage.route: (_) => EarnPage(this, keyring),
-      EarnHistoryPage.route: (_) => EarnHistoryPage(this, keyring),
+      EarnHistoryPage.route: (_) => ClientProvider(
+            child: Builder(
+              builder: (_) => EarnHistoryPage(this, keyring),
+            ),
+            uri: GraphQLConfig['httpUri'],
+            subscriptionUri: GraphQLConfig['wsUri'],
+          ),
+      EarnLiquidityDetailPage.route: (_) => EarnLiquidityDetailPage(this, keyring),
+      EarnIncentiveDetailPage.route: (_) => EarnIncentiveDetailPage(this, keyring),
       LPStakePage.route: (_) => LPStakePage(this, keyring),
       AddLiquidityPage.route: (_) => AddLiquidityPage(this, keyring),
       WithdrawLiquidityPage.route: (_) => WithdrawLiquidityPage(this, keyring),

@@ -100,7 +100,7 @@ const graphSwapQuery = r'''
     }
   }
 ''';
-const graphEarnQuery = r'''
+const graphDexPoolQuery = r'''
   query ($account: String) {
     calls(filter: {
       and: [
@@ -108,15 +108,12 @@ const graphEarnQuery = r'''
           or: [
             { method: {equalTo: "addLiquidity"} },
             { method: {equalTo: "removeLiquidity"} },
-            { method: {equalTo: "depositDexShare"} },
-            { method: {equalTo: "withdrawDexShare"} },
-            { method: {equalTo: "claimRewards"} }
           ]
         },
-        { section: {equalTo: "incentives"} },
+        { section: {equalTo: "dex"} },
         { signerId: { equalTo: $account } }
       ]
-    }, orderBy: TIMESTAMP_DESC, first: 10) {
+    }, orderBy: TIMESTAMP_DESC, first: 20) {
       nodes {
         id
         method
@@ -127,12 +124,65 @@ const graphEarnQuery = r'''
           id
           block {number}
           timestamp
-          events {
-            nodes {
-              data,
-              method
-            }
-          }
+        }
+      }
+    }
+  }
+''';
+const graphDexStakeQuery = r'''
+  query ($account: String) {
+    calls(filter: {
+      and: [
+        {
+          or: [
+            { method: {equalTo: "depositDexShare"} },
+            { method: {equalTo: "withdrawDexShare"} }
+          ]
+        },
+        { section: {equalTo: "incentives"} },
+        { signerId: {equalTo: $account} }
+      ]
+    }, orderBy: TIMESTAMP_DESC, first: 20) {
+      nodes {
+        id
+        method
+        section
+        args
+        isSuccess
+        extrinsic {
+          id
+          block {number}
+          timestamp
+        }
+      }
+    }
+  }
+''';
+const graphEarnQuery = r'''
+  query ($account: String) {
+    calls(filter: {
+      and: [
+        {
+          or: [
+            { args: {includes: "dexIncentive"} },
+            { args: {includes: "dexSaving"} }
+          ]
+        },
+        { section: {equalTo: "incentives"} },
+        { method: {equalTo: "claimRewards"} }
+        { signerId: {equalTo: $account} }
+      ]
+    }, orderBy: TIMESTAMP_DESC, first: 20) {
+      nodes {
+        id
+        method
+        section
+        args
+        isSuccess
+        extrinsic {
+          id
+          block {number}
+          timestamp
         }
       }
     }
@@ -151,7 +201,7 @@ const graphHomaQuery = r'''
         { section: {equalTo: "homa"} },
         { signerId: { equalTo: $account } }
       ]
-    }, orderBy: TIMESTAMP_DESC, first: 10) {
+    }, orderBy: TIMESTAMP_DESC, first: 20) {
       nodes {
         id
         method
