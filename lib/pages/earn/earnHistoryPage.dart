@@ -146,7 +146,9 @@ class _EarnHistoryPageState extends State<EarnHistoryPage> {
           );
         }
         final ls = List.of(result.data['calls']['nodes']);
-        if (ls.length > 0 && ls[0]['section'] != 'incentives') {
+        if (ls.length > 0 &&
+            ls[0]['method'] != 'withdrawDexShare' &&
+            ls[0]['method'] != 'depositDexShare') {
           return ListTail(isEmpty: true, isLoading: true);
         }
         final list = ls
@@ -230,7 +232,7 @@ class _EarnHistoryPageState extends State<EarnHistoryPage> {
           );
         }
         final ls = List.of(result.data['calls']['nodes']);
-        if (ls.length > 0 && ls[0]['section'] != 'incentives') {
+        if (ls.length > 0 && ls[0]['method'] != 'claimRewards') {
           return ListTail(isEmpty: true, isLoading: true);
         }
         final list = ls
@@ -312,9 +314,11 @@ class _EarnHistoryPageState extends State<EarnHistoryPage> {
                 fontSize: 20,
                 lineWidth: 6,
                 onTap: (i) {
-                  setState(() {
-                    _tab = i;
-                  });
+                  if (_tab != i) {
+                    setState(() {
+                      _tab = i;
+                    });
+                  }
                 },
               ),
             ),

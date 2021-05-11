@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:polkawallet_plugin_acala/common/constants.dart';
-import 'package:polkawallet_plugin_acala/pages/currencySelectPage.dart';
-import 'package:polkawallet_plugin_acala/pages/loan/loanAdjustPage.dart';
-import 'package:polkawallet_plugin_acala/pages/loan/loanCard.dart';
-import 'package:polkawallet_plugin_acala/pages/loan/loanChart.dart';
+import 'package:liquid_progress_indicator/liquid_progress_indicator.dart';
+import 'package:polkawallet_plugin_acala/api/types/loanType.dart';
+import 'package:polkawallet_plugin_acala/pages/loan/loanDetailPage.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanCreatePage.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanHistoryPage.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
+import 'package:polkawallet_sdk/storage/types/keyPairData.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
+import 'package:polkawallet_ui/components/addressIcon.dart';
+import 'package:polkawallet_ui/components/roundedButton.dart';
 import 'package:polkawallet_ui/components/roundedCard.dart';
 import 'package:polkawallet_ui/components/tokenIcon.dart';
 import 'package:polkawallet_ui/utils/format.dart';
@@ -29,8 +30,6 @@ class LoanPage extends StatefulWidget {
 }
 
 class _LoanPageState extends State<LoanPage> {
-  String _tab = 'DOT';
-
   Future<void> _fetchData() async {
     await widget.plugin.service.loan
         .queryLoanTypes(widget.keyring.current.address);
@@ -60,23 +59,9 @@ class _LoanPageState extends State<LoanPage> {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
     return Observer(
       builder: (_) {
-        final loan = widget.plugin.store.loan.loans[_tab];
-
-        final symbols = widget.plugin.networkState.tokenSymbol;
-        final decimals = widget.plugin.networkState.tokenDecimals;
-        final stableCoinDecimals = decimals[symbols.indexOf('AUSD')];
-        final collateralDecimals = decimals[symbols.indexOf(_tab)];
-
-        var aUSDBalance = BigInt.zero;
-        final aUSDBalanceIndex = widget.plugin.balances.tokens
-            .indexWhere((e) => e.symbol == acala_stable_coin);
-        if (aUSDBalanceIndex >= 0) {
-          aUSDBalance = Fmt.balanceInt(
-              widget.plugin.balances.tokens[aUSDBalanceIndex].amount);
-        }
-
-        final Color cardColor = Theme.of(context).cardColor;
-        final Color primaryColor = Theme.of(context).primaryColor;
+        final loans = widget.plugin.store.loan.loans.values.toList();
+        loans.retainWhere((loan) =>
+            loan.debits > BigInt.zero || loan.collaterals > BigInt.zero);
 
         return Scaffold(
           backgroundColor: Theme.of(context).cardColor,
@@ -85,112 +70,46 @@ class _LoanPageState extends State<LoanPage> {
             centerTitle: true,
             actions: <Widget>[
               IconButton(
-                icon: Icon(Icons.history, color: cardColor),
-                onPressed: loan == null
-                    ? null
-                    : () => Navigator.of(context)
-                        .pushNamed(LoanHistoryPage.route, arguments: loan.type),
+                icon: Icon(Icons.history, color: Theme.of(context).cardColor),
+                onPressed: () => Navigator.of(context)
+                        .pushNamed(LoanHistoryPage.route),
               )
             ],
           ),
           body: SafeArea(
             child: Column(
               children: <Widget>[
-                CurrencySelector(
-                  tokenOptions: widget.plugin.store.loan.loanTypes
-                      .map((e) => e.token)
-                      .toList(),
-                  tokenIcons: widget.plugin.tokenIcons,
-                  token: _tab,
-                  price: widget.plugin.store.assets.prices[_tab],
-                  onSelect: (res) {
-                    if (res != null) {
-                      setState(() {
-                        _tab = res;
-                      });
-                    }
-                  },
-                ),
-                Expanded(
-                  child: loan != null
-                      ? ListView(
-                          children: <Widget>[
-                            loan.collaterals > BigInt.zero
-                                ? LoanCard(
-                                    loan,
-                                    Fmt.priceFloorBigInt(
-                                        aUSDBalance, stableCoinDecimals),
-                                    stableCoinDecimals,
-                                    collateralDecimals)
-                                : RoundedCard(
-                                    margin: EdgeInsets.all(16),
-                                    padding:
-                                        EdgeInsets.fromLTRB(48, 24, 48, 24),
-                                    child: SvgPicture.asset(
-                                        'packages/polkawallet_plugin_acala/assets/images/loan-start.svg'),
-                                  ),
-                            loan.debitInUSD > BigInt.zero
-                                ? LoanChart(loan)
-//                                    ? LoanDonutChart(loan)
-                                : Container()
-                          ],
+                AccountCard(widget.keyring.current),
+            loans.length > 0
+                ? Expanded(
+                  child:  ListView(
+                    padding:  EdgeInsets.all(16),
+                          children: loans.map((loan) {
+                            return LoanOverviewCard(
+                              loan,
+                              widget.plugin.networkState.tokenSymbol,
+                              widget.plugin.networkState.tokenDecimals,
+                              widget.plugin.tokenIcons,
+                            );
+                          }).toList(),
                         )
-                      : Container(),
-                ),
+                      ,
+                ): RoundedCard(
+              margin: EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(80, 24, 80, 24),
+              child: SvgPicture.asset(
+                  'packages/polkawallet_plugin_acala/assets/images/loan-start.svg'),
+            ),
                 widget.plugin.store.loan.loanTypes.length > 0
-                    ? Row(
-                        children: <Widget>[
-                          Expanded(
-                            child: Container(
-                              color: Colors.blue,
-                              child: FlatButton(
-                                  padding: EdgeInsets.only(top: 16, bottom: 16),
-                                  child: Text(
-                                    dic['loan.borrow'],
-                                    style: TextStyle(color: cardColor),
-                                  ),
-                                  onPressed: () {
-                                    if (loan != null &&
-                                        loan.collaterals > BigInt.zero) {
-                                      Navigator.of(context).pushNamed(
-                                        LoanAdjustPage.route,
-                                        arguments: LoanAdjustPageParams(
-                                            LoanAdjustPage.actionTypeBorrow,
-                                            _tab),
-                                      );
-                                    } else {
-                                      Navigator.of(context).pushNamed(
-                                        LoanCreatePage.route,
-                                        arguments:
-                                            LoanAdjustPageParams('', _tab),
-                                      );
-                                    }
-                                  }),
-                            ),
-                          ),
-                          loan != null && loan.debitInUSD > BigInt.zero
-                              ? Expanded(
-                                  child: Container(
-                                    color: primaryColor,
-                                    child: FlatButton(
-                                      padding:
-                                          EdgeInsets.only(top: 16, bottom: 16),
-                                      child: Text(
-                                        dic['loan.payback'],
-                                        style: TextStyle(color: cardColor),
-                                      ),
-                                      onPressed: () =>
-                                          Navigator.of(context).pushNamed(
-                                        LoanAdjustPage.route,
-                                        arguments: LoanAdjustPageParams(
-                                            LoanAdjustPage.actionTypePayback,
-                                            _tab),
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              : Container(),
-                        ],
+                    ? Container(
+                        padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+                        child: RoundedButton(
+                            text: '+ ${dic['loan.borrow']}',
+                            onPressed: () {
+                              Navigator.of(context).pushNamed(
+                                LoanCreatePage.route
+                              );
+                            }),
                       )
                     : Container(),
               ],
@@ -202,19 +121,115 @@ class _LoanPageState extends State<LoanPage> {
   }
 }
 
-class CurrencySelector extends StatelessWidget {
-  CurrencySelector({
-    this.tokenOptions,
-    this.tokenIcons,
-    this.token,
-    this.price,
-    this.onSelect,
-  });
-  final List<String> tokenOptions;
+class LoanOverviewCard extends StatelessWidget {
+  LoanOverviewCard(this.loan, this.symbols, this.decimals, this.tokenIcons);
+  final LoanData loan;
+  final List<String> symbols;
+  final List<int> decimals;
   final Map<String, Widget> tokenIcons;
-  final String token;
-  final BigInt price;
-  final Function(String) onSelect;
+
+  final colorSafe = Color(0xFFB9F6CA);
+  final colorWarn = Color(0xFFFFD180);
+  final colorDanger = Color(0xFFFF8A80);
+
+  @override
+  Widget build(BuildContext context) {
+    final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
+    final stableCoinDecimals = decimals[symbols.indexOf('AUSD')];
+    final collateralDecimals = decimals[symbols.indexOf(loan.token)];
+
+    final requiredCollateralRatio =
+        double.parse(Fmt.token(loan.type.requiredCollateralRatio, 18));
+    final borrowedRatio = 1 / loan.collateralRatio;
+
+    return GestureDetector(
+      child: Stack(children: [
+        RoundedCard(
+          margin: EdgeInsets.only(bottom: 16),
+          child: Container(
+            width: double.infinity,
+            height: 176,
+            child: LiquidLinearProgressIndicator(
+              value: borrowedRatio,
+              backgroundColor: Colors.white,
+              valueColor: AlwaysStoppedAnimation(
+                  loan.collateralRatio > requiredCollateralRatio
+                      ? loan.collateralRatio > requiredCollateralRatio + 0.2
+                          ? colorSafe
+                          : colorWarn
+                      : colorDanger),
+              borderRadius: 16,
+              direction: Axis.vertical,
+            ),
+          ),
+        ),
+        Container(
+          color: Colors.transparent,
+          padding: EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                margin: EdgeInsets.only(bottom: 8),
+                child: Text(
+                    '${dic['loan.collateral']}(${PluginFmt.tokenView(loan.token)})'),
+              ),
+              Row(children: [
+                Container(
+                    margin: EdgeInsets.only(right: 8),
+                    child: TokenIcon(loan.token, tokenIcons)),
+                Text(Fmt.priceFloorBigInt(loan.collaterals, collateralDecimals),
+                    style: TextStyle(
+                      fontSize: 30,
+                      letterSpacing: -0.8,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    )),
+              ]),
+              Row(children: [
+                Expanded(
+                    child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                        margin: EdgeInsets.only(top: 24, bottom: 8),
+                        child: Text(dic['loan.borrowed'] + '(aUSD)')),
+                    Text(
+                      Fmt.priceCeilBigInt(loan.debits, stableCoinDecimals),
+                      style: Theme.of(context).textTheme.headline4,
+                    )
+                  ],
+                )),
+                Expanded(
+                    child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                        margin: EdgeInsets.only(top: 24, bottom: 8),
+                        child: Text(dic['loan.ratio'])),
+                    Text(
+                      Fmt.ratio(loan.collateralRatio),
+                      style: Theme.of(context).textTheme.headline4,
+                    )
+                  ],
+                )),
+              ])
+            ],
+          ),
+        ),
+      ]),
+      onTap: () => Navigator.of(context).pushNamed(
+        LoanDetailPage.route,
+        arguments: loan.token,
+      ),
+    );
+  }
+}
+
+class AccountCard extends StatelessWidget {
+  AccountCard(this.account);
+  final KeyPairData account;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -223,44 +238,17 @@ class CurrencySelector extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: Colors.black12,
-            blurRadius: 16.0, // has the effect of softening the shadow
-            spreadRadius: 4.0, // has the effect of extending the shadow
-            offset: Offset(
-              2.0, // horizontal, move right 10
-              2.0, // vertical, move down 10
-            ),
+            blurRadius: 16.0,
+            spreadRadius: 4.0,
+            offset: Offset(2.0, 2.0),
           )
         ],
       ),
       child: ListTile(
-        leading: TokenIcon(token, tokenIcons),
-        title: Text(
-          PluginFmt.tokenView(token),
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).primaryColor,
-          ),
-        ),
-        subtitle: price != null
-            ? Text(
-                '\$${Fmt.token(price, acala_price_decimals)}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(context).unselectedWidgetColor,
-                ),
-              )
-            : null,
-        trailing: Icon(Icons.arrow_forward_ios, size: 18),
-        onTap: () async {
-          final res = await Navigator.of(context).pushNamed(
-            CurrencySelectPage.route,
-            arguments: tokenOptions,
-          );
-          if (res != null) {
-            onSelect(res);
-          }
-        },
+        dense: true,
+        leading: AddressIcon(account.address, svg: account.icon, size: 36),
+        title: Text(PluginFmt.tokenView(account.name)),
+        subtitle: Text(Fmt.address(account.address)),
       ),
     );
   }

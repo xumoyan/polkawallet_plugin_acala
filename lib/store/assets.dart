@@ -14,7 +14,6 @@ abstract class _AssetsStore with Store {
   _AssetsStore(this.cache);
 
   final StoreCache cache;
-  final String cacheTxsTransferKey = 'transfer_txs';
 
   @observable
   Map<String, TokenBalanceData> tokenBalanceMap =

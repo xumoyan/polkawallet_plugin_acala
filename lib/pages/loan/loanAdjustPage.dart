@@ -1,4 +1,3 @@
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -330,10 +329,6 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
           params: params['params'],
         ))) as Map;
     if (res != null) {
-      res['params'] = params['params'];
-      res['time'] = DateTime.now().millisecondsSinceEpoch;
-
-      widget.plugin.store.loan.addLoanTx(res, widget.keyring.current.pubKey);
       Navigator.of(context).pop(res);
     }
   }

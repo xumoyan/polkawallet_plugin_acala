@@ -28,6 +28,7 @@ import 'package:polkawallet_plugin_acala/pages/loan/loanAdjustPage.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanCreatePage.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanHistoryPage.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanPage.dart';
+import 'package:polkawallet_plugin_acala/pages/loan/loanDetailPage.dart';
 import 'package:polkawallet_plugin_acala/pages/nft/nftPage.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/swapHistoryPage.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/swapDetailPage.dart';
@@ -149,6 +150,7 @@ class PluginAcala extends PolkawalletPlugin {
 
       // loan pages
       LoanPage.route: (_) => LoanPage(this, keyring),
+      LoanDetailPage.route: (_) => LoanDetailPage(this, keyring),
       LoanCreatePage.route: (_) => LoanCreatePage(this, keyring),
       LoanAdjustPage.route: (_) => LoanAdjustPage(this, keyring),
       LoanHistoryPage.route: (_) => ClientProvider(
@@ -177,8 +179,10 @@ class PluginAcala extends PolkawalletPlugin {
             uri: GraphQLConfig['httpUri'],
             subscriptionUri: GraphQLConfig['wsUri'],
           ),
-      EarnLiquidityDetailPage.route: (_) => EarnLiquidityDetailPage(this, keyring),
-      EarnIncentiveDetailPage.route: (_) => EarnIncentiveDetailPage(this, keyring),
+      EarnLiquidityDetailPage.route: (_) =>
+          EarnLiquidityDetailPage(this, keyring),
+      EarnIncentiveDetailPage.route: (_) =>
+          EarnIncentiveDetailPage(this, keyring),
       LPStakePage.route: (_) => LPStakePage(this, keyring),
       AddLiquidityPage.route: (_) => AddLiquidityPage(this, keyring),
       WithdrawLiquidityPage.route: (_) => WithdrawLiquidityPage(this, keyring),

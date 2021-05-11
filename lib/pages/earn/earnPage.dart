@@ -10,7 +10,7 @@ import 'package:polkawallet_plugin_acala/pages/earn/LPStakePage.dart';
 import 'package:polkawallet_plugin_acala/pages/earn/addLiquidityPage.dart';
 import 'package:polkawallet_plugin_acala/pages/earn/earnHistoryPage.dart';
 import 'package:polkawallet_plugin_acala/pages/earn/withdrawLiquidityPage.dart';
-import 'package:polkawallet_plugin_acala/pages/loan/loanPage.dart';
+import 'package:polkawallet_plugin_acala/pages/loan/loanCreatePage.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';

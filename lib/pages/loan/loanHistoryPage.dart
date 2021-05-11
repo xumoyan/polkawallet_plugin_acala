@@ -1,11 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:polkawallet_plugin_acala/api/types/loanType.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:polkawallet_plugin_acala/api/types/txLoanData.dart';
 import 'package:polkawallet_plugin_acala/common/constants.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
+import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
 import 'package:polkawallet_ui/components/listTail.dart';
@@ -20,15 +21,6 @@ class LoanHistoryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final symbols = plugin.networkState.tokenSymbol;
-    final decimals = plugin.networkState.tokenDecimals;
-    final stableCoinDecimals = decimals[symbols.indexOf('AUSD')];
-
-    final list = plugin.store.loan.txs.reversed.toList();
-
-    final LoanType loanType = ModalRoute.of(context).settings.arguments;
-    final collateralDecimals = decimals[symbols.indexOf(loanType.token)];
-    list.retainWhere((i) => i.currencyId == loanType.token);
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -36,53 +28,82 @@ class LoanHistoryPage extends StatelessWidget {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: ListView.builder(
-          itemCount: list.length + 1,
-          itemBuilder: (BuildContext context, int i) {
-            if (i == list.length) {
-              return ListTail(isEmpty: list.length == 0, isLoading: false);
-            }
+        child: Query(
+            options: QueryOptions(
+              document: gql(graphLoanQuery),
+              variables: <String, String>{
+                'account': keyring.current.address,
+              },
+            ),
+            builder: (
+              QueryResult result, {
+              Future<QueryResult> Function() refetch,
+              FetchMore fetchMore,
+            }) {
+              if (result.data == null) {
+                return Container(
+                  height: MediaQuery.of(context).size.height / 3,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [CupertinoActivityIndicator()],
+                  ),
+                );
+              }
+              final list = List.of(result.data['loanActions']['nodes'])
+                  .map((i) => TxLoanData.fromJson(
+                      i as Map,
+                      plugin.networkState.tokenSymbol,
+                      plugin.networkState.tokenDecimals))
+                  .toList();
+              return ListView.builder(
+                itemCount: list.length + 1,
+                itemBuilder: (BuildContext context, int i) {
+                  if (i == list.length) {
+                    return ListTail(
+                        isEmpty: list.length == 0, isLoading: false);
+                  }
 
-            TxLoanData detail = list[i];
-            LoanType loanType = plugin.store.loan.loanTypes
-                .firstWhere((i) => i.token == detail.currencyId);
-            BigInt amountView = detail.amountCollateral;
-            if (detail.currencyIdView.toUpperCase() == acala_stable_coin) {
-              amountView = loanType.debitShareToDebit(detail.amountDebitShare);
-            } else {
-              amountView = BigInt.zero - amountView;
-            }
-            bool isOut = false;
-            if (detail.actionType == TxLoanData.actionTypePayback ||
-                detail.actionType == TxLoanData.actionTypeDeposit) {
-              isOut = true;
-            }
-            int decimal = collateralDecimals;
-            if (detail.actionType == TxLoanData.actionTypePayback ||
-                detail.actionType == TxLoanData.actionTypeBorrow) {
-              decimal = stableCoinDecimals;
-            }
-            return Container(
-              decoration: BoxDecoration(
-                border: Border(
-                    bottom: BorderSide(width: 0.5, color: Colors.black12)),
-              ),
-              child: ListTile(
-                  title: Text(list[i].actionType),
-                  subtitle: Text(Fmt.dateTime(list[i].time)),
-                  leading: SvgPicture.asset(
-                      'assets/images/assets_${isOut ? 'up' : 'down'}.svg',
-                      width: 32),
-                  trailing: FittedBox(
-                    child: Text(
-                      '${Fmt.priceFloorBigInt(amountView, decimal)} ${detail.currencyIdView}',
-                      style: Theme.of(context).textTheme.headline4,
-                      textAlign: TextAlign.end,
+                  final TxLoanData detail = list[i];
+                  bool isOut = false;
+                  if (detail.actionType == TxLoanData.actionTypePayback ||
+                      detail.actionType == TxLoanData.actionTypeDeposit) {
+                    isOut = true;
+                  }
+                  String amount = detail.amountDebit;
+                  String token = acala_stable_coin_view;
+                  if (detail.actionType == TxLoanData.actionTypePayback ||
+                      detail.actionType == TxLoanData.actionTypeDeposit) {
+                    isOut = true;
+                  }
+                  if (detail.actionType == TxLoanData.actionTypeDeposit ||
+                      detail.actionType == TxLoanData.actionTypeWithdraw) {
+                    amount = detail.amountCollateral;
+                    token = PluginFmt.tokenView(detail.token);
+                  }
+                  return Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                          bottom:
+                              BorderSide(width: 0.5, color: Colors.black12)),
                     ),
-                  )),
-            );
-          },
-        ),
+                    child: ListTile(
+                        title: Text(list[i].actionType),
+                        subtitle:
+                            Text(Fmt.dateTime(DateTime.parse(list[i].time))),
+                        leading: SvgPicture.asset(
+                            'packages/polkawallet_plugin_acala/assets/images/${detail.isSuccess ? isOut ? 'assets_up' : 'assets_down' : 'tx_failed'}.svg',
+                            width: 32),
+                        trailing: FittedBox(
+                          child: Text(
+                            '$amount $token',
+                            style: Theme.of(context).textTheme.headline4,
+                            textAlign: TextAlign.end,
+                          ),
+                        )),
+                  );
+                },
+              );
+            }),
       ),
     );
   }

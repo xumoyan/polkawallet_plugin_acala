@@ -6,6 +6,5 @@ class StoreCache {
 
   final tokens = {}.val('tokens', getBox: _storage);
 
-  final loanTxs = {}.val('loanTxs', getBox: _storage);
   final homaTxs = {}.val('homaTxs', getBox: _storage);
 }

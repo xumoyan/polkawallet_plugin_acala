@@ -2,13 +2,16 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:polkawallet_plugin_acala/api/types/loanType.dart';
-import 'package:polkawallet_plugin_acala/pages/loan/loanAdjustPage.dart';
+import 'package:polkawallet_plugin_acala/common/constants.dart';
+import 'package:polkawallet_plugin_acala/pages/currencySelectPage.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanInfoPanel.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
+import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
 import 'package:polkawallet_ui/components/roundedButton.dart';
+import 'package:polkawallet_ui/components/tokenIcon.dart';
 import 'package:polkawallet_ui/components/txButton.dart';
 import 'package:polkawallet_ui/pages/txConfirmPage.dart';
 import 'package:polkawallet_ui/utils/format.dart';
@@ -32,6 +35,8 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
   final TextEditingController _amountCtrl = new TextEditingController();
   final TextEditingController _amountCtrl2 = new TextEditingController();
 
+  String _token = 'DOT';
+
   BigInt _amountCollateral = BigInt.zero;
   BigInt _amountDebit = BigInt.zero;
 
@@ -43,9 +48,7 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
 
   void _updateState(LoanType loanType, BigInt collateral, BigInt debit,
       {int stableCoinDecimals, int collateralDecimals}) {
-    final LoanAdjustPageParams params =
-        ModalRoute.of(context).settings.arguments;
-    final tokenPrice = widget.plugin.store.assets.prices[params.token];
+    final tokenPrice = widget.plugin.store.assets.prices[_token];
     final collateralInUSD = loanType.tokenToUSD(collateral, tokenPrice,
         stableCoinDecimals: stableCoinDecimals,
         collateralDecimals: collateralDecimals);
@@ -155,8 +158,6 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
 
   Map _getTxParams(LoanType loanType,
       {int stableCoinDecimals, int collateralDecimals}) {
-    final LoanAdjustPageParams params =
-        ModalRoute.of(context).settings.arguments;
     BigInt debitShare = loanType.debitToDebitShare(_amountDebit);
     return {
       'detail': {
@@ -164,7 +165,7 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
         "debits": Fmt.token(_amountDebit, stableCoinDecimals),
       },
       'params': [
-        {'token': params.token},
+        {'token': _token},
         _amountCollateral.toString(),
         debitShare.toString(),
       ]
@@ -185,10 +186,6 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
           params: params['params'],
         ))) as Map;
     if (res != null) {
-      res['params'] = params['params'];
-      res['time'] = DateTime.now().millisecondsSinceEpoch;
-
-      widget.plugin.store.loan.addLoanTx(res, widget.keyring.current.pubKey);
       Navigator.of(context).pop(res);
     }
   }
@@ -209,19 +206,27 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
       final decimals = widget.plugin.networkState.tokenDecimals;
       final stableCoinDecimals = decimals[symbols.indexOf('AUSD')];
 
-      final LoanAdjustPageParams params =
-          ModalRoute.of(context).settings.arguments;
-      final symbol = params.token;
-      final collateralDecimals = decimals[symbols.indexOf(symbol)];
+      final collateralDecimals = decimals[symbols.indexOf(_token)];
 
-      final pageTitle = '${dic['loan.create']} $symbol';
+      final pageTitle = '${dic['loan.create']} $_token';
 
-      final price = widget.plugin.store.assets.prices[symbol];
+      final loans = widget.plugin.store.loan.loans.values.toList();
+      loans.retainWhere((loan) =>
+      loan.debits > BigInt.zero || loan.collaterals > BigInt.zero);
+      final tokenOptions =
+          widget.plugin.store.loan.loanTypes.map((e) => e.token).toList();
+      tokenOptions.retainWhere((e) =>
+      loans.map((i) => i.token)
+              .toList()
+              .indexOf(e) <
+          0);
+
+      final price = widget.plugin.store.assets.prices[_token];
 
       final loanType = widget.plugin.store.loan.loanTypes
-          .firstWhere((i) => i.token == symbol);
+          .firstWhere((i) => i.token == _token);
       final balance = Fmt.balanceInt(
-          widget.plugin.store.assets.tokenBalanceMap[symbol]?.amount);
+          widget.plugin.store.assets.tokenBalanceMap[_token]?.amount);
       final available = balance;
 
       final balanceView =
@@ -238,6 +243,19 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
           return SafeArea(
             child: Column(
               children: <Widget>[
+                CurrencySelector(
+                  tokenOptions: tokenOptions,
+                  tokenIcons: widget.plugin.tokenIcons,
+                  token: _token,
+                  price: widget.plugin.store.assets.prices[_token],
+                  onSelect: (res) {
+                    if (res != null) {
+                      setState(() {
+                        _token = res;
+                      });
+                    }
+                  },
+                ),
                 Expanded(
                   child: Form(
                     key: _formKey,
@@ -262,7 +280,7 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
                           decoration: InputDecoration(
                             hintText: assetDic['amount'],
                             labelText:
-                                '${assetDic['amount']} (${assetDic['amount.available']}: $balanceView $symbol)',
+                                '${assetDic['amount']} (${assetDic['amount.available']}: $balanceView $_token)',
                           ),
                           inputFormatters: [
                             UI.decimalInputFormatter(collateralDecimals)
@@ -321,5 +339,70 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
         }),
       );
     });
+  }
+}
+
+class CurrencySelector extends StatelessWidget {
+  CurrencySelector({
+    this.tokenOptions,
+    this.tokenIcons,
+    this.token,
+    this.price,
+    this.onSelect,
+  });
+  final List<String> tokenOptions;
+  final Map<String, Widget> tokenIcons;
+  final String token;
+  final BigInt price;
+  final Function(String) onSelect;
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 16.0, // has the effect of softening the shadow
+            spreadRadius: 4.0, // has the effect of extending the shadow
+            offset: Offset(
+              2.0, // horizontal, move right 10
+              2.0, // vertical, move down 10
+            ),
+          )
+        ],
+      ),
+      child: ListTile(
+        dense: true,
+        leading: TokenIcon(token, tokenIcons),
+        title: Text(
+          PluginFmt.tokenView(token),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).primaryColor,
+          ),
+        ),
+        subtitle: price != null
+            ? Text(
+                '\$${Fmt.token(price, acala_price_decimals)}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).unselectedWidgetColor,
+                ),
+              )
+            : null,
+        trailing: Icon(Icons.arrow_forward_ios, size: 18),
+        onTap: () async {
+          final res = await Navigator.of(context).pushNamed(
+            CurrencySelectPage.route,
+            arguments: tokenOptions,
+          );
+          if (res != null) {
+            onSelect(res);
+          }
+        },
+      ),
+    );
   }
 }

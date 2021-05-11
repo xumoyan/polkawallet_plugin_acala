@@ -1,45 +1,55 @@
+import 'dart:math';
+
 import 'package:polkawallet_ui/utils/format.dart';
+import 'package:polkawallet_plugin_acala/common/constants.dart';
 
 class TxLoanData extends _TxLoanData {
   static const String actionTypeDeposit = 'deposit';
   static const String actionTypeWithdraw = 'withdraw';
   static const String actionTypeBorrow = 'borrow';
   static const String actionTypePayback = 'payback';
-  static TxLoanData fromJson(Map<String, dynamic> json) {
+  static const String actionTypeCreate = 'create';
+  static TxLoanData fromJson(
+      Map json, List<String> symbols, List<int> decimals) {
     TxLoanData data = TxLoanData();
-    data.hash = json['hash'];
-    data.currencyId = json['params'][0]['token'];
-    data.time = DateTime.fromMillisecondsSinceEpoch(json['time']);
-    data.amountCollateral = Fmt.balanceInt(json['params'][1].toString());
-    data.amountDebitShare = Fmt.balanceInt(json['params'][2].toString());
-    if (data.amountCollateral == BigInt.zero) {
-      data.actionType = data.amountDebitShare > BigInt.zero
-          ? actionTypeBorrow
-          : actionTypePayback;
-      data.currencyIdView = 'aUSD';
-    } else if (data.amountDebitShare == BigInt.zero) {
-      data.actionType = data.amountCollateral > BigInt.zero
-          ? actionTypeDeposit
-          : actionTypeWithdraw;
-      data.currencyIdView = data.currencyId;
-    } else if (data.amountDebitShare < BigInt.zero) {
+    data.block = json['extrinsic']['block']['number'];
+    data.hash = json['extrinsic']['id'];
+
+    data.token = json['token']['id'];
+
+    final stableCoinDecimals = decimals[symbols.indexOf(acala_stable_coin)];
+    final tokenDecimals = decimals[symbols.indexOf(data.token)];
+    final collateralInt = Fmt.balanceInt(json['collateral'].toString());
+    final debitInt = Fmt.balanceInt(json['debit'].toString()) * Fmt.balanceInt(json['exchangeRate'].toString()) ~/ BigInt.from(pow(10, 18));
+    data.amountCollateral = Fmt.priceFloorBigInt(BigInt.zero - collateralInt, tokenDecimals);
+    data.amountDebit = Fmt.priceCeilBigInt(debitInt, stableCoinDecimals);
+    if (collateralInt == BigInt.zero) {
+      data.actionType =
+          debitInt > BigInt.zero ? actionTypeBorrow : actionTypePayback;
+    } else if (debitInt == BigInt.zero) {
+      data.actionType =
+          collateralInt > BigInt.zero ? actionTypeDeposit : actionTypeWithdraw;
+    } else if (debitInt < BigInt.zero) {
       data.actionType = actionTypePayback;
-      data.currencyIdView = 'aUSD';
     } else {
-      data.actionType = 'create';
-      data.currencyIdView = 'aUSD';
+      data.actionType = actionTypeCreate;
     }
+
+    data.time = (json['extrinsic']['timestamp'] as String).replaceAll(' ', '');
+    data.isSuccess = json['isSuccess'];
     return data;
   }
 }
 
 abstract class _TxLoanData {
+  String block;
   String hash;
-  String currencyId;
-  String actionType;
-  DateTime time;
-  BigInt amountCollateral;
-  BigInt amountDebitShare;
 
-  String currencyIdView;
+  String token;
+  String actionType;
+  String amountCollateral;
+  String amountDebit;
+
+  String time;
+  bool isSuccess = true;
 }

@@ -64,7 +64,7 @@ class SwapHistoryPage extends StatelessWidget {
                   return ListTail(isEmpty: list.length == 0, isLoading: false);
                 }
 
-                TxSwapData detail = list[i];
+                final TxSwapData detail = list[i];
                 return Container(
                   decoration: BoxDecoration(
                     border: Border(
