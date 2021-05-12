@@ -140,7 +140,8 @@ class _AcalaEntryState extends State<AcalaEntry> {
                         height: 68,
                         margin: EdgeInsets.only(bottom: 16),
                         child: SvgPicture.asset(
-                            'packages/polkawallet_plugin_acala/assets/images/logo1.svg'),
+                            'packages/polkawallet_plugin_acala/assets/images/logo1.svg',
+                            color: Colors.white70),
                       ),
                       Padding(
                         padding: EdgeInsets.only(bottom: 16),

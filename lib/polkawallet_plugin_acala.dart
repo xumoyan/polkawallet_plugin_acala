@@ -29,6 +29,7 @@ import 'package:polkawallet_plugin_acala/pages/loan/loanCreatePage.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanHistoryPage.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanPage.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanDetailPage.dart';
+import 'package:polkawallet_plugin_acala/pages/loan/loanTxDetailPage.dart';
 import 'package:polkawallet_plugin_acala/pages/nft/nftPage.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/swapHistoryPage.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/swapDetailPage.dart';
@@ -151,6 +152,7 @@ class PluginAcala extends PolkawalletPlugin {
       // loan pages
       LoanPage.route: (_) => LoanPage(this, keyring),
       LoanDetailPage.route: (_) => LoanDetailPage(this, keyring),
+      LoanTxDetailPage.route: (_) => LoanTxDetailPage(this, keyring),
       LoanCreatePage.route: (_) => LoanCreatePage(this, keyring),
       LoanAdjustPage.route: (_) => LoanAdjustPage(this, keyring),
       LoanHistoryPage.route: (_) => ClientProvider(

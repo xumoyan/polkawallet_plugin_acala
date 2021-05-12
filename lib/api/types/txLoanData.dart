@@ -19,17 +19,21 @@ class TxLoanData extends _TxLoanData {
 
     final stableCoinDecimals = decimals[symbols.indexOf(acala_stable_coin)];
     final tokenDecimals = decimals[symbols.indexOf(data.token)];
-    final collateralInt = Fmt.balanceInt(json['collateral'].toString());
-    final debitInt = Fmt.balanceInt(json['debit'].toString()) * Fmt.balanceInt(json['exchangeRate'].toString()) ~/ BigInt.from(pow(10, 18));
-    data.amountCollateral = Fmt.priceFloorBigInt(BigInt.zero - collateralInt, tokenDecimals);
-    data.amountDebit = Fmt.priceCeilBigInt(debitInt, stableCoinDecimals);
-    if (collateralInt == BigInt.zero) {
+    data.collateral = Fmt.balanceInt(json['collateral'].toString());
+    data.debit = Fmt.balanceInt(json['debit'].toString()) *
+        Fmt.balanceInt(json['exchangeRate'].toString()) ~/
+        BigInt.from(pow(10, 18));
+    data.amountCollateral =
+        Fmt.priceFloorBigInt(BigInt.zero - data.collateral, tokenDecimals);
+    data.amountDebit = Fmt.priceCeilBigInt(data.debit, stableCoinDecimals);
+    if (data.collateral == BigInt.zero) {
       data.actionType =
-          debitInt > BigInt.zero ? actionTypeBorrow : actionTypePayback;
-    } else if (debitInt == BigInt.zero) {
-      data.actionType =
-          collateralInt > BigInt.zero ? actionTypeDeposit : actionTypeWithdraw;
-    } else if (debitInt < BigInt.zero) {
+          data.debit > BigInt.zero ? actionTypeBorrow : actionTypePayback;
+    } else if (data.debit == BigInt.zero) {
+      data.actionType = data.collateral > BigInt.zero
+          ? actionTypeDeposit
+          : actionTypeWithdraw;
+    } else if (data.debit < BigInt.zero) {
       data.actionType = actionTypePayback;
     } else {
       data.actionType = actionTypeCreate;
@@ -47,6 +51,8 @@ abstract class _TxLoanData {
 
   String token;
   String actionType;
+  BigInt collateral;
+  BigInt debit;
   String amountCollateral;
   String amountDebit;
 

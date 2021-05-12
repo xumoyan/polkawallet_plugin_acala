@@ -5,6 +5,7 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:polkawallet_plugin_acala/api/types/txLoanData.dart';
 import 'package:polkawallet_plugin_acala/common/constants.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
+import 'package:polkawallet_plugin_acala/pages/loan/loanTxDetailPage.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
@@ -87,19 +88,27 @@ class LoanHistoryPage extends StatelessWidget {
                               BorderSide(width: 0.5, color: Colors.black12)),
                     ),
                     child: ListTile(
-                        title: Text(list[i].actionType),
-                        subtitle:
-                            Text(Fmt.dateTime(DateTime.parse(list[i].time))),
-                        leading: SvgPicture.asset(
-                            'packages/polkawallet_plugin_acala/assets/images/${detail.isSuccess ? isOut ? 'assets_up' : 'assets_down' : 'tx_failed'}.svg',
-                            width: 32),
-                        trailing: FittedBox(
-                          child: Text(
-                            '$amount $token',
-                            style: Theme.of(context).textTheme.headline4,
-                            textAlign: TextAlign.end,
-                          ),
-                        )),
+                      title: Text(list[i].actionType),
+                      subtitle:
+                          Text(Fmt.dateTime(DateTime.parse(list[i].time))),
+                      leading: SvgPicture.asset(
+                          'packages/polkawallet_plugin_acala/assets/images/${detail.isSuccess ? isOut ? 'assets_up' : 'assets_down' : 'tx_failed'}.svg',
+                          width: 32),
+                      trailing: FittedBox(
+                        child: Text(
+                          '$amount $token',
+                          style: Theme.of(context).textTheme.headline4,
+                          textAlign: TextAlign.end,
+                        ),
+                      ),
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          LoanTxDetailPage.route,
+                          arguments: detail,
+                        );
+                      },
+                    ),
                   );
                 },
               );
