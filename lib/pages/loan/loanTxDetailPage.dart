@@ -56,7 +56,7 @@ class LoanTxDetailPage extends StatelessWidget {
     return TxDetail(
       success: tx.isSuccess,
       action: dic['loan.${tx.actionType}'],
-      blockNum: tx.block,
+      blockNum: int.parse(tx.block),
       hash: tx.hash,
       blockTime: Fmt.dateTime(DateTime.parse(tx.time)),
       networkName: networkName,

@@ -33,7 +33,7 @@ class TransferDetailPage extends StatelessWidget {
     return TxDetail(
       success: tx.isSuccess,
       action: txType,
-      blockNum: tx.block,
+      blockNum: int.parse(tx.block),
       hash: tx.hash,
       blockTime: Fmt.dateTime(DateTime.parse(tx.timestamp)),
       networkName: networkName,

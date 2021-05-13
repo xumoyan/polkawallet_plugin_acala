@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:liquid_progress_indicator/liquid_progress_indicator.dart';
@@ -80,7 +81,7 @@ class _LoanPageState extends State<LoanPage> {
             child: Column(
               children: <Widget>[
                 AccountCard(widget.keyring.current),
-            loans.length > 0
+                widget.plugin.store.loan.loansLoading ? CupertinoActivityIndicator() : loans.length > 0
                 ? Expanded(
                   child:  ListView(
                     padding:  EdgeInsets.all(16),
@@ -92,16 +93,15 @@ class _LoanPageState extends State<LoanPage> {
                               widget.plugin.tokenIcons,
                             );
                           }).toList(),
-                        )
-                      ,
-                ): RoundedCard(
+                        ),
+                ) : RoundedCard(
               margin: EdgeInsets.all(16),
               padding: EdgeInsets.fromLTRB(80, 24, 80, 24),
               child: SvgPicture.asset(
                   'packages/polkawallet_plugin_acala/assets/images/loan-start.svg'),
             ),
-                widget.plugin.store.loan.loanTypes.length > 0
-                    ? Container(
+              !widget.plugin.store.loan.loansLoading ?
+                    Container(
                         padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
                         child: RoundedButton(
                             text: '+ ${dic['loan.borrow']}',

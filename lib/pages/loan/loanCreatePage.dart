@@ -172,6 +172,17 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
     };
   }
 
+  List<String> _getTokenOptions() {
+    final loans = widget.plugin.store.loan.loans.values.toList();
+    loans.retainWhere(
+        (loan) => loan.debits > BigInt.zero || loan.collaterals > BigInt.zero);
+    final tokenOptions =
+        widget.plugin.store.loan.loanTypes.map((e) => e.token).toList();
+    tokenOptions
+        .retainWhere((e) => loans.map((i) => i.token).toList().indexOf(e) < 0);
+    return tokenOptions;
+  }
+
   Future<void> _onSubmit(String pageTitle, LoanType loanType,
       {int stableCoinDecimals, int collateralDecimals}) async {
     final params = _getTxParams(loanType,
@@ -188,6 +199,19 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
     if (res != null) {
       Navigator.of(context).pop(res);
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final tokenOptions = _getTokenOptions();
+      print(tokenOptions);
+      setState(() {
+        _token = tokenOptions[0];
+      });
+    });
   }
 
   @override
@@ -209,17 +233,6 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
       final collateralDecimals = decimals[symbols.indexOf(_token)];
 
       final pageTitle = '${dic['loan.create']} $_token';
-
-      final loans = widget.plugin.store.loan.loans.values.toList();
-      loans.retainWhere((loan) =>
-      loan.debits > BigInt.zero || loan.collaterals > BigInt.zero);
-      final tokenOptions =
-          widget.plugin.store.loan.loanTypes.map((e) => e.token).toList();
-      tokenOptions.retainWhere((e) =>
-      loans.map((i) => i.token)
-              .toList()
-              .indexOf(e) <
-          0);
 
       final price = widget.plugin.store.assets.prices[_token];
 
@@ -244,7 +257,7 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
             child: Column(
               children: <Widget>[
                 CurrencySelector(
-                  tokenOptions: tokenOptions,
+                  tokenOptions: _getTokenOptions(),
                   tokenIcons: widget.plugin.tokenIcons,
                   token: _token,
                   price: widget.plugin.store.assets.prices[_token],

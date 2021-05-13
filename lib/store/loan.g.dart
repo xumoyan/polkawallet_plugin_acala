@@ -39,6 +39,21 @@ mixin _$LoanStore on _LoanStore, Store {
     });
   }
 
+  final _$loansLoadingAtom = Atom(name: '_LoanStore.loansLoading');
+
+  @override
+  bool get loansLoading {
+    _$loansLoadingAtom.reportRead();
+    return super.loansLoading;
+  }
+
+  @override
+  set loansLoading(bool value) {
+    _$loansLoadingAtom.reportWrite(value, super.loansLoading, () {
+      super.loansLoading = value;
+    });
+  }
+
   final _$_LoanStoreActionController = ActionController(name: '_LoanStore');
 
   @override
@@ -64,6 +79,17 @@ mixin _$LoanStore on _LoanStore, Store {
   }
 
   @override
+  void setLoansLoading(bool loading) {
+    final _$actionInfo = _$_LoanStoreActionController.startAction(
+        name: '_LoanStore.setLoansLoading');
+    try {
+      return super.setLoansLoading(loading);
+    } finally {
+      _$_LoanStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void loadCache(String pubKey) {
     final _$actionInfo =
         _$_LoanStoreActionController.startAction(name: '_LoanStore.loadCache');
@@ -78,7 +104,8 @@ mixin _$LoanStore on _LoanStore, Store {
   String toString() {
     return '''
 loanTypes: ${loanTypes},
-loans: ${loans}
+loans: ${loans},
+loansLoading: ${loansLoading}
     ''';
   }
 }

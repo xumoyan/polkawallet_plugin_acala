@@ -32,19 +32,21 @@ class SwapDetailPage extends StatelessWidget {
     return TxDetail(
       success: tx.isSuccess,
       action: dic['dex.title'],
-      blockNum: tx.block,
+      blockNum: int.parse(tx.block),
       hash: tx.hash,
       blockTime: Fmt.dateTime(DateTime.parse(tx.time)),
       networkName: networkName,
       infoItems: <TxDetailInfoItem>[
         TxDetailInfoItem(
           label: dic['dex.pay'],
-          content: Text('${tx.amountPay} ${PluginFmt.tokenView(tx.tokenPay['token'])}',
+          content: Text(
+              '${tx.amountPay} ${PluginFmt.tokenView(tx.tokenPay['token'])}',
               style: amountStyle),
         ),
         TxDetailInfoItem(
           label: dic['dex.receive'],
-          content: Text('${tx.amountReceive} ${PluginFmt.tokenView(tx.tokenReceive['token'])}',
+          content: Text(
+              '${tx.amountReceive} ${PluginFmt.tokenView(tx.tokenReceive['token'])}',
               style: amountStyle),
         )
       ],

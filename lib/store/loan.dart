@@ -1,6 +1,5 @@
 import 'package:mobx/mobx.dart';
 import 'package:polkawallet_plugin_acala/api/types/loanType.dart';
-import 'package:polkawallet_plugin_acala/api/types/txLoanData.dart';
 import 'package:polkawallet_plugin_acala/store/cache/storeCache.dart';
 
 part 'loan.g.dart';
@@ -20,6 +19,9 @@ abstract class _LoanStore with Store {
   @observable
   Map<String, LoanData> loans = Map<String, LoanData>();
 
+  @observable
+  bool loansLoading = false;
+
   @action
   void setLoanTypes(List<LoanType> list) {
     loanTypes = list;
@@ -28,6 +30,11 @@ abstract class _LoanStore with Store {
   @action
   void setAccountLoans(Map<String, LoanData> data) {
     loans = data;
+  }
+
+  @action
+  void setLoansLoading(bool loading) {
+    loansLoading = loading;
   }
 
   @action

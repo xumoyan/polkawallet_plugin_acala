@@ -54,6 +54,8 @@ class ServiceLoan {
   Future<void> subscribeAccountLoans(String address) async {
     if (address == null) return;
 
+    store.loan.setLoansLoading(true);
+
     // 1. subscribe all token prices, callback triggers per 5s.
     api.assets.subscribeTokenPrices((Map<String, BigInt> prices) async {
       // 2. we need homa staking pool info to calculate price of LDOT
@@ -66,6 +68,7 @@ class ServiceLoan {
 
       // 4. we need loanTypes & prices to get account loans
       final loans = await api.loan.queryAccountLoans(address);
+      store.loan.setLoansLoading(false);
       if (loans != null &&
           loans.length > 0 &&
           store.loan.loanTypes.length > 0 &&
@@ -78,5 +81,6 @@ class ServiceLoan {
 
   void unsubscribeAccountLoans() {
     api.assets.unsubscribeTokenPrices();
+    store.loan.setLoansLoading(false);
   }
 }
