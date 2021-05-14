@@ -83,6 +83,6 @@ class ServiceLoan {
 
   void unsubscribeAccountLoans() {
     api.assets.unsubscribeTokenPrices();
-    store.loan.setLoansLoading(false);
+    store.loan.setLoansLoading(true);
   }
 }

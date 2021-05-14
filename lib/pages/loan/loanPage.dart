@@ -81,7 +81,10 @@ class _LoanPageState extends State<LoanPage> {
             child: Column(
               children: <Widget>[
                 AccountCard(widget.keyring.current),
-                widget.plugin.store.loan.loansLoading ? CupertinoActivityIndicator() : loans.length > 0
+                widget.plugin.store.loan.loansLoading ? Container(
+                  height: MediaQuery.of(context).size.width / 2,
+                  child: CupertinoActivityIndicator(),
+                ) : loans.length > 0
                 ? Expanded(
                   child:  ListView(
                     padding:  EdgeInsets.all(16),

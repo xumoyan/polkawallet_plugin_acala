@@ -390,7 +390,8 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
 
     switch (params.actionType) {
       case LoanAdjustPage.actionTypeBorrow:
-        maxToBorrow = maxToBorrow > BigInt.zero ? maxToBorrow: BigInt.zero;
+        maxToBorrow = maxToBorrow > BigInt.zero ? maxToBorrow : BigInt.zero;
+        maxToBorrowView = Fmt.priceFloorBigInt(maxToBorrow, stableCoinDecimals);
         showCollateral = false;
         titleSuffix = ' aUSD';
         break;
@@ -414,6 +415,10 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
 
     final availableView =
         Fmt.priceFloorBigInt(available, collateralDecimals, lengthMax: 8);
+    final debitsView = Fmt.priceCeilBigInt(
+        loan.debits, stableCoinDecimals);
+    final collateralView = Fmt.priceFloorBigInt(
+        loan.collaterals, collateralDecimals);
 
     final pageTitle = '${dic['loan.${params.actionType}']}$titleSuffix';
 
@@ -442,10 +447,8 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
                       Padding(
                         padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
                         child: LoanInfoPanel(
-                          debits: Fmt.priceCeilBigInt(
-                              loan.debits, stableCoinDecimals),
-                          collateral: Fmt.priceFloorBigInt(
-                              loan.collaterals, collateralDecimals),
+                          debits: '$debitsView $acala_stable_coin_view',
+                          collateral: '$collateralView $symbol',
                           price: price,
                           liquidationRatio: loan.type.liquidationRatio,
                           requiredRatio: loan.type.requiredCollateralRatio,
