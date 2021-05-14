@@ -20,7 +20,7 @@ abstract class _LoanStore with Store {
   Map<String, LoanData> loans = Map<String, LoanData>();
 
   @observable
-  bool loansLoading = false;
+  bool loansLoading = true;
 
   @action
   void setLoanTypes(List<LoanType> list) {

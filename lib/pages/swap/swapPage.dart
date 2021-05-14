@@ -321,7 +321,7 @@ class _SwapPageState extends State<SwapPage> {
         Fmt.tokenInt(minMax.toString(), pairDecimals[_swapMode == 0 ? 1 : 0])
             .toString(),
       ];
-      final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
+      Navigator.of(context).pushNamed(TxConfirmPage.route,
           arguments: TxConfirmParams(
             module: 'dex',
             call:
@@ -335,10 +335,7 @@ class _SwapPageState extends State<SwapPage> {
               "amountReceive": receive,
             },
             params: params,
-          ))) as Map;
-      if (res != null) {
-        Navigator.of(context).pushNamed(SwapHistoryPage.route);
-      }
+          ));
     }
   }
 

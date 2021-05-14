@@ -68,7 +68,9 @@ class ServiceLoan {
 
       // 4. we need loanTypes & prices to get account loans
       final loans = await api.loan.queryAccountLoans(address);
-      store.loan.setLoansLoading(false);
+      if (store.loan.loansLoading) {
+        store.loan.setLoansLoading(false);
+      }
       if (loans != null &&
           loans.length > 0 &&
           store.loan.loanTypes.length > 0 &&

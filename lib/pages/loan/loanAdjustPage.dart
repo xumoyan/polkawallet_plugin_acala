@@ -390,13 +390,13 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
 
     switch (params.actionType) {
       case LoanAdjustPage.actionTypeBorrow:
-        maxToBorrow = Fmt.tokenInt(maxToBorrowView, stableCoinDecimals);
+        maxToBorrow = maxToBorrow > BigInt.zero ? maxToBorrow: BigInt.zero;
         showCollateral = false;
         titleSuffix = ' aUSD';
         break;
       case LoanAdjustPage.actionTypePayback:
         // max to payback
-        maxToBorrow = loan.debits;
+        maxToBorrow = balanceAUSD > loan.debits ? loan.debits : balanceAUSD;
         maxToBorrowView = Fmt.priceCeilBigInt(maxToBorrow, stableCoinDecimals);
         showCollateral = false;
         titleSuffix = ' aUSD';
@@ -405,22 +405,22 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
         showDebit = false;
         break;
       case LoanAdjustPage.actionTypeWithdraw:
-        available = loan.collaterals - loan.requiredCollateral;
+        // max to withdraw
+        available = loan.collaterals - loan.requiredCollateral > BigInt.zero ? loan.collaterals - loan.requiredCollateral : BigInt.zero;
         showDebit = false;
         break;
       default:
     }
 
-    int maxCollateralDecimal =
-        loan.debits > BigInt.zero ? 6 : acala_price_decimals;
-    String availableView = Fmt.priceFloorBigInt(available, collateralDecimals,
-        lengthMax: maxCollateralDecimal);
+    final availableView =
+        Fmt.priceFloorBigInt(available, collateralDecimals, lengthMax: 8);
 
-    String pageTitle = '${dic['loan.${params.actionType}']}$titleSuffix';
+    final pageTitle = '${dic['loan.${params.actionType}']}$titleSuffix';
 
-    bool showCheckbox = params.actionType == LoanAdjustPage.actionTypePayback &&
-        _amountCtrl2.text.trim().isNotEmpty &&
-        _amountDebit == loan.debits;
+    final showCheckbox =
+        params.actionType == LoanAdjustPage.actionTypePayback &&
+            _amountCtrl2.text.trim().isNotEmpty &&
+            _amountDebit == loan.debits;
 
     return Scaffold(
       appBar: AppBar(
@@ -442,6 +442,10 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
                       Padding(
                         padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
                         child: LoanInfoPanel(
+                          debits: Fmt.priceCeilBigInt(
+                              loan.debits, stableCoinDecimals),
+                          collateral: Fmt.priceFloorBigInt(
+                              loan.collaterals, collateralDecimals),
                           price: price,
                           liquidationRatio: loan.type.liquidationRatio,
                           requiredRatio: loan.type.requiredCollateralRatio,

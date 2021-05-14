@@ -40,12 +40,19 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
         final dataChartDebit = [
           Fmt.bigIntToDouble(loan.debitInUSD, stableCoinDecimals),
           Fmt.bigIntToDouble(
-              loan.maxToBorrow - loan.debitInUSD, stableCoinDecimals),
+              loan.maxToBorrow - loan.debitInUSD > BigInt.zero
+                  ? loan.maxToBorrow - loan.debitInUSD
+                  : BigInt.zero,
+              stableCoinDecimals),
         ];
         final price = widget.plugin.store.assets.prices[token];
         final dataChartPrice = [
           Fmt.bigIntToDouble(loan.liquidationPrice, stableCoinDecimals),
-          Fmt.bigIntToDouble(price - loan.liquidationPrice, stableCoinDecimals),
+          Fmt.bigIntToDouble(
+              price - loan.liquidationPrice > BigInt.zero
+                  ? price - loan.liquidationPrice
+                  : BigInt.zero,
+              stableCoinDecimals),
           Fmt.bigIntToDouble(
               price ~/ (BigInt.one + BigInt.two), stableCoinDecimals),
         ];

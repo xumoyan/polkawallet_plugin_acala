@@ -8,12 +8,16 @@ import 'package:polkawallet_ui/utils/format.dart';
 
 class LoanInfoPanel extends StatelessWidget {
   LoanInfoPanel({
+    this.debits,
+    this.collateral,
     this.price,
     this.liquidationRatio,
     this.requiredRatio,
     this.currentRatio,
     this.liquidationPrice,
   });
+  final String debits;
+  final String collateral;
   final BigInt price;
   final BigInt liquidationRatio;
   final BigInt requiredRatio;
@@ -28,18 +32,22 @@ class LoanInfoPanel extends StatelessWidget {
         Fmt.token(liquidationPrice, acala_price_decimals);
     return Column(
       children: <Widget>[
+        debits != null
+            ? InfoItemRow(
+                dic['loan.borrowed'],
+                debits,
+              )
+            : Container(),
+        collateral != null
+            ? InfoItemRow(
+                dic['loan.collateral'],
+                collateral,
+              )
+            : Container(),
         InfoItemRow(
           dic['collateral.price'],
           '\$$priceString',
         ),
-//        LoanInfoItem(
-//          dic['liquid.ratio'],
-//          Fmt.ratio(
-//            double.parse(
-//              Fmt.token(liquidationRatio, decimals),
-//            ),
-//          ),
-//        ),
         InfoItemRow(
           dic['liquid.ratio.require'],
           Fmt.ratio(
