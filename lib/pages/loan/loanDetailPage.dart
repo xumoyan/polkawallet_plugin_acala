@@ -84,9 +84,8 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
           appBar: AppBar(
               title: Text(PluginFmt.tokenView(token)), centerTitle: true),
           body: SafeArea(
-            child: Column(
+            child: AccountCardLayout(widget.keyring.current, Column(
               children: <Widget>[
-                AccountCard(widget.keyring.current),
                 Expanded(
                   child: ListView(
                     padding: EdgeInsets.all(16),
@@ -97,7 +96,7 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                             Expanded(
                                 child: RoundedCard(
                                     padding:
-                                        EdgeInsets.only(top: 8, bottom: 16),
+                                    EdgeInsets.only(top: 8, bottom: 16),
                                     child: Column(
                                       children: [
                                         LoanDonutChart(
@@ -120,7 +119,7 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                             Expanded(
                                 child: RoundedCard(
                                     padding:
-                                        EdgeInsets.only(top: 8, bottom: 16),
+                                    EdgeInsets.only(top: 8, bottom: 16),
                                     child: Column(
                                       children: [
                                         LoanDonutChart(
@@ -154,7 +153,7 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                   ),
                 ),
               ],
-            ),
+            ),),
           ),
         );
       },

@@ -72,51 +72,52 @@ class _LoanPageState extends State<LoanPage> {
             actions: <Widget>[
               IconButton(
                 icon: Icon(Icons.history, color: Theme.of(context).cardColor),
-                onPressed: () => Navigator.of(context)
-                        .pushNamed(LoanHistoryPage.route),
+                onPressed: () =>
+                    Navigator.of(context).pushNamed(LoanHistoryPage.route),
               )
             ],
           ),
           body: SafeArea(
-            child: Column(
+            child: AccountCardLayout(widget.keyring.current, Column(
               children: <Widget>[
-                AccountCard(widget.keyring.current),
-                widget.plugin.store.loan.loansLoading ? Container(
+                widget.plugin.store.loan.loansLoading
+                    ? Container(
                   height: MediaQuery.of(context).size.width / 2,
                   child: CupertinoActivityIndicator(),
-                ) : loans.length > 0
-                ? Expanded(
-                  child:  ListView(
-                    padding:  EdgeInsets.all(16),
-                          children: loans.map((loan) {
-                            return LoanOverviewCard(
-                              loan,
-                              widget.plugin.networkState.tokenSymbol,
-                              widget.plugin.networkState.tokenDecimals,
-                              widget.plugin.tokenIcons,
-                            );
-                          }).toList(),
-                        ),
-                ) : RoundedCard(
-              margin: EdgeInsets.all(16),
-              padding: EdgeInsets.fromLTRB(80, 24, 80, 24),
-              child: SvgPicture.asset(
-                  'packages/polkawallet_plugin_acala/assets/images/loan-start.svg'),
-            ),
-              !widget.plugin.store.loan.loansLoading ?
-                    Container(
-                        padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-                        child: RoundedButton(
-                            text: '+ ${dic['loan.borrow']}',
-                            onPressed: () {
-                              Navigator.of(context).pushNamed(
-                                LoanCreatePage.route
-                              );
-                            }),
-                      )
+                )
+                    : loans.length > 0
+                    ? Expanded(
+                  child: ListView(
+                    padding: EdgeInsets.all(16),
+                    children: loans.map((loan) {
+                      return LoanOverviewCard(
+                        loan,
+                        widget.plugin.networkState.tokenSymbol,
+                        widget.plugin.networkState.tokenDecimals,
+                        widget.plugin.tokenIcons,
+                      );
+                    }).toList(),
+                  ),
+                )
+                    : RoundedCard(
+                  margin: EdgeInsets.all(16),
+                  padding: EdgeInsets.fromLTRB(80, 24, 80, 24),
+                  child: SvgPicture.asset(
+                      'packages/polkawallet_plugin_acala/assets/images/loan-start.svg'),
+                ),
+                !widget.plugin.store.loan.loansLoading
+                    ? Container(
+                  padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: RoundedButton(
+                      text: '+ ${dic['loan.borrow']}',
+                      onPressed: () {
+                        Navigator.of(context)
+                            .pushNamed(LoanCreatePage.route);
+                      }),
+                )
                     : Container(),
               ],
-            ),
+            )),
           ),
         );
       },
@@ -254,5 +255,22 @@ class AccountCard extends StatelessWidget {
         subtitle: Text(Fmt.address(account.address)),
       ),
     );
+  }
+}
+
+class AccountCardLayout extends StatelessWidget {
+  AccountCardLayout(this.account, this.child);
+  final KeyPairData account;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(children: [
+      Container(
+        margin: EdgeInsets.only(top: 64),
+        child: child,
+      ),
+      AccountCard(account),
+    ]);
   }
 }
