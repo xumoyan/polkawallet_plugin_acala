@@ -7,7 +7,7 @@ class WalletApi {
 
   static Future<Map> getLiveModules() async {
     try {
-      Response res = await get('$_endpoint/liveModules.json');
+      Response res = await get(Uri.parse('$_endpoint/liveModules.json'));
       if (res == null) {
         return null;
       } else {
@@ -27,7 +27,7 @@ class WalletApi {
       "account": deviceId,
     });
     try {
-      Response res = await post('$_endpoint/v2/faucet-tc6/faucet',
+      Response res = await post(Uri.parse('$_endpoint/v2/faucet-tc6/faucet'),
           headers: headers, body: body);
       if (res.statusCode == 200) {
         try {

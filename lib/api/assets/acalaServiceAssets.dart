@@ -73,12 +73,9 @@ class AcalaServiceAssets {
   }
 
   Future<Map> queryAirdropTokens(String address) async {
-    final getCurrencyIds = Platform.isIOS
-        ? 'JSON.stringify(api.registry.createType("AirDropCurrencyId").defKeys)'
-        : 'api.createType("AirDropCurrencyId").defKeys';
-
-    final res = await plugin.sdk.webView
-        .evalJavascript(getCurrencyIds, wrapPromise: false);
+    final res = await plugin.sdk.webView.evalJavascript(
+        'JSON.stringify(api.registry.createType("AirDropCurrencyId").defKeys)',
+        wrapPromise: false);
     if (res != null) {
       final List tokens = jsonDecode(res);
       final queries = tokens
