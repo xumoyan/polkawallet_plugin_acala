@@ -52,6 +52,9 @@ const Map<String, String> enDex = {
   'loan.warn':
       'Debt should be greater than 1aUSD or payback all, this action will have 1aUSD debt left. Are you sure to continue?',
   'loan.warn.back': 'Back to modify',
+  'loan.my': 'My Loans',
+  'loan.incentive': 'Incentives',
+  'loan.apy': 'APY',
   'txs.action': 'Action',
   'payback.small': 'The remaining debt is too small.',
   'earn.title': 'Deposit & Earn',
