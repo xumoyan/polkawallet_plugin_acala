@@ -292,7 +292,7 @@ class AccountCard extends StatelessWidget {
       child: ListTile(
         dense: true,
         leading: AddressIcon(account.address, svg: account.icon, size: 36),
-        title: Text(PluginFmt.tokenView(account.name)),
+        title: Text(account.name.toUpperCase()),
         subtitle: Text(Fmt.address(account.address)),
       ),
     );
@@ -349,11 +349,30 @@ class CollateralIncentiveList extends StatelessWidget {
           final borrowed =
               Fmt.priceCeilBigInt(loans[token].debits, stableCoinDecimals);
           final reward = rewards[token];
+          final rewardView =
+              reward != null ? Fmt.priceFloor(reward.reward, lengthMax: 6) : '';
           return RoundedCard(
             padding: EdgeInsets.fromLTRB(16, 24, 16, 24),
             margin: EdgeInsets.fromLTRB(16, 16, 16, 0),
             child: Column(
               children: [
+                Container(
+                  margin: EdgeInsets.only(bottom: 16),
+                  child: Row(
+                    children: [
+                      Container(
+                          margin: EdgeInsets.only(right: 8),
+                          child: TokenIcon(token, tokenIcons)),
+                      Text(PluginFmt.tokenView(token),
+                          style: TextStyle(
+                            fontSize: 30,
+                            letterSpacing: -0.8,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          )),
+                    ],
+                  ),
+                ),
                 Row(
                   children: [
                     Expanded(
@@ -364,18 +383,12 @@ class CollateralIncentiveList extends StatelessWidget {
                           margin: EdgeInsets.only(bottom: 8),
                           child: Text('${dic['loan.apy']} (ACA)'),
                         ),
-                        Row(children: [
-                          Container(
-                              margin: EdgeInsets.only(right: 8),
-                              child: TokenIcon(token, tokenIcons, small: true)),
-                          Text(Fmt.ratio(apy),
-                              style: TextStyle(
-                                fontSize: 24,
-                                letterSpacing: -0.8,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              )),
-                        ]),
+                        Text(Fmt.ratio(apy),
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black54,
+                            )),
                       ],
                     )),
                     Expanded(
@@ -389,10 +402,9 @@ class CollateralIncentiveList extends StatelessWidget {
                         ),
                         Text(borrowed,
                             style: TextStyle(
-                              fontSize: 24,
-                              letterSpacing: -0.8,
+                              fontSize: 22,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color: Colors.black54,
                             )),
                       ],
                     ))
@@ -400,19 +412,25 @@ class CollateralIncentiveList extends StatelessWidget {
                 ),
                 Container(
                   margin: EdgeInsets.only(top: 24),
-                  child: reward != null && reward.reward > 0.0
+                  child: reward != null && reward.reward > 0.00001
                       ? TxButton(
-                          text:
-                              '${dic['earn.claim']} ${Fmt.priceFloor(reward.reward, lengthMax: 6)} ACA',
+                          text: '${dic['earn.claim']} $rewardView ACA',
                           getTxParams: () async {
+                            final pool = {
+                              'Loans': {'Token': token}
+                            };
                             return TxConfirmParams(
                               module: 'incentives',
                               call: 'claimRewards',
                               txTitle: dic['earn.claim'],
-                              txDisplay: {},
-                              params: [],
+                              txDisplay: {
+                                'pool': pool,
+                                'amount': '$rewardView ACA'
+                              },
+                              params: [pool],
                             );
                           },
+                          onFinish: (_) => null,
                         )
                       : RoundedButton(text: dic['earn.claim']),
                 )
