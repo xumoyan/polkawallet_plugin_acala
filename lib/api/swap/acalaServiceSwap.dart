@@ -55,8 +55,8 @@ class AcalaServiceSwap {
   Future<Map> queryDexPoolInfo(String pool, address) async {
     final Map info = await plugin.sdk.webView.evalJavascript(
         'acala.fetchDexPoolInfo(api, ${jsonEncode({
-      'DEXShare': pool.split('-').map((e) => e.toUpperCase()).toList()
-    })}, "$address")');
+          'DEXShare': pool.split('-').map((e) => e.toUpperCase()).toList()
+        })}, "$address")');
     return info;
   }
 }

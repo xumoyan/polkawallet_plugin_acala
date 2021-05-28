@@ -9,7 +9,7 @@ part of 'dexPoolInfoData.dart';
 DexPoolData _$DexPoolDataFromJson(Map<String, dynamic> json) {
   return DexPoolData()
     ..decimals = json['decimals'] as int
-    ..tokens = json['tokens'] as List;
+    ..tokens = json['tokens'] as List<dynamic>;
 }
 
 Map<String, dynamic> _$DexPoolDataToJson(DexPoolData instance) =>

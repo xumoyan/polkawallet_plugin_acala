@@ -65,7 +65,7 @@ class PluginAcala extends PolkawalletPlugin {
       color: Color(0xFF9E9E9E),
       width: 24,
     ),
-    jsCodeVersion: 20101,
+    jsCodeVersion: 20601,
   );
 
   @override

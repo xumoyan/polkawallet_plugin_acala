@@ -6,3 +6,8 @@
 
 * bump polkawallet_sdk: ^0.1.6.
 * update new acala logo.
+
+## [0.1.8] - 20210527.
+
+* bump polkawallet_sdk 0.1.8, polkawallet_ui 0.1.8.
+* add loans incentives.

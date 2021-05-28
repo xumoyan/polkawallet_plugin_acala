@@ -24,6 +24,21 @@ mixin _$LoanStore on _LoanStore, Store {
     });
   }
 
+  final _$totalCDPsAtom = Atom(name: '_LoanStore.totalCDPs');
+
+  @override
+  Map<String, TotalCDPData> get totalCDPs {
+    _$totalCDPsAtom.reportRead();
+    return super.totalCDPs;
+  }
+
+  @override
+  set totalCDPs(Map<String, TotalCDPData> value) {
+    _$totalCDPsAtom.reportWrite(value, super.totalCDPs, () {
+      super.totalCDPs = value;
+    });
+  }
+
   final _$loansAtom = Atom(name: '_LoanStore.loans');
 
   @override
@@ -36,6 +51,38 @@ mixin _$LoanStore on _LoanStore, Store {
   set loans(Map<String, LoanData> value) {
     _$loansAtom.reportWrite(value, super.loans, () {
       super.loans = value;
+    });
+  }
+
+  final _$collateralIncentivesAtom =
+      Atom(name: '_LoanStore.collateralIncentives');
+
+  @override
+  Map<String, double> get collateralIncentives {
+    _$collateralIncentivesAtom.reportRead();
+    return super.collateralIncentives;
+  }
+
+  @override
+  set collateralIncentives(Map<String, double> value) {
+    _$collateralIncentivesAtom.reportWrite(value, super.collateralIncentives,
+        () {
+      super.collateralIncentives = value;
+    });
+  }
+
+  final _$collateralRewardsAtom = Atom(name: '_LoanStore.collateralRewards');
+
+  @override
+  Map<String, CollateralRewardData> get collateralRewards {
+    _$collateralRewardsAtom.reportRead();
+    return super.collateralRewards;
+  }
+
+  @override
+  set collateralRewards(Map<String, CollateralRewardData> value) {
+    _$collateralRewardsAtom.reportWrite(value, super.collateralRewards, () {
+      super.collateralRewards = value;
     });
   }
 
@@ -62,6 +109,39 @@ mixin _$LoanStore on _LoanStore, Store {
         name: '_LoanStore.setLoanTypes');
     try {
       return super.setLoanTypes(list);
+    } finally {
+      _$_LoanStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void setTotalCDPs(List<TotalCDPData> list) {
+    final _$actionInfo = _$_LoanStoreActionController.startAction(
+        name: '_LoanStore.setTotalCDPs');
+    try {
+      return super.setTotalCDPs(list);
+    } finally {
+      _$_LoanStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void setCollateralIncentives(Map<String, double> data) {
+    final _$actionInfo = _$_LoanStoreActionController.startAction(
+        name: '_LoanStore.setCollateralIncentives');
+    try {
+      return super.setCollateralIncentives(data);
+    } finally {
+      _$_LoanStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void setCollateralRewards(List<CollateralRewardData> data) {
+    final _$actionInfo = _$_LoanStoreActionController.startAction(
+        name: '_LoanStore.setCollateralRewards');
+    try {
+      return super.setCollateralRewards(data);
     } finally {
       _$_LoanStoreActionController.endAction(_$actionInfo);
     }
@@ -104,7 +184,10 @@ mixin _$LoanStore on _LoanStore, Store {
   String toString() {
     return '''
 loanTypes: ${loanTypes},
+totalCDPs: ${totalCDPs},
 loans: ${loans},
+collateralIncentives: ${collateralIncentives},
+collateralRewards: ${collateralRewards},
 loansLoading: ${loansLoading}
     ''';
   }

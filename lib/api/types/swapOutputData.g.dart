@@ -8,10 +8,10 @@ part of 'swapOutputData.dart';
 
 SwapOutputData _$SwapOutputDataFromJson(Map<String, dynamic> json) {
   return SwapOutputData()
-    ..path = json['path'] as List
-    ..amount = (json['amount'] as num)?.toDouble()
-    ..priceImpact = (json['priceImpact'] as num)?.toDouble()
-    ..fee = (json['fee'] as num)?.toDouble()
+    ..path = json['path'] as List<dynamic>
+    ..amount = (json['amount'] as num).toDouble()
+    ..priceImpact = (json['priceImpact'] as num).toDouble()
+    ..fee = (json['fee'] as num).toDouble()
     ..input = json['input'] as String
     ..output = json['output'] as String;
 }
@@ -29,7 +29,7 @@ Map<String, dynamic> _$SwapOutputDataToJson(SwapOutputData instance) =>
 LPTokenData _$LPTokenDataFromJson(Map<String, dynamic> json) {
   return LPTokenData()
     ..currencyId =
-        (json['currencyId'] as List)?.map((e) => e as String)?.toList()
+        (json['currencyId'] as List<dynamic>).map((e) => e as String).toList()
     ..free = json['free'] as String;
 }
 

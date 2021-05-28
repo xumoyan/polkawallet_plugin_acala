@@ -75,7 +75,8 @@ class LoanType extends _LoanType {
       {int stableCoinDecimals, int collateralDecimals}) {
     return tokenToUSD(collaterals, tokenPrice,
             stableCoinDecimals: stableCoinDecimals,
-            collateralDecimals: collateralDecimals) * BigInt.from(pow(10, acala_price_decimals)) ~/
+            collateralDecimals: collateralDecimals) *
+        BigInt.from(pow(10, acala_price_decimals)) ~/
         requiredCollateralRatio;
   }
 }
@@ -159,4 +160,54 @@ abstract class _LoanData {
             BigInt.from(pow(10, acala_price_decimals));
     return (pow(base, blocks) - 1);
   }
+}
+
+class CollateralIncentiveData extends _CollateralIncentiveData {
+  static CollateralIncentiveData fromJson(List json) {
+    final data = CollateralIncentiveData();
+    data.token = json[0][0]['Token'];
+    data.incentive = Fmt.balanceInt(json[1].toString());
+    return data;
+  }
+}
+
+abstract class _CollateralIncentiveData {
+  String token;
+  BigInt incentive;
+}
+
+class TotalCDPData extends _TotalCDPData {
+  static TotalCDPData fromJson(Map json) {
+    final data = TotalCDPData();
+    data.token = json['token'];
+    data.collateral = Fmt.balanceInt(json['collateral'].toString());
+    data.debit = Fmt.balanceInt(json['debit'].toString());
+    return data;
+  }
+}
+
+abstract class _TotalCDPData {
+  String token;
+  BigInt collateral;
+  BigInt debit;
+}
+
+class CollateralRewardData extends _CollateralRewardData {
+  static CollateralRewardData fromJson(Map json) {
+    final data = CollateralRewardData();
+    data.token = json['token'];
+    data.sharesTotal = Fmt.balanceInt(json['sharesTotal'].toString());
+    data.shares = Fmt.balanceInt(json['shares'].toString());
+    data.proportion = double.parse(json['proportion'].toString());
+    data.reward = double.parse(json['reward']);
+    return data;
+  }
+}
+
+abstract class _CollateralRewardData {
+  String token;
+  BigInt sharesTotal;
+  BigInt shares;
+  double reward;
+  double proportion;
 }

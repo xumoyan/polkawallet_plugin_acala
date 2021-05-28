@@ -16,4 +16,31 @@ class AcalaServiceLoan {
     return await plugin.sdk.webView
         .evalJavascript('api.derive.loan.allLoanTypes()');
   }
+
+  Future<List> queryTotalCDPs(List<String> pools) async {
+    final query = pools
+        .map((e) => 'api.query.loans.totalPositions({Token: "$e"})')
+        .join(',');
+    final List res =
+        await plugin.sdk.webView.evalJavascript('Promise.all([$query])');
+    return res;
+  }
+
+  Future<List> queryCollateralIncentives() async {
+    final pools = await plugin.sdk.webView
+        .evalJavascript('api.query.incentives.loansIncentiveRewards.entries()'
+            '.then(ls => ls.map(i => ([i[0].toHuman(), i[1]])))');
+    return pools;
+  }
+
+  Future<List> queryCollateralRewards(
+      List<String> collaterals, String address) async {
+    final query = collaterals
+        .map((e) =>
+            'acala.fetchCollateralRewards(api, {Token: "$e"}, "$address")')
+        .join(',');
+    final List res =
+        await plugin.sdk.webView.evalJavascript('Promise.all([$query])');
+    return res;
+  }
 }

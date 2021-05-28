@@ -11,13 +11,11 @@ class StakingPoolInfoData extends _StakingPoolInfoData {
 abstract class _StakingPoolInfoData {
   String rewardRate;
   List<StakingPoolFreeItemData> freeList;
-  double claimFeeRatio;
   double unbondingDuration;
   double freePool;
   double unbondingToFree;
   String liquidTokenIssuance;
   double defaultExchangeRate;
-  double maxClaimFee;
   double bondingDuration;
   double currentEra;
   double communalBonded;

@@ -96,6 +96,33 @@ async function getAllTokenSymbols(chain: string) {
  * @param {String} poolId
  * @param {String} address
  */
+async function fetchCollateralRewards(api: ApiPromise, pool: any, address: string) {
+  const res = (await Promise.all([
+    api.query.rewards.pools({ Loans: pool }),
+    api.query.rewards.shareAndWithdrawnReward({ Loans: pool }, address),
+  ])) as any;
+  let proportion = new FixedPointNumber(0);
+  if (res[0] && res[1]) {
+    proportion = FPNum(res[1][0]).div(FPNum(res[0].totalShares));
+  }
+  const decimalsACA = 13;
+  return {
+    token: pool.Token,
+    sharesTotal: res[0].totalShares,
+    shares: res[1][0],
+    proportion: proportion.toNumber() || 0,
+    reward: FPNum(res[0].totalRewards, decimalsACA)
+      .times(proportion)
+      .minus(FPNum(res[1][1], decimalsACA))
+      .toString(),
+  };
+}
+
+/**
+ * fetchDexPoolInfo
+ * @param {String} poolId
+ * @param {String} address
+ */
 async function fetchDexPoolInfo(api: ApiPromise, pool: any, address: string) {
   const res = (await Promise.all([
     api.query.dex.liquidityPool(pool.DEXShare.map((e: any) => ({ Token: e }))),
@@ -293,6 +320,7 @@ export default {
   queryLPTokens,
   getTokenPairs,
   getAllTokenSymbols,
+  fetchCollateralRewards,
   fetchDexPoolInfo,
   fetchHomaStakingPool,
   fetchHomaUserInfo,
