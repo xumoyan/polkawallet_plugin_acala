@@ -223,7 +223,9 @@ class PluginAcala extends PolkawalletPlugin {
         .setExtraTokens([ExtraTokenData(title: 'Airdrop', tokens: airdrops)]);
 
     final nft = await _api.assets.queryNFTs(acc.address);
-    _store.assets.setNFTs(nft);
+    if (nft != null) {
+      _store.assets.setNFTs(nft);
+    }
   }
 
   void _updateTokenBalances(List<TokenBalanceData> data) {

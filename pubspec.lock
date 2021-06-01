@@ -714,9 +714,11 @@ packages:
   polkawallet_ui:
     dependency: "direct main"
     description:
-      path: "../ui"
-      relative: true
-    source: path
+      path: "."
+      ref: a181a240a0c2b098a2e4140e07d036ea8222cea1
+      resolved-ref: a181a240a0c2b098a2e4140e07d036ea8222cea1
+      url: "https://github.com/polkawallet-io/ui.git"
+    source: git
     version: "0.1.8"
   pool:
     dependency: transitive
