@@ -1,5 +1,5 @@
 const Map<String, String> enCommon = {
-  'acala': 'Acala Platform',
+  'acala': 'Acala Defi Hub',
   'transfer': 'Transfer',
   'receive': 'Receive',
   'cancel': 'Cancel',
