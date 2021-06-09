@@ -10,15 +10,15 @@ import 'package:polkawallet_plugin_acala/api/acalaService.dart';
 import 'package:polkawallet_plugin_acala/common/constants.dart';
 import 'package:polkawallet_plugin_acala/pages/acalaEntry.dart';
 import 'package:polkawallet_plugin_acala/pages/assets/tokenDetailPage.dart';
-import 'package:polkawallet_plugin_acala/pages/assets/transferPage.dart';
 import 'package:polkawallet_plugin_acala/pages/assets/transferDetailPage.dart';
+import 'package:polkawallet_plugin_acala/pages/assets/transferPage.dart';
 import 'package:polkawallet_plugin_acala/pages/currencySelectPage.dart';
 import 'package:polkawallet_plugin_acala/pages/earn/LPStakePage.dart';
 import 'package:polkawallet_plugin_acala/pages/earn/addLiquidityPage.dart';
-import 'package:polkawallet_plugin_acala/pages/earn/earnHistoryPage.dart';
 import 'package:polkawallet_plugin_acala/pages/earn/earnDetailPage.dart';
-import 'package:polkawallet_plugin_acala/pages/earn/liquidityDetailPage.dart';
+import 'package:polkawallet_plugin_acala/pages/earn/earnHistoryPage.dart';
 import 'package:polkawallet_plugin_acala/pages/earn/earnPage.dart';
+import 'package:polkawallet_plugin_acala/pages/earn/liquidityDetailPage.dart';
 import 'package:polkawallet_plugin_acala/pages/earn/withdrawLiquidityPage.dart';
 import 'package:polkawallet_plugin_acala/pages/homa/homaHistoryPage.dart';
 import 'package:polkawallet_plugin_acala/pages/homa/homaPage.dart';
@@ -26,16 +26,16 @@ import 'package:polkawallet_plugin_acala/pages/homa/mintPage.dart';
 import 'package:polkawallet_plugin_acala/pages/homa/redeemPage.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanAdjustPage.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanCreatePage.dart';
+import 'package:polkawallet_plugin_acala/pages/loan/loanDetailPage.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanHistoryPage.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanPage.dart';
-import 'package:polkawallet_plugin_acala/pages/loan/loanDetailPage.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanTxDetailPage.dart';
 import 'package:polkawallet_plugin_acala/pages/nft/nftPage.dart';
-import 'package:polkawallet_plugin_acala/pages/swap/swapHistoryPage.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/swapDetailPage.dart';
+import 'package:polkawallet_plugin_acala/pages/swap/swapHistoryPage.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/swapPage.dart';
-import 'package:polkawallet_plugin_acala/service/index.dart';
 import 'package:polkawallet_plugin_acala/service/graphql.dart';
+import 'package:polkawallet_plugin_acala/service/index.dart';
 import 'package:polkawallet_plugin_acala/store/cache/storeCache.dart';
 import 'package:polkawallet_plugin_acala/store/index.dart';
 import 'package:polkawallet_sdk/api/types/networkParams.dart';
@@ -238,6 +238,8 @@ class PluginAcala extends PolkawalletPlugin {
     _store.assets.setNFTs([]);
 
     try {
+      loadBalances(acc);
+
       _store.assets.loadCache(acc.pubKey);
       _updateTokenBalances(_store.assets.tokenBalanceMap.values.toList());
 

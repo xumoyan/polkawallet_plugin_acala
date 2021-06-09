@@ -1,3 +1,7 @@
+## [0.2.1] - 20210609.
+
+* bump polkawallet_sdk 0.2.1.
+
 ## [0.1.3] - 20210324.
 
 * update for TC6.
