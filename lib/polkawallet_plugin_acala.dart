@@ -49,85 +49,81 @@ import 'package:polkawallet_ui/pages/accountQrCodePage.dart';
 import 'package:polkawallet_ui/pages/txConfirmPage.dart';
 
 class PluginAcala extends PolkawalletPlugin {
+  PluginAcala({String name = plugin_name_acala})
+      : basic = PluginBasicData(
+          name: name,
+          genesisHash: plugin_genesis_hash[name],
+          ss58: name == plugin_name_karura
+              ? ss58_prefix_karura
+              : ss58_prefix_acala,
+          primaryColor: name == plugin_name_karura ? Colors.red : Colors.indigo,
+          gradientColor: name == plugin_name_karura
+              ? Color.fromARGB(255, 255, 76, 59)
+              : Color(0xFF4B68F9),
+          backgroundImage: AssetImage(
+              'packages/polkawallet_plugin_acala/assets/images/${name == plugin_name_karura ? 'bg_kar' : 'bg'}.png'),
+          icon: name == plugin_name_karura
+              ? Image.asset(
+                  'packages/polkawallet_plugin_acala/assets/images/tokens/KAR.png')
+              : SvgPicture.asset(
+                  'packages/polkawallet_plugin_acala/assets/images/logo.svg'),
+          iconDisabled: name == plugin_name_karura
+              ? Image.asset(
+                  'packages/polkawallet_plugin_acala/assets/images/logo_kar_gray.png')
+              : SvgPicture.asset(
+                  'packages/polkawallet_plugin_acala/assets/images/logo.svg',
+                  color: Color(0xFF9E9E9E),
+                  width: 24,
+                ),
+          jsCodeVersion: 20701,
+        );
+
   @override
-  final basic = PluginBasicData(
-    name: 'acala-tc6',
-    genesisHash: acala_genesis_hash,
-    ss58: 42,
-    primaryColor: Colors.indigo,
-    gradientColor: Color(0xFF4B68F9),
-    backgroundImage:
-        AssetImage('packages/polkawallet_plugin_acala/assets/images/bg.png'),
-    icon: SvgPicture.asset(
-        'packages/polkawallet_plugin_acala/assets/images/logo.svg'),
-    iconDisabled: SvgPicture.asset(
-      'packages/polkawallet_plugin_acala/assets/images/logo.svg',
-      color: Color(0xFF9E9E9E),
-      width: 24,
-    ),
-    jsCodeVersion: 20601,
-  );
+  final PluginBasicData basic;
 
   @override
   List<NetworkParams> get nodeList {
-    return node_list.map((e) => NetworkParams.fromJson(e)).toList();
+    return node_list[basic.name].map((e) => NetworkParams.fromJson(e)).toList();
   }
 
-  Map<String, Widget> _basicIcons = {
-    'KAR': Image.asset(
-        'packages/polkawallet_plugin_acala/assets/images/tokens/KAR.png'),
-    'ACA': Image.asset(
-        'packages/polkawallet_plugin_acala/assets/images/tokens/ACA.png'),
-    'AUSD': Image.asset(
-        'packages/polkawallet_plugin_acala/assets/images/tokens/AUSD.png'),
-    'KUSD': Image.asset(
-        'packages/polkawallet_plugin_acala/assets/images/tokens/KUSD.png'),
-    'DOT': Image.asset(
-        'packages/polkawallet_plugin_acala/assets/images/tokens/DOT.png'),
-    'LDOT': Image.asset(
-        'packages/polkawallet_plugin_acala/assets/images/tokens/LDOT.png'),
-    'KSM': Image.asset(
-        'packages/polkawallet_plugin_acala/assets/images/tokens/KSM.png'),
-    'LKSM': Image.asset(
-        'packages/polkawallet_plugin_acala/assets/images/tokens/LKSM.png'),
-    'RENBTC': Image.asset(
-        'packages/polkawallet_plugin_acala/assets/images/tokens/RENBTC.png'),
-    'XBTC': Image.asset(
-        'packages/polkawallet_plugin_acala/assets/images/tokens/XBTC.png'),
-    'POLKABTC': Image.asset(
-        'packages/polkawallet_plugin_acala/assets/images/tokens/POLKABTC.png'),
-    'PLM': Image.asset(
-        'packages/polkawallet_plugin_acala/assets/images/tokens/PLM.png'),
-    'PHA': Image.asset(
-        'packages/polkawallet_plugin_acala/assets/images/tokens/PHA.png'),
-  };
+  Map<String, Widget> _getTokenIcons() {
+    final Map<String, Widget> all = {};
+    acala_token_ids[basic.name].forEach((token) {
+      all[token] = Image.asset(
+          'packages/polkawallet_plugin_acala/assets/images/tokens/$token.png');
+    });
+    acala_lp_token_ids[basic.name].forEach((token) {
+      all[token] = TokenIcon(token, all);
+    });
+    return all;
+  }
 
   @override
-  Map<String, Widget> get tokenIcons => {
-        ..._basicIcons,
-        'AUSD-DOT': TokenIcon('AUSD-DOT', _basicIcons),
-        'AUSD-LDOT': TokenIcon('AUSD-LDOT', _basicIcons),
-        'AUSD-XBTC': TokenIcon('AUSD-XBTC', _basicIcons),
-        'AUSD-RENBTC': TokenIcon('AUSD-RENBTC', _basicIcons),
-        'AUSD-POLKABTC': TokenIcon('AUSD-POLKABTC', _basicIcons),
-        'AUSD-PHA': TokenIcon('AUSD-PHA', _basicIcons),
-        'AUSD-PLM': TokenIcon('AUSD-PLM', _basicIcons),
-        'ACA-AUSD': TokenIcon('ACA-AUSD', _basicIcons),
-      };
+  Map<String, Widget> get tokenIcons => _getTokenIcons();
 
   @override
   List<HomeNavItem> getNavItems(BuildContext context, Keyring keyring) {
     return [
-      HomeNavItem(
-        text: 'Acala',
-        icon: SvgPicture.asset(
-          'packages/polkawallet_plugin_acala/assets/images/logo.svg',
-          color: Theme.of(context).disabledColor,
-        ),
-        iconActive: SvgPicture.asset(
-            'packages/polkawallet_plugin_acala/assets/images/logo.svg'),
-        content: AcalaEntry(this, keyring),
-      )
+      basic.name == plugin_name_karura
+          ? HomeNavItem(
+              text: 'Karura',
+              icon: SvgPicture.asset(
+                  'packages/polkawallet_plugin_acala/assets/images/logo_kar_empty.svg',
+                  color: Theme.of(context).disabledColor),
+              iconActive: Image.asset(
+                  'packages/polkawallet_plugin_acala/assets/images/tokens/KAR.png'),
+              content: AcalaEntry(this, keyring),
+            )
+          : HomeNavItem(
+              text: 'Acala',
+              icon: SvgPicture.asset(
+                'packages/polkawallet_plugin_acala/assets/images/logo.svg',
+                color: Theme.of(context).disabledColor,
+              ),
+              iconActive: SvgPicture.asset(
+                  'packages/polkawallet_plugin_acala/assets/images/logo.svg'),
+              content: AcalaEntry(this, keyring),
+            )
     ];
   }
 
@@ -205,7 +201,7 @@ class PluginAcala extends PolkawalletPlugin {
   AcalaApi _api;
   AcalaApi get api => _api;
 
-  final StoreCache _cache = StoreCache();
+  StoreCache _cache;
   PluginStore _store;
   PluginService _service;
   PluginStore get store => _store;
@@ -218,9 +214,11 @@ class PluginAcala extends PolkawalletPlugin {
       _updateTokenBalances(data);
     });
 
-    final airdrops = await _api.assets.queryAirdropTokens(acc.address);
-    balances
-        .setExtraTokens([ExtraTokenData(title: 'Airdrop', tokens: airdrops)]);
+    if (basic.name == plugin_name_acala) {
+      final airdrops = await _api.assets.queryAirdropTokens(acc.address);
+      balances
+          .setExtraTokens([ExtraTokenData(title: 'Airdrop', tokens: airdrops)]);
+    }
 
     final nft = await _api.assets.queryNFTs(acc.address);
     if (nft != null) {
@@ -257,8 +255,9 @@ class PluginAcala extends PolkawalletPlugin {
   Future<void> onWillStart(Keyring keyring) async {
     _api = AcalaApi(AcalaService(this));
 
-    await GetStorage.init(acala_plugin_cache_key);
+    await GetStorage.init(plugin_cache_key[basic.name]);
 
+    _cache = basic.name == plugin_name_karura ? StoreCacheKar() : StoreCache();
     _store = PluginStore(_cache);
     _loadCacheData(keyring.current);
 
