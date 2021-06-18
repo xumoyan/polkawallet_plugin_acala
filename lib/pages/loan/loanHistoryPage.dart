@@ -4,10 +4,10 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:polkawallet_plugin_acala/api/types/txLoanData.dart';
 import 'package:polkawallet_plugin_acala/common/constants.dart';
-import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanTxDetailPage.dart';
-import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
+import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
+import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
 import 'package:polkawallet_ui/components/listTail.dart';
@@ -22,6 +22,13 @@ class LoanHistoryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final symbols = plugin.networkState.tokenSymbol;
+    final decimals = plugin.networkState.tokenDecimals;
+
+    final stableCoinSymbol = plugin.basic.name == plugin_name_karura
+        ? karura_stable_coin
+        : acala_stable_coin;
+    final stableCoinDecimals = decimals[symbols.indexOf(stableCoinSymbol)];
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -53,8 +60,9 @@ class LoanHistoryPage extends StatelessWidget {
               final list = List.of(result.data['loanActions']['nodes'])
                   .map((i) => TxLoanData.fromJson(
                       i as Map,
-                      plugin.networkState.tokenSymbol,
-                      plugin.networkState.tokenDecimals))
+                      stableCoinSymbol,
+                      stableCoinDecimals,
+                      decimals[symbols.indexOf(i['token']['id'])]))
                   .toList();
               return ListView.builder(
                 itemCount: list.length + 1,

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:polkawallet_plugin_acala/common/constants.dart';
-import 'package:polkawallet_plugin_acala/pages/loan/loanPage.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanCard.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanChart.dart';
+import 'package:polkawallet_plugin_acala/pages/loan/loanPage.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
-import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
+import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
 import 'package:polkawallet_ui/components/roundedCard.dart';
@@ -27,14 +27,17 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
   @override
   Widget build(BuildContext context) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
+    final symbols = widget.plugin.networkState.tokenSymbol;
+    final decimals = widget.plugin.networkState.tokenDecimals;
+    final isKar = widget.plugin.basic.name == plugin_name_karura;
+    final stableCoinSymbol = isKar ? karura_stable_coin : acala_stable_coin;
+
     return Observer(
       builder: (_) {
         final token = ModalRoute.of(context).settings.arguments;
         final loan = widget.plugin.store.loan.loans[token];
 
-        final symbols = widget.plugin.networkState.tokenSymbol;
-        final decimals = widget.plugin.networkState.tokenDecimals;
-        final stableCoinDecimals = decimals[symbols.indexOf(acala_stable_coin)];
+        final stableCoinDecimals = decimals[symbols.indexOf(stableCoinSymbol)];
         final collateralDecimals = decimals[symbols.indexOf(token)];
 
         final dataChartDebit = [
@@ -67,7 +70,7 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                 : 0;
 
         final aUSDBalance = Fmt.balanceInt(widget
-            .plugin.store.assets.tokenBalanceMap[acala_stable_coin].amount);
+            .plugin.store.assets.tokenBalanceMap[stableCoinSymbol].amount);
         final tokenBalance = Fmt.balanceInt(
             widget.plugin.store.assets.tokenBalanceMap[token].amount);
 
@@ -84,76 +87,82 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
           appBar: AppBar(
               title: Text(PluginFmt.tokenView(token)), centerTitle: true),
           body: SafeArea(
-            child: AccountCardLayout(widget.keyring.current, Column(
-              children: <Widget>[
-                Expanded(
-                  child: ListView(
-                    padding: EdgeInsets.all(16),
-                    children: [
-                      Container(
-                          margin: EdgeInsets.only(bottom: 16),
-                          child: Row(children: [
-                            Expanded(
-                                child: RoundedCard(
-                                    padding:
-                                    EdgeInsets.only(top: 8, bottom: 16),
-                                    child: Column(
-                                      children: [
-                                        LoanDonutChart(
-                                          dataChartDebit,
-                                          title: Fmt.priceFloorBigInt(
-                                              loan.debits, stableCoinDecimals),
-                                          subtitle: dic['loan.borrowed'],
-                                          colorType: colorType,
-                                        ),
-                                        Text(
-                                            Fmt.priceFloorBigInt(
-                                                loan.maxToBorrow,
+            child: AccountCardLayout(
+              widget.keyring.current,
+              Column(
+                children: <Widget>[
+                  Expanded(
+                    child: ListView(
+                      padding: EdgeInsets.all(16),
+                      children: [
+                        Container(
+                            margin: EdgeInsets.only(bottom: 16),
+                            child: Row(children: [
+                              Expanded(
+                                  child: RoundedCard(
+                                      padding:
+                                          EdgeInsets.only(top: 8, bottom: 16),
+                                      child: Column(
+                                        children: [
+                                          LoanDonutChart(
+                                            dataChartDebit,
+                                            title: Fmt.priceFloorBigInt(
+                                                loan.debits,
                                                 stableCoinDecimals),
-                                            style: titleStyle),
-                                        Text('${dic['borrow.limit']}(aUSD)',
-                                            style: subtitleStyle)
-                                      ],
-                                    ))),
-                            Container(width: 16),
-                            Expanded(
-                                child: RoundedCard(
-                                    padding:
-                                    EdgeInsets.only(top: 8, bottom: 16),
-                                    child: Column(
-                                      children: [
-                                        LoanDonutChart(
-                                          dataChartPrice,
-                                          title: Fmt.priceFloorBigInt(
-                                              loan.liquidationPrice, 18),
-                                          subtitle: dic['liquid.price'],
-                                          colorType: colorType,
-                                        ),
-                                        Text(Fmt.priceFloorBigInt(price, 18),
-                                            style: titleStyle),
-                                        Text('${dic['collateral.price']}(\$)',
-                                            style: subtitleStyle)
-                                      ],
-                                    ))),
-                          ])),
-                      LoanCollateralCard(
-                          loan,
-                          Fmt.priceFloorBigInt(
-                              tokenBalance, collateralDecimals),
-                          stableCoinDecimals,
-                          collateralDecimals,
-                          widget.plugin.tokenIcons),
-                      LoanDebtCard(
-                          loan,
-                          Fmt.priceFloorBigInt(aUSDBalance, stableCoinDecimals),
-                          stableCoinDecimals,
-                          collateralDecimals,
-                          widget.plugin.tokenIcons),
-                    ],
+                                            subtitle: dic['loan.borrowed'],
+                                            colorType: colorType,
+                                          ),
+                                          Text(
+                                              Fmt.priceFloorBigInt(
+                                                  loan.maxToBorrow,
+                                                  stableCoinDecimals),
+                                              style: titleStyle),
+                                          Text('${dic['borrow.limit']}(aUSD)',
+                                              style: subtitleStyle)
+                                        ],
+                                      ))),
+                              Container(width: 16),
+                              Expanded(
+                                  child: RoundedCard(
+                                      padding:
+                                          EdgeInsets.only(top: 8, bottom: 16),
+                                      child: Column(
+                                        children: [
+                                          LoanDonutChart(
+                                            dataChartPrice,
+                                            title: Fmt.priceFloorBigInt(
+                                                loan.liquidationPrice, 18),
+                                            subtitle: dic['liquid.price'],
+                                            colorType: colorType,
+                                          ),
+                                          Text(Fmt.priceFloorBigInt(price, 18),
+                                              style: titleStyle),
+                                          Text('${dic['collateral.price']}(\$)',
+                                              style: subtitleStyle)
+                                        ],
+                                      ))),
+                            ])),
+                        LoanCollateralCard(
+                            loan,
+                            Fmt.priceFloorBigInt(
+                                tokenBalance, collateralDecimals),
+                            stableCoinDecimals,
+                            collateralDecimals,
+                            widget.plugin.tokenIcons),
+                        LoanDebtCard(
+                            loan,
+                            Fmt.priceFloorBigInt(
+                                aUSDBalance, stableCoinDecimals),
+                            stableCoinSymbol,
+                            stableCoinDecimals,
+                            collateralDecimals,
+                            widget.plugin.tokenIcons),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),),
+                ],
+              ),
+            ),
           ),
         );
       },

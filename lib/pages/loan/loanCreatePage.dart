@@ -228,7 +228,10 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
       final assetDic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
       final symbols = widget.plugin.networkState.tokenSymbol;
       final decimals = widget.plugin.networkState.tokenDecimals;
-      final stableCoinDecimals = decimals[symbols.indexOf('AUSD')];
+
+      final isKar = widget.plugin.basic.name == plugin_name_karura;
+      final stableCoinDecimals = decimals[
+          symbols.indexOf(isKar ? karura_stable_coin : acala_stable_coin)];
 
       final collateralDecimals = decimals[symbols.indexOf(_token)];
 

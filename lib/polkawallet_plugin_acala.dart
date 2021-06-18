@@ -75,6 +75,7 @@ class PluginAcala extends PolkawalletPlugin {
                   color: Color(0xFF9E9E9E),
                   width: 24,
                 ),
+          isTestNet: name != plugin_name_karura,
           jsCodeVersion: 20701,
         );
 
@@ -196,7 +197,7 @@ class PluginAcala extends PolkawalletPlugin {
 
   @override
   Future<String> loadJSCode() => rootBundle.loadString(
-      'packages/polkawallet_plugin_acala/lib/js_service_acala/dist/main.js');
+      'packages/polkawallet_plugin_acala/lib/js_service_acala${basic.name == plugin_name_karura ? '' : '_tc6'}/dist/main.js');
 
   AcalaApi _api;
   AcalaApi get api => _api;
@@ -262,6 +263,8 @@ class PluginAcala extends PolkawalletPlugin {
     _loadCacheData(keyring.current);
 
     _service = PluginService(this, keyring);
+
+    _service.fetchLiveModules();
   }
 
   @override

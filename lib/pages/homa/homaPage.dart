@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:polkawallet_plugin_acala/api/types/txHomaData.dart';
+import 'package:polkawallet_plugin_acala/common/constants.dart';
 import 'package:polkawallet_plugin_acala/pages/homa/mintPage.dart';
 import 'package:polkawallet_plugin_acala/pages/homa/redeemPage.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
@@ -92,7 +93,10 @@ class _HomaPageState extends State<HomaPage> {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
         final symbols = widget.plugin.networkState.tokenSymbol;
         final decimals = widget.plugin.networkState.tokenDecimals;
-        final stakeSymbol = 'DOT';
+
+        final bool enabled = ModalRoute.of(context).settings.arguments;
+        final isKar = widget.plugin.basic.name == plugin_name_karura;
+        final stakeSymbol = isKar ? 'KSM' : 'DOT';
 
         final nativeDecimal = decimals[symbols.indexOf(stakeSymbol)];
         final liquidDecimal = decimals[symbols.indexOf('L$stakeSymbol')];
@@ -282,13 +286,12 @@ class _HomaPageState extends State<HomaPage> {
                           Expanded(
                             child: Container(
                               color: Colors.blue,
-                              child: FlatButton(
-                                padding: EdgeInsets.only(top: 16, bottom: 16),
+                              child: TextButton(
                                 child: Text(
                                   dic['homa.mint'],
                                   style: TextStyle(color: white),
                                 ),
-                                onPressed: pool.communalTotal != null
+                                onPressed: enabled && pool.communalTotal != null
                                     ? () => Navigator.of(context)
                                         .pushNamed(MintPage.route)
                                     : null,
@@ -298,13 +301,12 @@ class _HomaPageState extends State<HomaPage> {
                           Expanded(
                             child: Container(
                               color: primary,
-                              child: FlatButton(
-                                padding: EdgeInsets.only(top: 16, bottom: 16),
+                              child: TextButton(
                                 child: Text(
                                   dic['homa.redeem'],
                                   style: TextStyle(color: white),
                                 ),
-                                onPressed: pool.communalTotal != null
+                                onPressed: enabled && pool.communalTotal != null
                                     ? () => Navigator.of(context)
                                         .pushNamed(HomaRedeemPage.route)
                                     : null,

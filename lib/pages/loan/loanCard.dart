@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:polkawallet_plugin_acala/api/types/loanType.dart';
-import 'package:polkawallet_plugin_acala/common/constants.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanAdjustPage.dart';
-import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
+import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
 import 'package:polkawallet_ui/components/roundedButton.dart';
 import 'package:polkawallet_ui/components/roundedCard.dart';
@@ -14,12 +13,14 @@ class LoanDebtCard extends StatelessWidget {
   LoanDebtCard(
     this.loan,
     this.balance,
+    this.stableCoinSymbol,
     this.stableCoinDecimals,
     this.collateralDecimals,
     this.tokenIcons,
   );
   final LoanData loan;
   final String balance;
+  final String stableCoinSymbol;
   final int stableCoinDecimals;
   final int collateralDecimals;
   final Map<String, Widget> tokenIcons;
@@ -43,7 +44,7 @@ class LoanDebtCard extends StatelessWidget {
                     Row(children: [
                       Container(
                           margin: EdgeInsets.only(right: 8),
-                          child: TokenIcon(acala_stable_coin, tokenIcons)),
+                          child: TokenIcon(stableCoinSymbol, tokenIcons)),
                       Text(
                           Fmt.priceFloorBigInt(loan.debits, stableCoinDecimals),
                           style: TextStyle(

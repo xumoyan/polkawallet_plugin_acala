@@ -28,6 +28,13 @@ class AcalaServiceLoan {
 
   Future<List> queryCollateralIncentives() async {
     final pools = await plugin.sdk.webView
+        .evalJavascript('api.query.incentives.incentiveRewardAmount.entries()'
+            '.then(ls => ls.map(i => ([i[0].toHuman(), i[1]])))');
+    return pools;
+  }
+
+  Future<List> queryCollateralIncentivesTC6() async {
+    final pools = await plugin.sdk.webView
         .evalJavascript('api.query.incentives.loansIncentiveRewards.entries()'
             '.then(ls => ls.map(i => ([i[0].toHuman(), i[1]])))');
     return pools;

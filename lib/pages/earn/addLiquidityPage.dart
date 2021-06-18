@@ -5,10 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:polkawallet_plugin_acala/common/constants.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/swapTokenInput.dart';
-import 'package:polkawallet_plugin_acala/api/types/txLiquidityData.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
-import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
+import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/api/types/txInfoData.dart';
 import 'package:polkawallet_sdk/plugin/store/balances.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
@@ -46,20 +45,20 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
   String _errorLeft;
   String _errorRight;
 
-  Future<void> _refreshData() async {
+  Future<void> _refreshData(String stableCoinSymbol) async {
     final symbols = widget.plugin.networkState.tokenSymbol;
     final decimals = widget.plugin.networkState.tokenDecimals;
 
     final String poolId = ModalRoute.of(context).settings.arguments;
     final tokenPair = poolId.toUpperCase().split('-');
 
-    final token = tokenPair.firstWhere((e) => e != acala_stable_coin);
-    final stableCoinDecimals = decimals[symbols.indexOf(acala_stable_coin)];
+    final token = tokenPair.firstWhere((e) => e != stableCoinSymbol);
+    final stableCoinDecimals = decimals[symbols.indexOf(stableCoinSymbol)];
     final tokenDecimals = decimals[symbols.indexOf(token)];
     final decimalsLeft =
-        tokenPair[0] == acala_stable_coin ? stableCoinDecimals : tokenDecimals;
+        tokenPair[0] == stableCoinSymbol ? stableCoinDecimals : tokenDecimals;
     final decimalsRight =
-        tokenPair[0] == acala_stable_coin ? tokenDecimals : stableCoinDecimals;
+        tokenPair[0] == stableCoinSymbol ? tokenDecimals : stableCoinDecimals;
 
     await widget.plugin.service.earn.queryDexPoolInfo(poolId);
 
@@ -71,7 +70,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
       });
       _timer = Timer(Duration(seconds: 10), () {
         if (mounted) {
-          _refreshData();
+          _refreshData(stableCoinSymbol);
         }
       });
     }
@@ -191,22 +190,16 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
     _onTargetAmountChange(amount);
   }
 
-  Future<void> _onSubmit() async {
+  Future<void> _onSubmit(String stableCoinSymbol, int stableCoinDecimals,
+      int tokenDecimals) async {
     if (_onValidate()) {
-      final symbols = widget.plugin.networkState.tokenSymbol;
-      final decimals = widget.plugin.networkState.tokenDecimals;
-
       final String poolId = ModalRoute.of(context).settings.arguments;
       final pair = poolId.toUpperCase().split('-');
 
-      final token = pair.firstWhere((e) => e != 'AUSD');
-      final stableCoinDecimals = decimals[symbols.indexOf('AUSD')];
-      final tokenDecimals = decimals[symbols.indexOf(token)];
-
       final decimalsLeft =
-          pair[0] == acala_stable_coin ? stableCoinDecimals : tokenDecimals;
+          pair[0] == stableCoinSymbol ? stableCoinDecimals : tokenDecimals;
       final decimalsRight =
-          pair[0] == acala_stable_coin ? tokenDecimals : stableCoinDecimals;
+          pair[0] == stableCoinSymbol ? tokenDecimals : stableCoinDecimals;
 
       final amountLeft = _amountLeftCtrl.text.trim();
       final amountRight = _amountRightCtrl.text.trim();
@@ -242,7 +235,10 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _refreshData();
+      final isKar = widget.plugin.basic.name == plugin_name_karura;
+      final stableCoinSymbol = isKar ? karura_stable_coin : acala_stable_coin;
+
+      _refreshData(stableCoinSymbol);
     });
   }
 
@@ -273,13 +269,16 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
           PluginFmt.tokenView(tokenPair[1])
         ];
 
-        final token = tokenPair.firstWhere((e) => e != acala_stable_coin);
-        final stableCoinDecimals = decimals[symbols.indexOf(acala_stable_coin)];
+        final isKar = widget.plugin.basic.name == plugin_name_karura;
+        final stableCoinSymbol = isKar ? karura_stable_coin : acala_stable_coin;
+        final stableCoinDecimals = decimals[symbols.indexOf(stableCoinSymbol)];
+
+        final token = tokenPair.firstWhere((e) => e != stableCoinSymbol);
         final tokenDecimals = decimals[symbols.indexOf(token)];
-        final decimalsLeft = tokenPair[0] == acala_stable_coin
+        final decimalsLeft = tokenPair[0] == stableCoinSymbol
             ? stableCoinDecimals
             : tokenDecimals;
-        final decimalsRight = tokenPair[0] == acala_stable_coin
+        final decimalsRight = tokenPair[0] == stableCoinSymbol
             ? tokenDecimals
             : stableCoinDecimals;
 
@@ -292,7 +291,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
 
         TokenBalanceData balanceLeftUser;
         TokenBalanceData balanceRightUser;
-        if (tokenPair[0] == 'ACA') {
+        if (tokenPair[0] == symbols[0]) {
           balanceLeftUser = TokenBalanceData(
               symbol: tokenPair[0],
               decimals: widget.plugin.networkState.tokenDecimals[0],
@@ -300,7 +299,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                   (widget.plugin.balances.native?.freeBalance ?? 0).toString());
           balanceRightUser =
               widget.plugin.store.assets.tokenBalanceMap[tokenPair[1]];
-        } else if (tokenPair[1] == 'ACA') {
+        } else if (tokenPair[1] == symbols[0]) {
           balanceRightUser = TokenBalanceData(
               symbol: tokenPair[1],
               decimals: widget.plugin.networkState.tokenDecimals[0],
@@ -479,7 +478,8 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                   padding: EdgeInsets.only(top: 16),
                   child: RoundedButton(
                     text: dic['earn.deposit'],
-                    onPressed: _onSubmit,
+                    onPressed: () => _onSubmit(
+                        stableCoinSymbol, stableCoinDecimals, tokenDecimals),
                   ),
                 )
               ],

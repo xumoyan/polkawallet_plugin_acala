@@ -35,7 +35,7 @@ class EarnPage extends StatefulWidget {
 }
 
 class _EarnPageState extends State<EarnPage> {
-  String _tab = 'aUSD-DOT';
+  String _tab;
 
   Timer _timer;
 
@@ -43,8 +43,12 @@ class _EarnPageState extends State<EarnPage> {
     if (widget.plugin.store.earn.dexPools.length == 0) {
       await widget.plugin.service.earn.getDexPools();
     }
+    final tabNow = _tab ??
+        (widget.plugin.basic.name == plugin_name_karura
+            ? 'kUSD-KSM'
+            : 'aUSD-DOT');
     await Future.wait([
-      widget.plugin.service.earn.queryDexPoolInfo(_tab),
+      widget.plugin.service.earn.queryDexPoolInfo(tabNow),
       widget.plugin.service.earn
           .queryDexPoolRewards(widget.plugin.store.earn.dexPools),
     ]);
@@ -150,9 +154,14 @@ class _EarnPageState extends State<EarnPage> {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
     final symbols = widget.plugin.networkState.tokenSymbol;
     final decimals = widget.plugin.networkState.tokenDecimals;
-    final pair = _tab.toUpperCase().split('-');
-    final stableCoinIndex = pair.indexOf(acala_stable_coin);
-    final stableCoinDecimals = decimals[symbols.indexOf(acala_stable_coin)];
+
+    final bool enabled = ModalRoute.of(context).settings.arguments;
+    final isKar = widget.plugin.basic.name == plugin_name_karura;
+    final stableCoinSymbol = isKar ? karura_stable_coin : acala_stable_coin;
+    final tabNow = _tab ?? (isKar ? 'kUSD-KSM' : 'aUSD-DOT');
+    final pair = tabNow.toUpperCase().split('-');
+    final stableCoinIndex = pair.indexOf(stableCoinSymbol);
+    final stableCoinDecimals = decimals[symbols.indexOf(stableCoinSymbol)];
     final tokenDecimals =
         decimals[symbols.indexOf(stableCoinIndex == 0 ? pair[1] : pair[0])];
     final leftDecimal =
@@ -169,8 +178,10 @@ class _EarnPageState extends State<EarnPage> {
         actions: [
           IconButton(
             icon: Icon(Icons.history, color: Theme.of(context).cardColor),
-            onPressed: () => Navigator.of(context)
-                .pushNamed(EarnHistoryPage.route, arguments: _tab),
+            onPressed: enabled
+                ? () => Navigator.of(context)
+                    .pushNamed(EarnHistoryPage.route, arguments: tabNow)
+                : null,
           )
         ],
       ),
@@ -187,7 +198,7 @@ class _EarnPageState extends State<EarnPage> {
           String lpAmountString = '~';
 
           DexPoolInfoData poolInfo =
-              widget.plugin.store.earn.dexPoolInfoMap[_tab];
+              widget.plugin.store.earn.dexPoolInfoMap[tabNow];
           if (poolInfo != null) {
             issuance = poolInfo.issuance;
             shareTotal = poolInfo.sharesTotal;
@@ -201,18 +212,17 @@ class _EarnPageState extends State<EarnPage> {
             final lpAmount2 =
                 Fmt.bigIntToDouble(poolInfo.amountRight, rightDecimal) *
                     poolShare;
-            final pair = _tab.split('-');
             lpAmountString =
                 '${Fmt.priceFloor(lpAmount)} ${PluginFmt.tokenView(pair[0])} + ${Fmt.priceFloor(lpAmount2, lengthFixed: 4)} ${PluginFmt.tokenView(pair[1])}';
-            reward = (widget.plugin.store.earn.swapPoolRewards[_tab] ?? 0) *
+            reward = (widget.plugin.store.earn.swapPoolRewards[tabNow] ?? 0) *
                 stakeShare;
             rewardSaving =
-                (widget.plugin.store.earn.swapPoolSavingRewards[_tab] ?? 0) *
+                (widget.plugin.store.earn.swapPoolSavingRewards[tabNow] ?? 0) *
                     stakeShare;
           }
 
           final balance = Fmt.balanceInt(widget.plugin.store.assets
-                  .tokenBalanceMap[_tab.toUpperCase()]?.amount ??
+                  .tokenBalanceMap[tabNow.toUpperCase()]?.amount ??
               '0');
 
           Color cardColor = Theme.of(context).cardColor;
@@ -222,7 +232,7 @@ class _EarnPageState extends State<EarnPage> {
             child: Column(
               children: <Widget>[
                 CurrencySelector(
-                  token: _tab,
+                  token: tabNow,
                   tokenOptions: widget.plugin.store.earn.dexPools
                       .map((e) => e.tokens.map((e) => e['token']).join('-'))
                       .toList(),
@@ -231,14 +241,14 @@ class _EarnPageState extends State<EarnPage> {
                     setState(() {
                       _tab = res;
                     });
-                    widget.plugin.service.earn.queryDexPoolInfo(_tab);
+                    widget.plugin.service.earn.queryDexPoolInfo(tabNow);
                   },
                 ),
                 Expanded(
                   child: ListView(
                     children: <Widget>[
                       _SystemCard(
-                        token: _tab,
+                        token: tabNow,
                         total: Fmt.bigIntToDouble(
                             poolInfo?.sharesTotal ?? BigInt.zero,
                             shareDecimals),
@@ -251,8 +261,9 @@ class _EarnPageState extends State<EarnPage> {
                               child: RoundedButton(
                                 color: Colors.blue,
                                 text: dic['earn.stake'],
-                                onPressed:
-                                    balance > BigInt.zero ? _onStake : null,
+                                onPressed: enabled && balance > BigInt.zero
+                                    ? _onStake
+                                    : null,
                               ),
                             ),
                             (poolInfo?.shares ?? BigInt.zero) > BigInt.zero
@@ -272,7 +283,7 @@ class _EarnPageState extends State<EarnPage> {
                       _UserCard(
                         share: stakeShare,
                         poolInfo: poolInfo,
-                        token: _tab,
+                        token: tabNow,
                         rewardEstimate: reward,
                         rewardSavingEstimate: rewardSaving,
                         fee: widget.plugin.service.earn.getSwapFee(),
@@ -286,27 +297,31 @@ class _EarnPageState extends State<EarnPage> {
                   children: <Widget>[
                     Expanded(
                       child: Container(
-                        color: Colors.blue,
-                        child: FlatButton(
-                            padding: EdgeInsets.only(top: 16, bottom: 16),
+                        color: !enabled
+                            ? Colors.black26
+                            : isKar
+                                ? Colors.redAccent
+                                : Colors.blue,
+                        child: TextButton(
                             child: Text(
                               dic['earn.deposit'],
                               style: TextStyle(color: cardColor),
                             ),
-                            onPressed: () {
-                              Navigator.of(context).pushNamed(
-                                AddLiquidityPage.route,
-                                arguments: _tab,
-                              );
-                            }),
+                            onPressed: enabled
+                                ? () {
+                                    Navigator.of(context).pushNamed(
+                                      AddLiquidityPage.route,
+                                      arguments: tabNow,
+                                    );
+                                  }
+                                : null),
                       ),
                     ),
                     balance > BigInt.zero
                         ? Expanded(
                             child: Container(
                               color: primaryColor,
-                              child: FlatButton(
-                                padding: EdgeInsets.only(top: 16, bottom: 16),
+                              child: TextButton(
                                 child: Text(
                                   dic['earn.withdraw'],
                                   style: TextStyle(color: cardColor),
@@ -314,7 +329,7 @@ class _EarnPageState extends State<EarnPage> {
                                 onPressed: () =>
                                     Navigator.of(context).pushNamed(
                                   WithdrawLiquidityPage.route,
-                                  arguments: _tab,
+                                  arguments: tabNow,
                                 ),
                               ),
                             ),

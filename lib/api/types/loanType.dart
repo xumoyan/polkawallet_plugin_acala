@@ -14,12 +14,18 @@ class LoanType extends _LoanType {
     data.requiredCollateralRatio =
         BigInt.parse((json['requiredCollateralRatio'] ?? 0).toString());
     data.stabilityFee = BigInt.parse((json['stabilityFee'] ?? 0).toString());
-    data.globalStabilityFee =
-        BigInt.parse(json['globalStabilityFee'].toString());
+    data.globalStabilityFee = json['globalStabilityFee'] == null
+        ? null
+        : BigInt.parse(json['globalStabilityFee'].toString());
+    data.interestRatePerSec =
+        BigInt.parse((json['interestRatePerSec'] ?? 0).toString());
+    data.globalInterestRatePerSec = json['globalInterestRatePerSec'] == null
+        ? null
+        : BigInt.parse(json['globalInterestRatePerSec'].toString());
     data.maximumTotalDebitValue =
         BigInt.parse(json['maximumTotalDebitValue'].toString());
     data.minimumDebitValue = BigInt.parse(json['minimumDebitValue'].toString());
-    data.expectedBlockTime = int.parse(json['expectedBlockTime']);
+    data.expectedBlockTime = int.parse(json['expectedBlockTime'] ?? '0');
     return data;
   }
 
@@ -89,6 +95,8 @@ abstract class _LoanType {
   BigInt requiredCollateralRatio = BigInt.zero;
   BigInt stabilityFee = BigInt.zero;
   BigInt globalStabilityFee = BigInt.zero;
+  BigInt interestRatePerSec = BigInt.zero;
+  BigInt globalInterestRatePerSec = BigInt.zero;
   BigInt maximumTotalDebitValue = BigInt.zero;
   BigInt minimumDebitValue = BigInt.zero;
   int expectedBlockTime = 0;
@@ -96,9 +104,7 @@ abstract class _LoanType {
 
 class LoanData extends _LoanData {
   static LoanData fromJson(Map<String, dynamic> json, LoanType type,
-      BigInt tokenPrice, List<String> symbols, List<int> decimals) {
-    final stableCoinDecimals = decimals[symbols.indexOf('AUSD')];
-
+      BigInt tokenPrice, int stableCoinDecimals, int collateralDecimals) {
     LoanData data = LoanData();
     data.token = json['currency']['token'];
     data.type = type;
@@ -107,8 +113,6 @@ class LoanData extends _LoanData {
     data.debitShares = BigInt.parse(json['debit'].toString());
     data.debits = type.debitShareToDebit(data.debitShares);
     data.collaterals = BigInt.parse(json['collateral'].toString());
-
-    final collateralDecimals = decimals[symbols.indexOf(data.token)];
 
     data.debitInUSD = data.debits;
     data.collateralInUSD = type.tokenToUSD(data.collaterals, tokenPrice,
@@ -154,8 +158,16 @@ abstract class _LoanData {
   BigInt liquidationPrice = BigInt.zero;
 
   double calcStableFee(int seconds) {
-    int blocks = seconds * 1000 ~/ type.expectedBlockTime;
-    double base = 1 +
+    // if we have new api data
+    if (type.globalInterestRatePerSec != null) {
+      final base = 1 +
+          (type.globalInterestRatePerSec + type.interestRatePerSec) /
+              BigInt.from(pow(10, acala_price_decimals));
+      return (pow(base, seconds) - 1);
+    }
+    // else use the TC6 api data type
+    final blocks = seconds * 1000 ~/ type.expectedBlockTime;
+    final base = 1 +
         (type.globalStabilityFee + type.stabilityFee) /
             BigInt.from(pow(10, acala_price_decimals));
     return (pow(base, blocks) - 1);

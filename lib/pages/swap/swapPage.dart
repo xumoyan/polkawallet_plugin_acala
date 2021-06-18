@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:polkawallet_plugin_acala/api/types/swapOutputData.dart';
 import 'package:polkawallet_plugin_acala/common/constants.dart';
-import 'package:polkawallet_plugin_acala/pages/swap/swapTokenInput.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/swapHistoryPage.dart';
+import 'package:polkawallet_plugin_acala/pages/swap/swapTokenInput.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
@@ -65,9 +65,11 @@ class _SwapPageState extends State<SwapPage> {
     final txInfo = TxInfoData('balances', 'transfer', sender);
     final fee = await widget.plugin.sdk.api.tx
         .estimateFees(txInfo, [widget.keyring.current.address, '10000000000']);
-    setState(() {
-      _fee = fee;
-    });
+    if (mounted) {
+      setState(() {
+        _fee = fee;
+      });
+    }
   }
 
   Future<void> _switchPair() async {
@@ -91,7 +93,7 @@ class _SwapPageState extends State<SwapPage> {
   List<String> _getSwapTokens() {
     final tokens = widget.plugin.store.assets.tokenBalanceMap.keys.toList();
     tokens.retainWhere((e) => !e.contains('-'));
-    tokens.add('ACA');
+    tokens.add(acala_token_ids[widget.plugin.basic.name][0]);
     return tokens;
   }
 
@@ -107,7 +109,7 @@ class _SwapPageState extends State<SwapPage> {
     final v = _amountPayCtrl.text.trim();
     TokenBalanceData balance;
     if (_swapPair.length > 0) {
-      if (_swapPair[0] == 'ACA') {
+      if (_swapPair[0] == 'ACA' || _swapPair[0] == 'KAR') {
         balance = TokenBalanceData(
             symbol: _swapPair[0],
             decimals: widget.plugin.networkState.tokenDecimals[0],
@@ -308,7 +310,8 @@ class _SwapPageState extends State<SwapPage> {
       if (_maxInput != null) {
         input = _maxInput;
         // keep tx fee for ACA swap
-        if (_swapMode == 0 && _swapPair[0] == 'ACA') {
+        if (_swapMode == 0 &&
+            (_swapPair[0] == 'ACA' || _swapPair[0] == 'KAR')) {
           input -= BigInt.two * Fmt.balanceInt(_fee.partialFee.toString());
         }
       }
@@ -349,7 +352,9 @@ class _SwapPageState extends State<SwapPage> {
       final currencyIds = _getSwapTokens();
       if (currencyIds.length > 0) {
         setState(() {
-          _swapPair = ['ACA', acala_stable_coin];
+          _swapPair = widget.plugin.basic.name == plugin_name_karura
+              ? ['KAR', karura_stable_coin]
+              : ['ACA', acala_stable_coin];
         });
         _setUpdateTimer();
       }
@@ -371,6 +376,7 @@ class _SwapPageState extends State<SwapPage> {
 
   @override
   Widget build(_) {
+    final bool enabled = ModalRoute.of(context).settings.arguments;
     return Observer(
       builder: (BuildContext context) {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
@@ -392,7 +398,7 @@ class _SwapPageState extends State<SwapPage> {
         TokenBalanceData payBalance;
         TokenBalanceData receiveBalance;
         if (_swapPair.length > 0) {
-          if (_swapPair[0] == 'ACA') {
+          if (_swapPair[0] == 'ACA' || _swapPair[0] == 'KAR') {
             payBalance = TokenBalanceData(
                 symbol: _swapPair[0],
                 decimals: widget.plugin.networkState.tokenDecimals[0],
@@ -400,7 +406,7 @@ class _SwapPageState extends State<SwapPage> {
                     .toString());
             receiveBalance = widget.plugin.store.assets
                 .tokenBalanceMap[_swapPair[1].toUpperCase()];
-          } else if (_swapPair[1] == 'ACA') {
+          } else if (_swapPair[1] == 'ACA' || _swapPair[0] == 'KAR') {
             receiveBalance = TokenBalanceData(
                 symbol: _swapPair[1],
                 decimals: widget.plugin.networkState.tokenDecimals[0],
@@ -436,9 +442,11 @@ class _SwapPageState extends State<SwapPage> {
             centerTitle: true,
             actions: [
               IconButton(
-                icon: Icon(Icons.history),
-                onPressed: () =>
-                    Navigator.of(context).pushNamed(SwapHistoryPage.route),
+                icon: Icon(Icons.history, color: Theme.of(context).cardColor),
+                onPressed: enabled
+                    ? () =>
+                        Navigator.of(context).pushNamed(SwapHistoryPage.route)
+                    : null,
               )
             ],
           ),
@@ -727,7 +735,7 @@ class _SwapPageState extends State<SwapPage> {
                   padding: EdgeInsets.only(top: 24),
                   child: RoundedButton(
                     text: dic['dex.title'],
-                    onPressed: _swapRatio == 0
+                    onPressed: !enabled || _swapRatio == 0
                         ? null
                         : () => _onSubmit(pairDecimals, minMax),
                   ),

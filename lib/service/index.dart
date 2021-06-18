@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
+import 'package:polkawallet_plugin_acala/common/constants.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/service/serviceEarn.dart';
 import 'package:polkawallet_plugin_acala/service/serviceHoma.dart';
 import 'package:polkawallet_plugin_acala/service/serviceLoan.dart';
+import 'package:polkawallet_plugin_acala/service/walletApi.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_sdk/storage/types/keyPairData.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
@@ -36,5 +38,16 @@ class PluginService {
       },
     );
     return password;
+  }
+
+  Future<void> fetchLiveModules() async {
+    final res = plugin.basic.name == plugin_name_karura
+        ? await WalletApi.getLiveModules()
+        : config_modules;
+    if (res != null) {
+      plugin.store.setting.setLiveModules(res);
+    } else {
+      plugin.store.setting.setLiveModules(config_modules);
+    }
   }
 }

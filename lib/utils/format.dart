@@ -6,6 +6,9 @@ class PluginFmt {
     if (token == acala_stable_coin) {
       tokenView = acala_stable_coin_view;
     }
+    if (token == karura_stable_coin) {
+      tokenView = karura_stable_coin_view;
+    }
     if (token == acala_token_ren_btc) {
       tokenView = acala_token_ren_btc_view;
     }

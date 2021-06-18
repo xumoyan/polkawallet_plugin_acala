@@ -42,6 +42,7 @@ dev_dependencies:
 flutter:
   assets:
     - lib/js_service_acala/dist/main.js
+    - lib/js_service_acala_tc6/dist/main.js
     - assets/images/bg.png
     - assets/images/logo.svg
     - assets/images/logo1.svg
@@ -50,13 +51,18 @@ flutter:
     - assets/images/assets_send.png
     - assets/images/tx_failed.svg
     - assets/images/swap.svg
+    - assets/images/swap_kar.svg
     - assets/images/loan.svg
+    - assets/images/loan_kar.svg
     - assets/images/loan-start.svg
-    - assets/images/deposit.svg
+    - assets/images/earn.svg
+    - assets/images/earn_kar.svg
     - assets/images/scan.svg
     - assets/images/faucet.svg
-    - assets/images/liquid_dot.png
+    - assets/images/homa.svg
+    - assets/images/homa_kar.svg
     - assets/images/nft.svg
+    - assets/images/nft_kar.svg
     - assets/images/tokens/KAR.png
     - assets/images/tokens/ACA.png
     - assets/images/tokens/AUSD.png

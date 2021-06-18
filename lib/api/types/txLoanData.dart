@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:polkawallet_ui/utils/format.dart';
-import 'package:polkawallet_plugin_acala/common/constants.dart';
 
 class TxLoanData extends _TxLoanData {
   static const String actionTypeDeposit = 'deposit';
@@ -9,16 +8,14 @@ class TxLoanData extends _TxLoanData {
   static const String actionTypeBorrow = 'borrow';
   static const String actionTypePayback = 'payback';
   static const String actionTypeCreate = 'create';
-  static TxLoanData fromJson(
-      Map json, List<String> symbols, List<int> decimals) {
+  static TxLoanData fromJson(Map json, String stableCoinSymbol,
+      int stableCoinDecimals, int tokenDecimals) {
     TxLoanData data = TxLoanData();
     data.block = json['extrinsic']['block']['number'];
     data.hash = json['extrinsic']['id'];
 
     data.token = json['token']['id'];
 
-    final stableCoinDecimals = decimals[symbols.indexOf(acala_stable_coin)];
-    final tokenDecimals = decimals[symbols.indexOf(data.token)];
     data.collateral = Fmt.balanceInt(json['collateral'].toString());
     data.debit = Fmt.balanceInt(json['debit'].toString()) *
         Fmt.balanceInt(json['exchangeRate'].toString()) ~/

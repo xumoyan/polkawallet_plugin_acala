@@ -7,7 +7,7 @@ class WalletApi {
 
   static Future<Map> getLiveModules() async {
     try {
-      Response res = await get(Uri.parse('$_endpoint/liveModules.json'));
+      Response res = await get(Uri.parse('$_endpoint/config/modules.json'));
       if (res == null) {
         return null;
       } else {

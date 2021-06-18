@@ -1,16 +1,16 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:liquid_progress_indicator/liquid_progress_indicator.dart';
 import 'package:polkawallet_plugin_acala/api/types/loanType.dart';
 import 'package:polkawallet_plugin_acala/common/constants.dart';
-import 'package:polkawallet_plugin_acala/pages/loan/loanDetailPage.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanCreatePage.dart';
+import 'package:polkawallet_plugin_acala/pages/loan/loanDetailPage.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanHistoryPage.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
-import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
+import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_sdk/storage/types/keyPairData.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
@@ -50,7 +50,12 @@ class _LoanPageState extends State<LoanPage> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fetchData();
+      final bool enabled = ModalRoute.of(context).settings.arguments;
+      if (enabled) {
+        _fetchData();
+      } else {
+        widget.plugin.store.loan.setLoansLoading(false);
+      }
     });
   }
 
@@ -63,6 +68,13 @@ class _LoanPageState extends State<LoanPage> {
   @override
   Widget build(BuildContext context) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
+    final bool enabled = ModalRoute.of(context).settings.arguments;
+
+    final isKar = widget.plugin.basic.name == plugin_name_karura;
+    final stableCoinDecimals = widget.plugin.networkState.tokenDecimals[widget
+        .plugin.networkState.tokenSymbol
+        .indexOf(isKar ? karura_stable_coin : acala_stable_coin)];
+
     return Observer(
       builder: (_) {
         final loans = widget.plugin.store.loan.loans.values.toList();
@@ -77,8 +89,10 @@ class _LoanPageState extends State<LoanPage> {
             actions: <Widget>[
               IconButton(
                 icon: Icon(Icons.history, color: Theme.of(context).cardColor),
-                onPressed: () =>
-                    Navigator.of(context).pushNamed(LoanHistoryPage.route),
+                onPressed: enabled
+                    ? () =>
+                        Navigator.of(context).pushNamed(LoanHistoryPage.route)
+                    : null,
               )
             ],
           ),
@@ -112,12 +126,15 @@ class _LoanPageState extends State<LoanPage> {
                                     ? ListView(
                                         padding: EdgeInsets.all(16),
                                         children: loans.map((loan) {
+                                          final tokenDecimals = widget.plugin
+                                                  .networkState.tokenDecimals[
+                                              widget.plugin.networkState
+                                                  .tokenSymbol
+                                                  .indexOf(loan.token)];
                                           return LoanOverviewCard(
                                             loan,
-                                            widget.plugin.networkState
-                                                .tokenSymbol,
-                                            widget.plugin.networkState
-                                                .tokenDecimals,
+                                            stableCoinDecimals,
+                                            tokenDecimals,
                                             widget.plugin.tokenIcons,
                                           );
                                         }).toList(),
@@ -133,28 +150,27 @@ class _LoanPageState extends State<LoanPage> {
                                             .collateralRewards,
                                         prices:
                                             widget.plugin.store.assets.prices,
-                                        stableCoinDecimals: widget.plugin
-                                                .networkState.tokenDecimals[
-                                            widget
-                                                .plugin.networkState.tokenSymbol
-                                                .indexOf(acala_stable_coin)],
+                                        stableCoinDecimals: stableCoinDecimals,
                                       ),
                               )
                             : RoundedCard(
                                 margin: EdgeInsets.all(16),
                                 padding: EdgeInsets.fromLTRB(80, 24, 80, 24),
                                 child: SvgPicture.asset(
-                                    'packages/polkawallet_plugin_acala/assets/images/loan-start.svg'),
+                                    'packages/polkawallet_plugin_acala/assets/images/loan-start.svg',
+                                    color: Theme.of(context).primaryColor),
                               ),
                     !widget.plugin.store.loan.loansLoading
                         ? Container(
                             padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
                             child: RoundedButton(
                                 text: '+ ${dic['loan.borrow']}',
-                                onPressed: () {
-                                  Navigator.of(context)
-                                      .pushNamed(LoanCreatePage.route);
-                                }),
+                                onPressed: enabled
+                                    ? () {
+                                        Navigator.of(context)
+                                            .pushNamed(LoanCreatePage.route);
+                                      }
+                                    : null),
                           )
                         : Container(),
                   ],
@@ -167,10 +183,11 @@ class _LoanPageState extends State<LoanPage> {
 }
 
 class LoanOverviewCard extends StatelessWidget {
-  LoanOverviewCard(this.loan, this.symbols, this.decimals, this.tokenIcons);
+  LoanOverviewCard(this.loan, this.stableCoinDecimals, this.collateralDecimals,
+      this.tokenIcons);
   final LoanData loan;
-  final List<String> symbols;
-  final List<int> decimals;
+  final int stableCoinDecimals;
+  final int collateralDecimals;
   final Map<String, Widget> tokenIcons;
 
   final colorSafe = Color(0xFFB9F6CA);
@@ -180,8 +197,6 @@ class LoanOverviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
-    final stableCoinDecimals = decimals[symbols.indexOf('AUSD')];
-    final collateralDecimals = decimals[symbols.indexOf(loan.token)];
 
     final requiredCollateralRatio =
         double.parse(Fmt.token(loan.type.requiredCollateralRatio, 18));

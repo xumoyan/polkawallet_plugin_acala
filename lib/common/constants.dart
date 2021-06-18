@@ -1,5 +1,6 @@
 const int SECONDS_OF_DAY = 24 * 60 * 60; // seconds of one day
 const int SECONDS_OF_YEAR = 365 * 24 * 60 * 60; // seconds of one year
+const BLOCK_TIME_DEFAULT = 6000;
 
 const plugin_name_acala = 'acala-tc6';
 const plugin_name_karura = 'karura';
@@ -20,20 +21,25 @@ const node_list = {
     },
   ],
   plugin_name_karura: [
+    // {
+    //   'name': 'Acala Karura (Hosted by Acala Network)',
+    //   'ss58': ss58_prefix_karura,
+    //   'endpoint': 'wss://karura-rpc-0.aca-api.network',
+    // },
+    // {
+    //   'name': 'Acala Karura (Hosted by OnFinality)',
+    //   'ss58': ss58_prefix_karura,
+    //   'endpoint': 'wss://karura.api.onfinality.io',
+    // },
+    // {
+    //   'name': 'Karura Test Node (for Testing)',
+    //   'ss58': ss58_prefix_karura,
+    //   'endpoint': 'wss://karura.polkawallet.io:9944',
+    // },
     {
-      'name': 'Acala Karura (Hosted by Acala Network)',
+      'name': 'Acala Karura (Dev)',
       'ss58': ss58_prefix_karura,
-      'endpoint': 'wss://karura-rpc-0.aca-api.network',
-    },
-    {
-      'name': 'Acala Karura (Hosted by OnFinality)',
-      'ss58': ss58_prefix_karura,
-      'endpoint': 'wss://karura.api.onfinality.io',
-    },
-    {
-      'name': 'Karura Test Node (for Testing)',
-      'ss58': ss58_prefix_karura,
-      'endpoint': 'wss://karura.polkawallet.io:9944',
+      'endpoint': 'wss://polkadot-2.polkawallet.io',
     },
   ],
 };
@@ -100,6 +106,57 @@ const acala_lp_token_ids = {
     // 'KUSD-POLKABTC',
     'KAR-KUSD',
   ]
+};
+
+const module_name_assets = 'assets';
+const module_name_loan = 'loan';
+const module_name_swap = 'swap';
+const module_name_earn = 'earn';
+const module_name_homa = 'homa';
+const module_name_nft = 'nft';
+const config_modules = {
+  module_name_assets: {
+    'visible': true,
+    'enabled': false,
+  },
+  module_name_loan: {
+    'visible': true,
+    'enabled': false,
+  },
+  module_name_swap: {
+    'visible': true,
+    'enabled': false,
+  },
+  module_name_earn: {
+    'visible': true,
+    'enabled': false,
+  },
+  module_name_homa: {
+    'visible': true,
+    'enabled': false,
+  },
+  module_name_nft: {
+    'visible': true,
+    'enabled': true,
+  },
+};
+
+const image_assets_uri = 'packages/polkawallet_plugin_acala/assets/images';
+const module_icons_uri = {
+  plugin_name_acala: {
+    module_name_loan: '$image_assets_uri/loan.svg',
+    module_name_swap: '$image_assets_uri/swap.svg',
+    module_name_earn: '$image_assets_uri/earn.svg',
+    module_name_homa: '$image_assets_uri/homa.svg',
+    module_name_nft: '$image_assets_uri/nft.svg',
+  },
+  plugin_name_karura: {
+    module_name_loan: '$image_assets_uri/loan_kar.svg',
+    module_name_swap: '$image_assets_uri/swap_kar.svg',
+    module_name_earn: '$image_assets_uri/earn_kar.svg',
+    module_name_homa: '$image_assets_uri/homa_kar.svg',
+    module_name_nft: '$image_assets_uri/nft_kar.svg',
+  }
 };
 
 // graphql query

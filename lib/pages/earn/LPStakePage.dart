@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:polkawallet_plugin_acala/api/types/txLiquidityData.dart';
+import 'package:polkawallet_plugin_acala/common/constants.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
@@ -102,10 +102,16 @@ class _LPStakePage extends State<LPStakePage> {
     final symbols = widget.plugin.networkState.tokenSymbol;
     final decimals = widget.plugin.networkState.tokenDecimals;
 
+    final isKar = widget.plugin.basic.name == plugin_name_karura;
+    final stableCoinSymbol = isKar ? karura_stable_coin : acala_stable_coin;
+    final stableCoinDecimals = decimals[symbols.indexOf(stableCoinSymbol)];
+
     final LPStakePageParams args = ModalRoute.of(context).settings.arguments;
 
-    final token = args.poolId.toUpperCase().split('-').firstWhere((e) => e != 'AUSD');
-    final stableCoinDecimals = decimals[symbols.indexOf('AUSD')];
+    final token = args.poolId
+        .toUpperCase()
+        .split('-')
+        .firstWhere((e) => e != stableCoinSymbol);
     final tokenDecimals = decimals[symbols.indexOf(token)];
     final shareDecimals = stableCoinDecimals >= tokenDecimals
         ? stableCoinDecimals
@@ -157,7 +163,9 @@ class _LPStakePage extends State<LPStakePage> {
                               onTap: () => _onSetMax(balance, shareDecimals),
                             ),
                           ),
-                          inputFormatters: [UI.decimalInputFormatter(shareDecimals)],
+                          inputFormatters: [
+                            UI.decimalInputFormatter(shareDecimals)
+                          ],
                           controller: _amountCtrl,
                           keyboardType:
                               TextInputType.numberWithOptions(decimal: true),

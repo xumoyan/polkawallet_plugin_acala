@@ -2,17 +2,17 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
-import 'package:polkawallet_plugin_acala/api/types/txLiquidityData.dart';
 import 'package:polkawallet_plugin_acala/api/types/txIncentiveData.dart';
+import 'package:polkawallet_plugin_acala/api/types/txLiquidityData.dart';
 import 'package:polkawallet_plugin_acala/common/constants.dart';
-import 'package:polkawallet_plugin_acala/pages/earn/liquidityDetailPage.dart';
 import 'package:polkawallet_plugin_acala/pages/earn/earnDetailPage.dart';
+import 'package:polkawallet_plugin_acala/pages/earn/liquidityDetailPage.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
-import 'package:polkawallet_ui/components/listTail.dart';
 import 'package:polkawallet_ui/components/MainTabBar.dart';
+import 'package:polkawallet_ui/components/listTail.dart';
 import 'package:polkawallet_ui/utils/format.dart';
 
 class EarnHistoryPage extends StatefulWidget {
@@ -38,7 +38,7 @@ const _actionsMap = {
 class _EarnHistoryPageState extends State<EarnHistoryPage> {
   int _tab = 0;
 
-  Widget _buildLiquidityTxs() {
+  Widget _buildLiquidityTxs(String stableCoinSymbol) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
     return Query(
       options: QueryOptions(
@@ -68,6 +68,7 @@ class _EarnHistoryPageState extends State<EarnHistoryPage> {
         final list = ls
             .map((i) => TxDexLiquidityData.fromJson(
                 i as Map,
+                stableCoinSymbol,
                 widget.plugin.networkState.tokenSymbol,
                 widget.plugin.networkState.tokenDecimals))
             .toList();
@@ -122,7 +123,7 @@ class _EarnHistoryPageState extends State<EarnHistoryPage> {
     );
   }
 
-  Widget _buildStakeTxs() {
+  Widget _buildStakeTxs(String stableCoinSymbol) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
     return Query(
       options: QueryOptions(
@@ -154,6 +155,7 @@ class _EarnHistoryPageState extends State<EarnHistoryPage> {
         final list = ls
             .map((i) => TxDexIncentiveData.fromJson(
                 i as Map,
+                stableCoinSymbol,
                 widget.plugin.networkState.tokenSymbol,
                 widget.plugin.networkState.tokenDecimals))
             .toList();
@@ -208,7 +210,7 @@ class _EarnHistoryPageState extends State<EarnHistoryPage> {
     );
   }
 
-  Widget _buildIncentiveTxs() {
+  Widget _buildIncentiveTxs(String stableCoinSymbol) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
     return Query(
       options: QueryOptions(
@@ -238,6 +240,7 @@ class _EarnHistoryPageState extends State<EarnHistoryPage> {
         final list = ls
             .map((i) => TxDexIncentiveData.fromJson(
                 i as Map,
+                stableCoinSymbol,
                 widget.plugin.networkState.tokenSymbol,
                 widget.plugin.networkState.tokenDecimals))
             .toList();
@@ -294,6 +297,8 @@ class _EarnHistoryPageState extends State<EarnHistoryPage> {
   @override
   Widget build(BuildContext context) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
+    final isKar = widget.plugin.basic.name == plugin_name_karura;
+    final stableCoinSymbol = isKar ? karura_stable_coin : acala_stable_coin;
     return Scaffold(
       appBar: AppBar(
         title: Text(dic['loan.txs']),
@@ -324,10 +329,10 @@ class _EarnHistoryPageState extends State<EarnHistoryPage> {
             ),
             Expanded(
               child: _tab == 0
-                  ? _buildLiquidityTxs()
+                  ? _buildLiquidityTxs(stableCoinSymbol)
                   : _tab == 1
-                      ? _buildStakeTxs()
-                      : _buildIncentiveTxs(),
+                      ? _buildStakeTxs(stableCoinSymbol)
+                      : _buildIncentiveTxs(stableCoinSymbol),
             )
           ],
         ),

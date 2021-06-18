@@ -1,16 +1,15 @@
 import 'dart:convert';
 
-import 'package:polkawallet_ui/utils/format.dart';
-import 'package:polkawallet_plugin_acala/common/constants.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
+import 'package:polkawallet_ui/utils/format.dart';
 
 class TxDexIncentiveData extends _TxDexIncentiveData {
   static const String actionRewardIncentive = 'dexIncentive';
   static const String actionRewardSaving = 'dexSaving';
   static const String actionStake = 'depositDexShare';
   static const String actionUnStake = 'withdrawDexShare';
-  static TxDexIncentiveData fromJson(
-      Map<String, dynamic> json, List<String> symbols, List<int> decimals) {
+  static TxDexIncentiveData fromJson(Map<String, dynamic> json,
+      String stableCoinSymbol, List<String> symbols, List<int> decimals) {
     final args = jsonDecode(json['args']);
 
     final data = TxDexIncentiveData();
@@ -22,7 +21,7 @@ class TxDexIncentiveData extends _TxDexIncentiveData {
     } else {
       data.action = json['method'];
     }
-    final stableCoinDecimals = decimals[symbols.indexOf(acala_stable_coin)];
+    final stableCoinDecimals = decimals[symbols.indexOf(stableCoinSymbol)];
 
     switch (data.action) {
       case actionRewardIncentive: // incentive reward is ACA
@@ -34,7 +33,7 @@ class TxDexIncentiveData extends _TxDexIncentiveData {
         final poolId = pair.join('-');
         final shareTokenView = PluginFmt.tokenView(poolId);
 
-        final token = pair.firstWhere((e) => e != acala_stable_coin);
+        final token = pair.firstWhere((e) => e != stableCoinSymbol);
         final tokenDecimals = decimals[symbols.indexOf(token)];
         final shareDecimals = stableCoinDecimals >= tokenDecimals
             ? stableCoinDecimals

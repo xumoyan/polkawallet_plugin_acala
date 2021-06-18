@@ -4,8 +4,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/common/constants.dart';
+import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
@@ -138,13 +138,15 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
             I18n.of(context).getDic(i18n_full_dic_acala, 'common');
         final symbols = widget.plugin.networkState.tokenSymbol;
         final decimals = widget.plugin.networkState.tokenDecimals;
+        final isKar = widget.plugin.basic.name == plugin_name_karura;
+        final stableCoinSymbol = isKar ? karura_stable_coin : acala_stable_coin;
 
         final String poolId = ModalRoute.of(context).settings.arguments;
         final pair = poolId.toUpperCase().split('-');
         final pairView = pair.map((e) => PluginFmt.tokenView(e)).toList();
 
-        final stableCoinIndex = pair.indexOf(acala_stable_coin);
-        final stableCoinDecimals = decimals[symbols.indexOf(acala_stable_coin)];
+        final stableCoinIndex = pair.indexOf(stableCoinSymbol);
+        final stableCoinDecimals = decimals[symbols.indexOf(stableCoinSymbol)];
         final tokenDecimals =
             decimals[symbols.indexOf(stableCoinIndex == 0 ? pair[1] : pair[0])];
 

@@ -39,14 +39,20 @@ class ServiceLoan {
     Map<String, BigInt> prices,
   ) {
     final data = Map<String, LoanData>();
+    final isKar = plugin.basic.name == plugin_name_karura;
+    final stableCoinDecimals = plugin.networkState.tokenDecimals[plugin
+        .networkState.tokenSymbol
+        .indexOf(isKar ? karura_stable_coin : acala_stable_coin)];
     loans.forEach((i) {
-      String token = i['currency']['token'];
+      final String token = i['currency']['token'];
+      final tokenDecimals = plugin.networkState
+          .tokenDecimals[plugin.networkState.tokenSymbol.indexOf(token)];
       data[token] = LoanData.fromJson(
         Map<String, dynamic>.from(i),
         loanTypes.firstWhere((t) => t.token == token),
         prices[token] ?? BigInt.zero,
-        plugin.networkState.tokenSymbol,
-        plugin.networkState.tokenDecimals,
+        stableCoinDecimals,
+        tokenDecimals,
       );
     });
     return data;
@@ -54,8 +60,9 @@ class ServiceLoan {
 
   Map<String, double> _calcCollateralIncentiveRate(
       List<CollateralIncentiveData> incentives) {
-    final blockTime =
-        int.parse(plugin.networkConst['babe']['expectedBlockTime']);
+    final blockTime = plugin.networkConst['babe'] == null
+        ? BLOCK_TIME_DEFAULT
+        : int.parse(plugin.networkConst['babe']['expectedBlockTime']);
     final epoch =
         int.parse(plugin.networkConst['incentives']['accumulatePeriod']);
     final epochOfYear = SECONDS_OF_YEAR * 1000 / blockTime / epoch;
@@ -73,7 +80,9 @@ class ServiceLoan {
 
     final res = await Future.wait([
       api.loan.queryLoanTypes(),
-      api.loan.queryCollateralIncentives(),
+      plugin.basic.name == plugin_name_karura
+          ? api.loan.queryCollateralIncentives()
+          : api.loan.queryCollateralIncentivesTC6(),
     ]);
     store.loan.setLoanTypes(res[0]);
     if (res[1] != null) {

@@ -1,14 +1,13 @@
 import 'dart:convert';
 
-import 'package:polkawallet_ui/utils/format.dart';
-import 'package:polkawallet_plugin_acala/common/constants.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
+import 'package:polkawallet_ui/utils/format.dart';
 
 class TxDexLiquidityData extends _TxDexLiquidityData {
   static const String actionDeposit = 'addLiquidity';
   static const String actionWithdraw = 'removeLiquidity';
-  static TxDexLiquidityData fromJson(
-      Map<String, dynamic> json, List<String> symbols, List<int> decimals) {
+  static TxDexLiquidityData fromJson(Map<String, dynamic> json,
+      String stableCoinSymbol, List<String> symbols, List<int> decimals) {
     final args = jsonDecode(json['args']);
 
     final data = TxDexLiquidityData();
@@ -26,16 +25,16 @@ class TxDexLiquidityData extends _TxDexLiquidityData {
     final poolId = pair.join('-');
     final shareTokenView = PluginFmt.tokenView(poolId);
 
-    final token = pair.firstWhere((e) => e != acala_stable_coin);
-    final stableCoinDecimals = decimals[symbols.indexOf(acala_stable_coin)];
+    final token = pair.firstWhere((e) => e != stableCoinSymbol);
+    final stableCoinDecimals = decimals[symbols.indexOf(stableCoinSymbol)];
     final tokenDecimals = decimals[symbols.indexOf(token)];
     final shareDecimals = stableCoinDecimals >= tokenDecimals
         ? stableCoinDecimals
         : tokenDecimals;
     final decimalsLeft =
-        pair[0] == acala_stable_coin ? stableCoinDecimals : tokenDecimals;
+        pair[0] == stableCoinSymbol ? stableCoinDecimals : tokenDecimals;
     final decimalsRight =
-        pair[0] == acala_stable_coin ? tokenDecimals : stableCoinDecimals;
+        pair[0] == stableCoinSymbol ? tokenDecimals : stableCoinDecimals;
 
     switch (data.action) {
       case actionDeposit:
