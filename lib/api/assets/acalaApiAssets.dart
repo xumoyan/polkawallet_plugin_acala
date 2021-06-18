@@ -36,8 +36,9 @@ class AcalaApiAssets {
     service.unsubscribeTokenBalances(chain, address);
   }
 
-  Future<void> subscribeTokenBalances(String chain, String address,
-      Function(List<TokenBalanceData>) callback) async {
+  Future<void> subscribeTokenBalances(
+      String chain, String address, Function(List<TokenBalanceData>) callback,
+      {bool transferEnabled = true}) async {
     final tokens = await getAllTokenSymbols(chain);
     _tokenBalances.clear();
 
@@ -53,7 +54,8 @@ class AcalaApiAssets {
                 symbol: e['symbol'],
                 decimals: e['decimals'],
                 amount: e['balance']['free'].toString(),
-                detailPageRoute: '/assets/token/detail',
+                detailPageRoute:
+                    transferEnabled ? '/assets/token/detail' : null,
               ))
           .toList());
     });
@@ -68,7 +70,7 @@ class AcalaApiAssets {
     if (ls['tokens'] != null) {
       List.of(ls['tokens']).asMap().forEach((i, v) {
         int decimal = decimalsAll[symbolAll.indexOf(v)];
-        if (v == 'ACA') {
+        if (v == symbolAll[0]) {
           decimal = 12;
         }
         res.add(TokenBalanceData(

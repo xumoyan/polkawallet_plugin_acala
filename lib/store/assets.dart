@@ -65,8 +65,7 @@ abstract class _AssetsStore with Store {
 
   @action
   void setTxs(List list, int decimals) {
-    txs = list.map((i) => TransferData.fromJson(i as Map, decimals))
-        .toList();
+    txs = list.map((i) => TransferData.fromJson(i as Map, decimals)).toList();
   }
 
   @action

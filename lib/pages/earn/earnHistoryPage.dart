@@ -257,10 +257,12 @@ class _EarnHistoryPageState extends State<EarnHistoryPage> {
             bool isReceive = true;
             switch (detail.action) {
               case TxDexIncentiveData.actionRewardIncentive:
-                amount = 'ACA';
+                amount = widget.plugin.networkState.tokenSymbol[0];
                 break;
               case TxDexIncentiveData.actionRewardSaving:
-                amount = 'aUSD';
+                final isKar = widget.plugin.basic.name == plugin_name_karura;
+                amount =
+                    isKar ? karura_stable_coin_view : acala_stable_coin_view;
                 break;
             }
             return Container(

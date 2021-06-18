@@ -1,16 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
-import 'package:polkawallet_sdk/utils/i18n.dart';
-import 'package:polkawallet_sdk/plugin/store/balances.dart';
-import 'package:polkawallet_ui/components/currencyWithIcon.dart';
-import 'package:polkawallet_ui/components/tokenIcon.dart';
-import 'package:polkawallet_ui/components/textTag.dart';
-import 'package:polkawallet_ui/utils/index.dart';
-import 'package:polkawallet_ui/utils/format.dart';
 import 'package:polkawallet_plugin_acala/pages/currencySelectPage.dart';
-import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
+import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
+import 'package:polkawallet_sdk/plugin/store/balances.dart';
+import 'package:polkawallet_sdk/utils/i18n.dart';
+import 'package:polkawallet_ui/components/currencyWithIcon.dart';
+import 'package:polkawallet_ui/components/textTag.dart';
+import 'package:polkawallet_ui/components/tokenIcon.dart';
+import 'package:polkawallet_ui/utils/format.dart';
+import 'package:polkawallet_ui/utils/index.dart';
 
 class SwapTokenInput extends StatelessWidget {
   SwapTokenInput({
@@ -47,7 +46,7 @@ class SwapTokenInput extends StatelessWidget {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
     final dicAssets = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
 
-    final max = Fmt.balanceInt(balance.amount);
+    final max = Fmt.balanceInt(balance?.amount ?? '0');
 
     final colorGray = Theme.of(context).unselectedWidgetColor;
     final colorLightGray = Theme.of(context).disabledColor;

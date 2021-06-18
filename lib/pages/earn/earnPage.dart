@@ -137,6 +137,11 @@ class _EarnPageState extends State<EarnPage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchData();
+
+      final isKar = widget.plugin.basic.name == plugin_name_karura;
+      setState(() {
+        _tab = isKar ? 'kUSD-KSM' : 'aUSD-DOT';
+      });
     });
   }
 
@@ -154,9 +159,9 @@ class _EarnPageState extends State<EarnPage> {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
     final symbols = widget.plugin.networkState.tokenSymbol;
     final decimals = widget.plugin.networkState.tokenDecimals;
-
-    final bool enabled = ModalRoute.of(context).settings.arguments;
     final isKar = widget.plugin.basic.name == plugin_name_karura;
+
+    final bool enabled = !isKar || ModalRoute.of(context).settings.arguments;
     final stableCoinSymbol = isKar ? karura_stable_coin : acala_stable_coin;
     final tabNow = _tab ?? (isKar ? 'kUSD-KSM' : 'aUSD-DOT');
     final pair = tabNow.toUpperCase().split('-');
@@ -289,6 +294,8 @@ class _EarnPageState extends State<EarnPage> {
                         fee: widget.plugin.service.earn.getSwapFee(),
                         onWithdrawReward: () =>
                             _onWithdrawReward(poolInfo.reward),
+                        incentiveCoinSymbol: symbols[0],
+                        stableCoinSymbol: stableCoinSymbol,
                       )
                     ],
                   ),
@@ -421,6 +428,8 @@ class _UserCard extends StatelessWidget {
     this.rewardSavingEstimate,
     this.fee,
     this.onWithdrawReward,
+    this.incentiveCoinSymbol,
+    this.stableCoinSymbol,
   });
   final double share;
   final DexPoolInfoData poolInfo;
@@ -429,6 +438,8 @@ class _UserCard extends StatelessWidget {
   final double rewardSavingEstimate;
   final double fee;
   final Function onWithdrawReward;
+  final String incentiveCoinSymbol;
+  final String stableCoinSymbol;
   @override
   Widget build(BuildContext context) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
@@ -467,7 +478,7 @@ class _UserCard extends StatelessWidget {
                 children: <Widget>[
                   Column(
                     children: <Widget>[
-                      Text('${dic['earn.incentive']} (ACA)'),
+                      Text('${dic['earn.incentive']} ($incentiveCoinSymbol)'),
                       Padding(
                         padding: EdgeInsets.only(top: 8, bottom: 8),
                         child: Text(Fmt.priceFloor(reward, lengthFixed: 4),
@@ -477,7 +488,7 @@ class _UserCard extends StatelessWidget {
                   ),
                   Column(
                     children: <Widget>[
-                      Text('${dic['earn.saving']} (aUSD)'),
+                      Text('${dic['earn.saving']} ($stableCoinSymbol)'),
                       Padding(
                         padding: EdgeInsets.only(top: 8, bottom: 8),
                         child: Text(
@@ -492,7 +503,7 @@ class _UserCard extends StatelessWidget {
                   ? Padding(
                       padding: EdgeInsets.only(bottom: 4),
                       child: Text(
-                        '${dic['earn.incentive']} ≈ ${Fmt.priceFloor(rewardEstimate, lengthMax: 6)} ACA / day',
+                        '${dic['earn.incentive']} ≈ ${Fmt.priceFloor(rewardEstimate, lengthMax: 6)} $incentiveCoinSymbol / day',
                         style: TextStyle(fontSize: 12),
                       ),
                     )
@@ -501,7 +512,7 @@ class _UserCard extends StatelessWidget {
                   ? Padding(
                       padding: EdgeInsets.only(bottom: 4),
                       child: Text(
-                        '${dic['earn.saving']} ≈ ${Fmt.priceFloor(rewardSavingEstimate)} aUSD / day',
+                        '${dic['earn.saving']} ≈ ${Fmt.priceFloor(rewardSavingEstimate)} $stableCoinSymbol / day',
                         style: TextStyle(fontSize: 12),
                       ),
                     )

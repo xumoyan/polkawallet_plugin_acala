@@ -117,7 +117,8 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
     final v =
         index == 0 ? _amountLeftCtrl.text.trim() : _amountRightCtrl.text.trim();
     TokenBalanceData balance;
-    if (index == 0 && tokenPair[0] == 'ACA') {
+    if (index == 0 &&
+        tokenPair[0] == widget.plugin.networkState.tokenSymbol[0]) {
       balance = TokenBalanceData(
           symbol: tokenPair[0],
           decimals: widget.plugin.networkState.tokenDecimals[0],

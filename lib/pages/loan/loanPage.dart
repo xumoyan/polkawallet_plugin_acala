@@ -50,7 +50,8 @@ class _LoanPageState extends State<LoanPage> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final bool enabled = ModalRoute.of(context).settings.arguments;
+      final isKar = widget.plugin.basic.name == plugin_name_karura;
+      final bool enabled = !isKar || ModalRoute.of(context).settings.arguments;
       if (enabled) {
         _fetchData();
       } else {
@@ -68,9 +69,9 @@ class _LoanPageState extends State<LoanPage> {
   @override
   Widget build(BuildContext context) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
-    final bool enabled = ModalRoute.of(context).settings.arguments;
-
     final isKar = widget.plugin.basic.name == plugin_name_karura;
+    final bool enabled = !isKar || ModalRoute.of(context).settings.arguments;
+
     final stableCoinDecimals = widget.plugin.networkState.tokenDecimals[widget
         .plugin.networkState.tokenSymbol
         .indexOf(isKar ? karura_stable_coin : acala_stable_coin)];
@@ -151,6 +152,8 @@ class _LoanPageState extends State<LoanPage> {
                                         prices:
                                             widget.plugin.store.assets.prices,
                                         stableCoinDecimals: stableCoinDecimals,
+                                        incentiveTokenSymbol: widget
+                                            .plugin.networkState.tokenSymbol[0],
                                       ),
                               )
                             : RoundedCard(
@@ -339,7 +342,8 @@ class CollateralIncentiveList extends StatelessWidget {
       this.totalCDPs,
       this.tokenIcons,
       this.prices,
-      this.stableCoinDecimals});
+      this.stableCoinDecimals,
+      this.incentiveTokenSymbol});
 
   final Map<String, LoanData> loans;
   final Map<String, double> incentives;
@@ -348,6 +352,7 @@ class CollateralIncentiveList extends StatelessWidget {
   final Map<String, Widget> tokenIcons;
   final Map<String, BigInt> prices;
   final int stableCoinDecimals;
+  final String incentiveTokenSymbol;
 
   @override
   Widget build(BuildContext context) {
@@ -357,7 +362,7 @@ class CollateralIncentiveList extends StatelessWidget {
         itemCount: tokens.length,
         itemBuilder: (_, i) {
           final token = tokens[i];
-          final apy = prices['ACA'] /
+          final apy = prices[incentiveTokenSymbol] /
               Fmt.tokenInt('1', acala_price_decimals) *
               incentives[token] /
               Fmt.bigIntToDouble(totalCDPs[token].debit, stableCoinDecimals);
@@ -396,7 +401,8 @@ class CollateralIncentiveList extends StatelessWidget {
                       children: [
                         Container(
                           margin: EdgeInsets.only(bottom: 8),
-                          child: Text('${dic['loan.apy']} (ACA)'),
+                          child: Text(
+                              '${dic['loan.apy']} ($incentiveTokenSymbol)'),
                         ),
                         Text(Fmt.ratio(apy),
                             style: TextStyle(
@@ -429,7 +435,8 @@ class CollateralIncentiveList extends StatelessWidget {
                   margin: EdgeInsets.only(top: 24),
                   child: reward != null && reward.reward > 0.00001
                       ? TxButton(
-                          text: '${dic['earn.claim']} $rewardView ACA',
+                          text:
+                              '${dic['earn.claim']} $rewardView $incentiveTokenSymbol',
                           getTxParams: () async {
                             final pool = {
                               'Loans': {'Token': token}
@@ -440,7 +447,7 @@ class CollateralIncentiveList extends StatelessWidget {
                               txTitle: dic['earn.claim'],
                               txDisplay: {
                                 'pool': pool,
-                                'amount': '$rewardView ACA'
+                                'amount': '$rewardView $incentiveTokenSymbol'
                               },
                               params: [pool],
                             );

@@ -109,7 +109,7 @@ class _SwapPageState extends State<SwapPage> {
     final v = _amountPayCtrl.text.trim();
     TokenBalanceData balance;
     if (_swapPair.length > 0) {
-      if (_swapPair[0] == 'ACA' || _swapPair[0] == 'KAR') {
+      if (_swapPair[0] == widget.plugin.networkState.tokenSymbol[0]) {
         balance = TokenBalanceData(
             symbol: _swapPair[0],
             decimals: widget.plugin.networkState.tokenDecimals[0],
@@ -311,7 +311,7 @@ class _SwapPageState extends State<SwapPage> {
         input = _maxInput;
         // keep tx fee for ACA swap
         if (_swapMode == 0 &&
-            (_swapPair[0] == 'ACA' || _swapPair[0] == 'KAR')) {
+            (_swapPair[0] == widget.plugin.networkState.tokenSymbol[0])) {
           input -= BigInt.two * Fmt.balanceInt(_fee.partialFee.toString());
         }
       }
@@ -376,7 +376,8 @@ class _SwapPageState extends State<SwapPage> {
 
   @override
   Widget build(_) {
-    final bool enabled = ModalRoute.of(context).settings.arguments;
+    final isKar = widget.plugin.basic.name == plugin_name_karura;
+    final bool enabled = !isKar || ModalRoute.of(context).settings.arguments;
     return Observer(
       builder: (BuildContext context) {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
@@ -398,7 +399,7 @@ class _SwapPageState extends State<SwapPage> {
         TokenBalanceData payBalance;
         TokenBalanceData receiveBalance;
         if (_swapPair.length > 0) {
-          if (_swapPair[0] == 'ACA' || _swapPair[0] == 'KAR') {
+          if (_swapPair[0] == symbols[0]) {
             payBalance = TokenBalanceData(
                 symbol: _swapPair[0],
                 decimals: widget.plugin.networkState.tokenDecimals[0],
@@ -406,7 +407,7 @@ class _SwapPageState extends State<SwapPage> {
                     .toString());
             receiveBalance = widget.plugin.store.assets
                 .tokenBalanceMap[_swapPair[1].toUpperCase()];
-          } else if (_swapPair[1] == 'ACA' || _swapPair[0] == 'KAR') {
+          } else if (_swapPair[1] == symbols[0]) {
             receiveBalance = TokenBalanceData(
                 symbol: _swapPair[1],
                 decimals: widget.plugin.networkState.tokenDecimals[0],

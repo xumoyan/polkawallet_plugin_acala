@@ -209,11 +209,14 @@ class PluginAcala extends PolkawalletPlugin {
   PluginService get service => _service;
 
   Future<void> _subscribeTokenBalances(KeyPairData acc) async {
+    final enabled = basic.name != plugin_name_karura ||
+        _store.setting.liveModules['assets']['enabled'];
+
     _api.assets.subscribeTokenBalances(basic.name, acc.address, (data) {
       _store.assets.setTokenBalanceMap(data, acc.pubKey);
 
       _updateTokenBalances(data);
-    });
+    }, transferEnabled: enabled);
 
     if (basic.name == plugin_name_acala) {
       final airdrops = await _api.assets.queryAirdropTokens(acc.address);

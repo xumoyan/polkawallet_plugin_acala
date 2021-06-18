@@ -91,11 +91,12 @@ class _HomaPageState extends State<HomaPage> {
     return Observer(
       builder: (BuildContext context) {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
+        final isKar = widget.plugin.basic.name == plugin_name_karura;
         final symbols = widget.plugin.networkState.tokenSymbol;
         final decimals = widget.plugin.networkState.tokenDecimals;
 
-        final bool enabled = ModalRoute.of(context).settings.arguments;
-        final isKar = widget.plugin.basic.name == plugin_name_karura;
+        final bool enabled =
+            !isKar || ModalRoute.of(context).settings.arguments;
         final stakeSymbol = isKar ? 'KSM' : 'DOT';
 
         final nativeDecimal = decimals[symbols.indexOf(stakeSymbol)];
