@@ -4,8 +4,6 @@ const Map<String, String> enDex = {
   'transfer': 'Transfer',
   'receive': 'Receive',
   'dex.title': 'Swap',
-  'dex.brief':
-      'Decentralized token exchange with the liquid pool of the Acala platform.',
   'dex.pay': 'Pay',
   'dex.receive': 'Receive',
   'dex.rate': 'Price',
@@ -19,8 +17,6 @@ const Map<String, String> enDex = {
   'dex.fee': 'Liquidity provider fee',
   'dex.impact': 'Price impact',
   'loan.title': 'Self Serviced Loan',
-  'loan.brief':
-      'Lock your digital assets(i.e. DOT) in Acala platform to borrow equivalent aUSD.',
   'loan.borrowed': 'Borrowed',
   'loan.collateral': 'Collateral',
   'loan.ratio': 'Collateral Ratio',
@@ -58,8 +54,6 @@ const Map<String, String> enDex = {
   'txs.action': 'Action',
   'payback.small': 'The remaining debt is too small.',
   'earn.title': 'Deposit & Earn',
-  'earn.brief':
-      'Deposit your digital assets and stable coins into the liquid pool to earn interests and rewards',
   'earn.deposit': 'Add Liquidity',
   'earn.withdraw': 'Withdraw Liquidity',
   'earn.get': 'Withdraw Rewards',
@@ -87,8 +81,6 @@ const Map<String, String> enDex = {
   'faucet.limit': 'Exceeds limited amount.',
   'faucet.error': 'Request error, try again later.',
   'homa.title': 'Liquid DOT',
-  'homa.brief':
-      'Deposit DOT & Mint Liquid DOT (L-DOT). Your DOTs will be staked to earn returns, meanwhile you can use, trade and invest L-DOT balance in your wallet.',
   'homa.mint': 'Mint L-DOT',
   'homa.redeem': 'Redeem DOT',
   'homa.now': 'Redeem Now',
@@ -114,7 +106,6 @@ const Map<String, String> enDex = {
   'homa.redeem.free': 'Pool',
   'tx.fee.or': 'or equivalent in other tokens',
   'nft.title': 'NFTs',
-  'nft.brief': 'NFTs on Acala network.',
   'nft.testnet': 'Mandala testnet badge',
   'candy.title': 'Candy Claim',
   'candy.claim': 'Claim',
