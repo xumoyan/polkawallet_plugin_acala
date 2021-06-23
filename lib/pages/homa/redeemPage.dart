@@ -52,7 +52,7 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
         .queryHomaRedeemAmount(input, _radioSelect, era);
     double fee = 0;
     double amount = 0;
-    if (res.fee != null) {
+    if (res.fee > 0) {
       fee = res.fee;
       amount = res.received;
     } else {

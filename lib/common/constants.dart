@@ -21,25 +21,20 @@ const node_list = {
     },
   ],
   plugin_name_karura: [
-    // {
-    //   'name': 'Acala Karura (Hosted by Acala Network)',
-    //   'ss58': ss58_prefix_karura,
-    //   'endpoint': 'wss://karura-rpc-0.aca-api.network',
-    // },
-    // {
-    //   'name': 'Acala Karura (Hosted by OnFinality)',
-    //   'ss58': ss58_prefix_karura,
-    //   'endpoint': 'wss://karura.api.onfinality.io',
-    // },
-    // {
-    //   'name': 'Karura Test Node (for Testing)',
-    //   'ss58': ss58_prefix_karura,
-    //   'endpoint': 'wss://karura.polkawallet.io:9944',
-    // },
     {
-      'name': 'Acala Karura (Dev)',
+      'name': 'Acala Karura (Hosted by Acala Network)',
       'ss58': ss58_prefix_karura,
-      'endpoint': 'wss://polkadot-2.polkawallet.io',
+      'endpoint': 'wss://karura-rpc-0.aca-api.network',
+    },
+    {
+      'name': 'Acala Karura (Hosted by OnFinality)',
+      'ss58': ss58_prefix_karura,
+      'endpoint': 'wss://karura.api.onfinality.io',
+    },
+    {
+      'name': 'Acala Karura (Hosted by Polkawallet)',
+      'ss58': ss58_prefix_karura,
+      'endpoint': 'wss://karura.polkawallet.io:9944',
     },
   ],
 };
