@@ -60,6 +60,11 @@ const acala_token_ren_btc_view = 'renBTC';
 const acala_token_polka_btc = 'POLKABTC';
 const acala_token_polka_btc_view = 'polkaBTC';
 
+const relay_chain_token_symbol = {
+  plugin_name_acala: 'DOT',
+  plugin_name_karura: 'KSM',
+};
+
 const acala_token_ids = {
   plugin_name_acala: [
     'ACA',

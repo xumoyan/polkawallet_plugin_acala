@@ -188,7 +188,7 @@ class _HomaRedeemPageState extends State<HomaRedeemPage> {
 
         final symbols = widget.plugin.networkState.tokenSymbol;
         final decimals = widget.plugin.networkState.tokenDecimals;
-        final stakeSymbol = 'DOT';
+        final stakeSymbol = relay_chain_token_symbol[widget.plugin.basic.name];
         final liquidSymbol = 'L$stakeSymbol';
         final liquidDecimal = decimals[symbols.indexOf(liquidSymbol)];
 

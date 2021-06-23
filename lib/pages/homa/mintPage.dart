@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:polkawallet_plugin_acala/api/types/txHomaData.dart';
+import 'package:polkawallet_plugin_acala/common/constants.dart';
 import 'package:polkawallet_plugin_acala/pages/homa/homaHistoryPage.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
@@ -108,7 +109,7 @@ class _MintPageState extends State<MintPage> {
             I18n.of(context).getDic(i18n_full_dic_acala, 'common');
 
         final symbols = widget.plugin.networkState.tokenSymbol;
-        final stakeToken = 'DOT';
+        final stakeToken = relay_chain_token_symbol[widget.plugin.basic.name];
         final liquidToken = 'L$stakeToken';
         final decimals = widget.plugin.networkState.tokenDecimals;
 
@@ -194,7 +195,7 @@ class _MintPageState extends State<MintPage> {
                                   Padding(
                                     padding: EdgeInsets.only(top: 8),
                                     child: Text(
-                                      '${dicAssets['balance']}: ${Fmt.token(balance, stakeDecimal)} DOT',
+                                      '${dicAssets['balance']}: ${Fmt.token(balance, stakeDecimal)} $stakeToken',
                                       style: TextStyle(
                                           color: Theme.of(context)
                                               .unselectedWidgetColor),

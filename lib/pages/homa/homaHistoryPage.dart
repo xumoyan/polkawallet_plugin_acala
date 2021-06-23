@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:polkawallet_plugin_acala/api/types/txHomaData.dart';
+import 'package:polkawallet_plugin_acala/common/constants.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
@@ -18,7 +19,7 @@ class HomaHistoryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final symbol = 'DOT';
+    final symbol = relay_chain_token_symbol[plugin.basic.name];
     final list = plugin.store.homa.txs.reversed.toList();
     return Scaffold(
       appBar: AppBar(

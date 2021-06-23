@@ -97,7 +97,7 @@ class _HomaPageState extends State<HomaPage> {
 
         final bool enabled =
             !isKar || ModalRoute.of(context).settings.arguments;
-        final stakeSymbol = isKar ? 'KSM' : 'DOT';
+        final stakeSymbol = relay_chain_token_symbol[widget.plugin.basic.name];
 
         final nativeDecimal = decimals[symbols.indexOf(stakeSymbol)];
         final liquidDecimal = decimals[symbols.indexOf('L$stakeSymbol')];
@@ -144,7 +144,7 @@ class _HomaPageState extends State<HomaPage> {
                             padding: EdgeInsets.all(16),
                             child: Column(
                               children: <Widget>[
-                                Text('DOT ${dic['homa.pool']}'),
+                                Text('$stakeSymbol ${dic['homa.pool']}'),
                                 Padding(
                                   padding: EdgeInsets.only(top: 16),
                                   child: Text(
