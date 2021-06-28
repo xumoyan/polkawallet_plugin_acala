@@ -116,7 +116,7 @@ class _HomaPageState extends State<HomaPage> {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(dic['homa.title']),
+            title: Text(dic['homa${isKar ? 'KSM' : ''}.title']),
             centerTitle: true,
             elevation: 0.0,
           ),

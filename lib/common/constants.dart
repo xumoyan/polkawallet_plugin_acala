@@ -22,6 +22,11 @@ const node_list = {
   ],
   plugin_name_karura: [
     {
+      'name': 'Acala Karura (Hosted by Polkawallet)',
+      'ss58': ss58_prefix_karura,
+      'endpoint': 'wss://karura.polkawallet.io',
+    },
+    {
       'name': 'Acala Karura (Hosted by Acala Network)',
       'ss58': ss58_prefix_karura,
       'endpoint': 'wss://karura-rpc-0.aca-api.network',
@@ -30,11 +35,6 @@ const node_list = {
       'name': 'Acala Karura (Hosted by OnFinality)',
       'ss58': ss58_prefix_karura,
       'endpoint': 'wss://karura.api.onfinality.io',
-    },
-    {
-      'name': 'Acala Karura (Hosted by Polkawallet)',
-      'ss58': ss58_prefix_karura,
-      'endpoint': 'wss://karura.polkawallet.io:9944',
     },
   ],
 };
