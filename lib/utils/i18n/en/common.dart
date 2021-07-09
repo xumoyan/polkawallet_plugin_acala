@@ -37,10 +37,10 @@ const Map<String, String> enCommon = {
   'swapKSM.title': 'Swap',
   'swapKSM.brief':
       'Decentralized token exchange with the liquid pool of the Karura platform.',
-  'earn.title': 'Deposit & Earn',
+  'earn.title': 'Earn',
   'earn.brief':
       'Deposit your digital assets and stable coins into the liquid pool to earn interests and rewards',
-  'earnKSM.title': 'Deposit & Earn',
+  'earnKSM.title': 'Earn',
   'earnKSM.brief':
       'Deposit your digital assets and stable coins into the liquid pool to earn interests and rewards',
   'homa.title': 'Liquid DOT',

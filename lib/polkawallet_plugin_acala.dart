@@ -76,6 +76,8 @@ class PluginAcala extends PolkawalletPlugin {
                   width: 24,
                 ),
           isTestNet: name != plugin_name_karura,
+          isXCMSupport: name == plugin_name_karura,
+          parachainId: '2000',
           jsCodeVersion: 20701,
         );
 

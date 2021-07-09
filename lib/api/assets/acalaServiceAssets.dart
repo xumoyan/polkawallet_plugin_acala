@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:polkawallet_plugin_acala/common/constants.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_ui/utils/format.dart';
 
@@ -57,7 +58,10 @@ class AcalaServiceAssets {
         'api.query.tokens.accounts',
         [
           address,
-          {'DEXShare': lpToken}
+          {
+            'DEXShare':
+                plugin.basic.name == plugin_name_acala ? lpToken : e.tokens
+          }
         ],
         channel,
         (Map data) {

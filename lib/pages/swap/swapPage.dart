@@ -46,6 +46,7 @@ class _SwapPageState extends State<SwapPage> {
   double _slippage = 0.005;
   bool _slippageSettingVisable = false;
   String _slippageError;
+  List<String> _allSwapTokens = [];
   List<String> _swapPair = [];
   int _swapMode = 0; // 0 for 'EXACT_INPUT' and 1 for 'EXACT_OUTPUT'
   double _swapRatio = 0;
@@ -90,10 +91,20 @@ class _SwapPageState extends State<SwapPage> {
     await _updateSwapAmount();
   }
 
-  List<String> _getSwapTokens() {
-    final tokens = widget.plugin.store.assets.tokenBalanceMap.keys.toList();
-    tokens.retainWhere((e) => !e.contains('-'));
-    tokens.add(acala_token_ids[widget.plugin.basic.name][0]);
+  Future<List<String>> _getSwapTokens() async {
+    final dexPairs = await widget.plugin.api.swap.getTokenPairs();
+    final List<String> tokens = [];
+    dexPairs.forEach((e) {
+      e.tokens.forEach((token) {
+        if (tokens.indexOf(token['token']) < 0) {
+          tokens.add(token['token']);
+        }
+      });
+    });
+    setState(() {
+      _allSwapTokens = tokens;
+    });
+    print(tokens);
     return tokens;
   }
 
@@ -115,7 +126,7 @@ class _SwapPageState extends State<SwapPage> {
             decimals: widget.plugin.networkState.tokenDecimals[0],
             amount:
                 (widget.plugin.balances.native?.freeBalance ?? 0).toString());
-      } else if (_getSwapTokens().length > 0) {
+      } else if (_allSwapTokens.length > 0) {
         balance = widget
             .plugin.store.assets.tokenBalanceMap[_swapPair[0].toUpperCase()];
       }
@@ -318,7 +329,7 @@ class _SwapPageState extends State<SwapPage> {
 
       final params = [
         _swapOutput.path
-            .map((e) => ({'Token': e['symbol'], 'decimal': e['decimal']}))
+            .map((e) => ({'Token': e['name'], 'decimal': e['decimal']}))
             .toList(),
         input.toString(),
         Fmt.tokenInt(minMax.toString(), pairDecimals[_swapMode == 0 ? 1 : 0])
@@ -346,10 +357,10 @@ class _SwapPageState extends State<SwapPage> {
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       _getTxFee();
 
-      final currencyIds = _getSwapTokens();
+      final currencyIds = await _getSwapTokens();
       if (currencyIds.length > 0) {
         setState(() {
           _swapPair = widget.plugin.basic.name == plugin_name_karura
@@ -378,6 +389,7 @@ class _SwapPageState extends State<SwapPage> {
   Widget build(_) {
     final isKar = widget.plugin.basic.name == plugin_name_karura;
     final bool enabled = !isKar || ModalRoute.of(context).settings.arguments;
+    // final bool enabled = true;
     return Observer(
       builder: (BuildContext context) {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
@@ -385,7 +397,7 @@ class _SwapPageState extends State<SwapPage> {
         final decimals = widget.plugin.networkState.tokenDecimals;
 
         final pairDecimals = [8, 8];
-        final currencyOptions = _getSwapTokens();
+        final currencyOptions = _allSwapTokens.toList();
         if (_swapPair.length > 0) {
           pairDecimals
               .replaceRange(0, 1, [decimals[symbols.indexOf(_swapPair[0])]]);
@@ -415,7 +427,7 @@ class _SwapPageState extends State<SwapPage> {
                     .toString());
             payBalance = widget.plugin.store.assets
                 .tokenBalanceMap[_swapPair[0].toUpperCase()];
-          } else if (_getSwapTokens().length > 0) {
+          } else if (currencyOptions.length > 0) {
             payBalance = widget.plugin.store.assets
                 .tokenBalanceMap[_swapPair[0].toUpperCase()];
             receiveBalance = widget.plugin.store.assets

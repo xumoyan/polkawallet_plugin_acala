@@ -46,7 +46,7 @@ class SwapTokenInput extends StatelessWidget {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
     final dicAssets = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
 
-    final max = Fmt.balanceInt(balance?.amount ?? '0');
+    final max = Fmt.balanceInt(balance?.amount);
 
     final colorGray = Theme.of(context).unselectedWidgetColor;
     final colorLightGray = Theme.of(context).disabledColor;
@@ -66,7 +66,7 @@ class SwapTokenInput extends StatelessWidget {
               children: [
                 Expanded(child: Text(title ?? '')),
                 Text(
-                  '${dicAssets['balance']}: ${Fmt.token(max, balance.decimals)}',
+                  '${dicAssets['balance']}: ${Fmt.token(max, balance?.decimals ?? 12)}',
                   style: TextStyle(color: colorGray, fontSize: 14),
                 ),
                 onSetMax == null
@@ -111,7 +111,7 @@ class SwapTokenInput extends StatelessWidget {
                     ? Icon(Icons.keyboard_arrow_down)
                     : null,
               ),
-              onTap: onTokenChange != null
+              onTap: onTokenChange != null && tokenOptions.length > 0
                   ? () => _selectCurrencyPay(context)
                   : null,
             )

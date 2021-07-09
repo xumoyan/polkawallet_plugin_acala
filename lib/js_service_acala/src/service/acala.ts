@@ -1,11 +1,13 @@
 import { StakingPool } from "@acala-network/sdk-homa";
-import { FixedPointNumber, TokenBalance, Token, DexShare } from "@acala-network/sdk-core";
+import { FixedPointNumber, Token } from "@acala-network/sdk-core";
 import { SwapPromise } from "@acala-network/sdk-swap";
 import { ApiPromise } from "@polkadot/api";
 import { tokensForAcala, tokensForKarura } from "../constants/acala";
+import { BN } from "@polkadot/util/bn/bn";
 
 const decimalsDOT = 10;
 const ONE = FixedPointNumber.ONE;
+const ACA_SYS_BLOCK_TIME = new BN(12000);
 
 function _computeExchangeFee(path: Token[], fee: FixedPointNumber) {
   return ONE.minus(
@@ -34,19 +36,24 @@ async function calcTokenSwapAmount(api: ApiPromise, input: number, output: numbe
   return new Promise((resolve, reject) => {
     const exchangeFee = api.consts.dex.getExchangeFee as any;
 
-    swapper.swap([inputToken, outputToken], output === null ? i : o, mode, (res: any) => {
-      const feeRate = new FixedPointNumber(exchangeFee[0].toString()).div(new FixedPointNumber(exchangeFee[1].toString()));
-      if (res.input) {
-        resolve({
-          amount: output === null ? res.output.balance.toNumber(6) : res.input.balance.toNumber(6),
-          priceImpact: res.priceImpact.toNumber(6),
-          fee: res.input.balance.times(_computeExchangeFee(res.path, feeRate)).toNumber(6),
-          path: res.path,
-          input: res.input.token.toString(),
-          output: res.output.token.toString(),
-        });
-      }
-    });
+    try {
+      swapper.swap([inputToken, outputToken], output === null ? i : o, mode, (res: any) => {
+        const feeRate = new FixedPointNumber(exchangeFee[0].toString()).div(new FixedPointNumber(exchangeFee[1].toString()));
+        if (res.input) {
+          resolve({
+            amount: output === null ? res.output.balance.toNumber(6) : res.input.balance.toNumber(6),
+            priceImpact: res.priceImpact.toNumber(6),
+            fee: res.input.balance.times(_computeExchangeFee(res.path, feeRate)).toNumber(6),
+            path: res.path,
+            input: res.input.token.toString(),
+            output: res.output.token.toString(),
+          });
+        }
+      });
+    } catch (error) {
+      console.log(error);
+      reject({ error });
+    }
   });
 }
 
@@ -76,12 +83,20 @@ async function getTokenPairs(api: ApiPromise) {
           args: [item],
         },
       ]) => {
-        const pair = DexShare.fromCurrencyId(
-          api.createType("CurrencyId" as any, { DEXShare: [(item[0] as any).asToken.toString(), (item[1] as any).asToken.toString()] })
-        );
+        const pair = item.toJSON() as any[];
+        const decimals = api.registry.chainDecimals;
+        const symbols = api.registry.chainTokens;
+        const pairDecimals = [18, 18];
+        pair.forEach((e, index) => {
+          symbols.forEach((s, i) => {
+            if (e.token.toString() == s) {
+              pairDecimals[index] = decimals[i];
+            }
+          });
+        });
         return {
-          decimals: pair.decimal,
-          tokens: [{ token: pair.token1.symbol }, { token: pair.token2.symbol }],
+          decimals: pairDecimals[0] > pairDecimals[1] ? pairDecimals[0] : pairDecimals[1],
+          tokens: pair,
         };
       }
     );
@@ -206,7 +221,7 @@ async function fetchHomaStakingPool(api: ApiPromise) {
 
   const freeList = await _calacFreeList(api, stakingPool.currentEra.toNumber() + 1, stakingPool.bondingDuration.toNumber(), decimalsDOT);
   const eraLength = api.consts.polkadotBridge.eraLength as any;
-  const expectedBlockTime = api.consts.babe.expectedBlockTime;
+  const expectedBlockTime = api.consts.babe?.expectedBlockTime || ACA_SYS_BLOCK_TIME;
   const unbondingDuration = expectedBlockTime.toNumber() * eraLength.toNumber() * stakingPool.bondingDuration.toNumber();
   return {
     // ...stakingPoolHelper,

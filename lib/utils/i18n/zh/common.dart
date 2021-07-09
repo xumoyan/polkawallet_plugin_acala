@@ -33,9 +33,9 @@ const Map<String, String> zhCommon = {
   'swap.brief': '与流动性池进行去中心化 Token 交易.',
   'swapKSM.title': '兑换',
   'swapKSM.brief': '与流动性池进行去中心化 Token 交易.',
-  'earn.title': '存款盈利',
+  'earn.title': '盈利',
   'earn.brief': '将你的数字资产和稳定币存入流动性池，并获取交易费收益和系统奖励。',
-  'earnKSM.title': '存款盈利',
+  'earnKSM.title': '盈利',
   'earnKSM.brief': '将你的数字资产和稳定币存入流动性池，并获取交易费收益和系统奖励。',
   'homa.title': 'L-DOT 质押/提取',
   'homa.brief':

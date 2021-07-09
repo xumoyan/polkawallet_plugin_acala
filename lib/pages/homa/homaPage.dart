@@ -116,7 +116,7 @@ class _HomaPageState extends State<HomaPage> {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(dic['homa${isKar ? 'KSM' : ''}.title']),
+            title: Text('${dic['homa.title']} $stakeSymbol'),
             centerTitle: true,
             elevation: 0.0,
           ),
@@ -289,7 +289,7 @@ class _HomaPageState extends State<HomaPage> {
                               color: Colors.blue,
                               child: TextButton(
                                 child: Text(
-                                  dic['homa.mint'],
+                                  '${dic['homa.mint']} L-$stakeSymbol',
                                   style: TextStyle(color: white),
                                 ),
                                 onPressed: enabled && pool.communalTotal != null
@@ -304,7 +304,7 @@ class _HomaPageState extends State<HomaPage> {
                               color: primary,
                               child: TextButton(
                                 child: Text(
-                                  dic['homa.redeem'],
+                                  '${dic['homa.redeem']} $stakeSymbol',
                                   style: TextStyle(color: white),
                                 ),
                                 onPressed: enabled && pool.communalTotal != null

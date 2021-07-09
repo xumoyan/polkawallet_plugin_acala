@@ -95,7 +95,7 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> _startPlugin() async {
     /// Waiting for Keyring local storage initiate.
-    await _keyring.init();
+    await _keyring.init([42]);
 
     /// Waiting for PluginAcala load js code
     /// and start a hidden webView to run `acala.js`.
