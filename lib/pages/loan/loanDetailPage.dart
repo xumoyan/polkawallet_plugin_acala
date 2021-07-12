@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:polkawallet_plugin_acala/common/constants.dart';
+import 'package:polkawallet_plugin_acala/common/constants/base.dart';
+import 'package:polkawallet_plugin_acala/common/constants/index.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanCard.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanChart.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanPage.dart';

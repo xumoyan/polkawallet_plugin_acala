@@ -1,7 +1,6 @@
 import 'package:mobx/mobx.dart';
 import 'package:polkawallet_plugin_acala/api/types/stakingPoolInfoData.dart';
 import 'package:polkawallet_plugin_acala/api/types/txHomaData.dart';
-import 'package:polkawallet_plugin_acala/common/constants.dart';
 import 'package:polkawallet_plugin_acala/store/cache/storeCache.dart';
 
 part 'homa.g.dart';

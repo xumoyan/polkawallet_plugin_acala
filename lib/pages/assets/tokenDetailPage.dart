@@ -4,15 +4,16 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:polkawallet_plugin_acala/api/types/transferData.dart';
-import 'package:polkawallet_plugin_acala/pages/assets/transferPage.dart';
+import 'package:polkawallet_plugin_acala/common/constants/graphQLQuery.dart';
 import 'package:polkawallet_plugin_acala/pages/assets/transferDetailPage.dart';
+import 'package:polkawallet_plugin_acala/pages/assets/transferPage.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
-import 'package:polkawallet_plugin_acala/common/constants.dart';
 import 'package:polkawallet_sdk/plugin/store/balances.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
 import 'package:polkawallet_ui/components/borderedTitle.dart';
+import 'package:polkawallet_ui/components/infoItem.dart';
 import 'package:polkawallet_ui/components/listTail.dart';
 import 'package:polkawallet_ui/components/roundedButton.dart';
 import 'package:polkawallet_ui/pages/accountQrCodePage.dart';
@@ -30,7 +31,7 @@ class TokenDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
+    final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
 
     final TokenBalanceData token = ModalRoute.of(context).settings.arguments;
 
@@ -46,9 +47,11 @@ class TokenDetailPage extends StatelessWidget {
       body: SafeArea(
         child: Observer(
           builder: (_) {
-            final balance = Fmt.balanceInt(
-                plugin.store.assets.tokenBalanceMap[token.symbol]?.amount ??
-                    '0');
+            final balance = plugin.store.assets.tokenBalanceMap[token.symbol];
+            final free = Fmt.balanceInt(balance?.amount ?? '0');
+            final locked = Fmt.balanceInt(balance?.locked ?? '0');
+            final reserved = Fmt.balanceInt(balance?.reserved ?? '0');
+            final transferable = free - locked - reserved;
             return Column(
               children: <Widget>[
                 Stack(
@@ -62,13 +65,49 @@ class TokenDetailPage extends StatelessWidget {
                       margin: EdgeInsets.only(bottom: 24),
                       child: Padding(
                         padding: EdgeInsets.only(top: 16, bottom: 40),
-                        child: Text(
-                          Fmt.token(balance, token.decimals, length: 8),
-                          style: TextStyle(
-                            color: titleColor,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        child: Column(
+                          children: [
+                            Container(
+                              margin: EdgeInsets.only(bottom: 24),
+                              child: Text(
+                                Fmt.token(free, token.decimals, length: 8),
+                                style: TextStyle(
+                                  color: titleColor,
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                InfoItem(
+                                    title: dic['asset.reserve'],
+                                    content: Fmt.priceFloorBigInt(
+                                        reserved, token.decimals, lengthMax: 4),
+                                    color: titleColor,
+                                    titleColor: titleColor,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center),
+                                InfoItem(
+                                    title: dic['asset.transferable'],
+                                    content: Fmt.priceFloorBigInt(
+                                        transferable, token.decimals,
+                                        lengthMax: 4),
+                                    color: titleColor,
+                                    titleColor: titleColor,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center),
+                                InfoItem(
+                                    title: dic['asset.lock'],
+                                    content: Fmt.priceFloorBigInt(
+                                        locked, token.decimals, lengthMax: 4),
+                                    color: titleColor,
+                                    titleColor: titleColor,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center),
+                              ],
+                            )
+                          ],
                         ),
                       ),
                     ),
@@ -82,7 +121,8 @@ class TokenDetailPage extends StatelessWidget {
                       child: Row(
                         children: <Widget>[
                           BorderedTitle(
-                            title: dic['loan.txs'],
+                            title: I18n.of(context).getDic(
+                                i18n_full_dic_acala, 'acala')['loan.txs'],
                           )
                         ],
                       ),

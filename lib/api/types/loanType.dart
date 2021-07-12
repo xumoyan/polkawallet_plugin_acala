@@ -1,6 +1,7 @@
 import 'dart:math';
 
-import 'package:polkawallet_plugin_acala/common/constants.dart';
+import 'package:polkawallet_plugin_acala/common/constants/base.dart';
+import 'package:polkawallet_plugin_acala/common/constants/index.dart';
 import 'package:polkawallet_ui/utils/format.dart';
 
 class LoanType extends _LoanType {

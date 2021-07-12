@@ -111,4 +111,13 @@ const Map<String, String> enDex = {
   'candy.claim': 'Claim',
   'candy.amount': 'Candies to claim',
   'candy.claimed': 'Claimed',
+  'cross.chain': 'To Chain',
+  'cross.xcm': 'Cross Chain',
+  'cross.chain.select': 'Select Network',
+  'cross.exist': 'destination chain existential deposit',
+  'cross.exist.msg':
+      '\nThe minimum amount that an account should have to be deemed active.\n',
+  'cross.fee': 'destination chain transfer fee',
+  'transfer.exist': 'existential deposit',
+  'transfer.fee': 'estimated transfer fee',
 };

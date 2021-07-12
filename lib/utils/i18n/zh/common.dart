@@ -48,4 +48,7 @@ const Map<String, String> zhCommon = {
   'nftKSM.title': 'NFTs',
   'nftKSM.brief': 'NFT 收藏品.',
   'coming': '等待治理投票激活',
+  'asset.lock': '锁定',
+  'asset.reserve': '保留',
+  'asset.transferable': '可转账',
 };

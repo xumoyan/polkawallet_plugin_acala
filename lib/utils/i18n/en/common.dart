@@ -54,4 +54,7 @@ const Map<String, String> enCommon = {
   'nftKSM.title': 'NFTs',
   'nftKSM.brief': 'NFT collectables.',
   'coming': 'Await governance activation',
+  'asset.lock': 'Locked',
+  'asset.reserve': 'Reserved',
+  'asset.transferable': 'Transferable',
 };

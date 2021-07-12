@@ -1,5 +1,6 @@
 import 'package:get_storage/get_storage.dart';
-import 'package:polkawallet_plugin_acala/common/constants.dart';
+import 'package:polkawallet_plugin_acala/common/constants/base.dart';
+import 'package:polkawallet_plugin_acala/common/constants/index.dart';
 
 class StoreCache {
   static final _storage = () => GetStorage(plugin_cache_key[plugin_name_acala]);

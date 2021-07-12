@@ -110,4 +110,12 @@ const Map<String, String> zhDex = {
   'candy.claim': '马上领取',
   'candy.amount': '待领取',
   'candy.claimed': '已领取',
+  'cross.chain': '收款网络',
+  'cross.xcm': '跨链转账',
+  'cross.chain.select': '选择网络',
+  'cross.exist': '收款链存活余额',
+  'cross.exist.msg': '\n账户在网络上存活所需要的最小余额。\n',
+  'cross.fee': '收款链手续费',
+  'transfer.exist': '存活余额',
+  'transfer.fee': '预估手续费',
 };

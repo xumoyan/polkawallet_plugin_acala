@@ -1,14 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:polkawallet_ui/components/txDetail.dart';
-import 'package:polkawallet_ui/utils/format.dart';
+import 'package:polkawallet_plugin_acala/api/types/txLoanData.dart';
+import 'package:polkawallet_plugin_acala/common/constants/index.dart';
+import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
+import 'package:polkawallet_plugin_acala/utils/format.dart';
+import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
-import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
-import 'package:polkawallet_plugin_acala/api/types/txLoanData.dart';
-import 'package:polkawallet_plugin_acala/common/constants.dart';
-import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
-import 'package:polkawallet_plugin_acala/utils/format.dart';
+import 'package:polkawallet_ui/components/txDetail.dart';
+import 'package:polkawallet_ui/utils/format.dart';
 
 class LoanTxDetailPage extends StatelessWidget {
   LoanTxDetailPage(this.plugin, this.keyring);

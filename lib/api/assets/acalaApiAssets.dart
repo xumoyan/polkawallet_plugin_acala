@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:device_info/device_info.dart';
 import 'package:polkawallet_plugin_acala/api/assets/acalaServiceAssets.dart';
 import 'package:polkawallet_plugin_acala/api/types/nftData.dart';
+import 'package:polkawallet_plugin_acala/pages/assets/tokenDetailPage.dart';
 import 'package:polkawallet_plugin_acala/service/walletApi.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_sdk/plugin/store/balances.dart';
@@ -54,8 +55,9 @@ class AcalaApiAssets {
                 symbol: e['symbol'],
                 decimals: e['decimals'],
                 amount: e['balance']['free'].toString(),
-                detailPageRoute:
-                    transferEnabled ? '/assets/token/detail' : null,
+                locked: e['balance']['frozen'].toString(),
+                reserved: e['balance']['reserved'].toString(),
+                detailPageRoute: transferEnabled ? TokenDetailPage.route : null,
               ))
           .toList());
     });

@@ -1,4 +1,4 @@
-import 'package:polkawallet_plugin_acala/common/constants.dart';
+import 'package:polkawallet_plugin_acala/common/constants/index.dart';
 
 class PluginFmt {
   static String tokenView(String token) {

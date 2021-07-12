@@ -4,7 +4,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:polkawallet_plugin_acala/api/types/swapOutputData.dart';
-import 'package:polkawallet_plugin_acala/common/constants.dart';
+import 'package:polkawallet_plugin_acala/common/constants/base.dart';
+import 'package:polkawallet_plugin_acala/common/constants/index.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/swapHistoryPage.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/swapTokenInput.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
@@ -93,7 +94,9 @@ class _SwapPageState extends State<SwapPage> {
 
   Future<List<String>> _getSwapTokens() async {
     final dexPairs = await widget.plugin.api.swap.getTokenPairs();
-    final List<String> tokens = [];
+    final List<String> tokens = widget.plugin.basic.name == plugin_name_karura
+        ? ['KAR', karura_stable_coin]
+        : ['ACA', acala_stable_coin];
     dexPairs.forEach((e) {
       e.tokens.forEach((token) {
         if (tokens.indexOf(token['token']) < 0) {
