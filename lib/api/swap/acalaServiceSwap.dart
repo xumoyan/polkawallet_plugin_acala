@@ -24,16 +24,22 @@ class AcalaServiceSwap {
     return await plugin.sdk.webView.evalJavascript('acala.getTokenPairs(api)');
   }
 
+  Future<List> getBootstraps() async {
+    return await plugin.sdk.webView.evalJavascript('acala.getBootstraps(api)');
+  }
+
   Future<Map> queryDexLiquidityPoolRewards(List<List> dexPools) async {
     final pools = dexPools
-        .map((pool) =>
-            jsonEncode({'DEXShare': pool.map((e) => e['token']).toList()}))
+        .map((pool) => jsonEncode({
+              'DexIncentive': {'DEXShare': pool}
+            }))
         .toList();
     final incentiveQuery = pools
-        .map((i) => 'api.query.incentives.dEXIncentiveRewards($i)')
+        .map((i) => 'api.query.incentives.incentiveRewardAmount($i)')
         .join(',');
-    final savingRateQuery =
-        pools.map((i) => 'api.query.incentives.dEXSavingRates($i)').join(',');
+    final savingRateQuery = pools
+        .map((i) => 'api.query.incentives.dexSavingRewardRate($i)')
+        .join(',');
     final res = await Future.wait([
       plugin.sdk.webView.evalJavascript('Promise.all([$incentiveQuery])'),
       plugin.sdk.webView.evalJavascript('Promise.all([$savingRateQuery])')
@@ -53,9 +59,10 @@ class AcalaServiceSwap {
   }
 
   Future<Map> queryDexPoolInfo(String pool, address) async {
-    final Map info = await plugin.sdk.webView.evalJavascript(
-        'acala.fetchDexPoolInfo(api, ${jsonEncode({
-          'DEXShare': pool.split('-').map((e) => e.toUpperCase()).toList()
+    final Map info = await plugin.sdk.webView
+        .evalJavascript('acala.fetchDexPoolInfo(api, ${jsonEncode({
+          'DEXShare':
+              pool.split('-').map((e) => ({'Token': e.toUpperCase()})).toList()
         })}, "$address")');
     return info;
   }

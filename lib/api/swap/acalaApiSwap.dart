@@ -23,6 +23,11 @@ class AcalaApiSwap {
     return pairs.map((e) => DexPoolData.fromJson(e)).toList();
   }
 
+  Future<List<DexPoolData>> getBootstraps() async {
+    final pairs = await service.getBootstraps();
+    return pairs.map((e) => DexPoolData.fromJson(e)).toList();
+  }
+
   Future<Map> queryDexLiquidityPoolRewards(List<DexPoolData> dexPools) async {
     return await service
         .queryDexLiquidityPoolRewards(dexPools.map((e) => e.tokens).toList());

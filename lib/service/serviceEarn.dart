@@ -17,8 +17,9 @@ class ServiceEarn {
   final PluginStore store;
 
   Map<String, double> _calcIncentives(Map rewards) {
-    final blockTime =
-        int.parse(plugin.networkConst['babe']['expectedBlockTime']);
+    final blockTime = plugin.networkConst['babe'] == null
+        ? BLOCK_TIME_DEFAULT
+        : int.parse(plugin.networkConst['babe']['expectedBlockTime']);
     final epoch =
         int.parse(plugin.networkConst['incentives']['accumulatePeriod']);
     final epochOfDay = SECONDS_OF_DAY * 1000 / blockTime / epoch;
@@ -32,8 +33,9 @@ class ServiceEarn {
   }
 
   Map<String, double> _calcSavingRates(Map savingRates) {
-    final blockTime =
-        int.parse(plugin.networkConst['babe']['expectedBlockTime']);
+    final blockTime = plugin.networkConst['babe'] == null
+        ? BLOCK_TIME_DEFAULT
+        : int.parse(plugin.networkConst['babe']['expectedBlockTime']);
     final epoch =
         int.parse(plugin.networkConst['incentives']['accumulatePeriod']);
     final epochOfYear = SECONDS_OF_YEAR * 1000 / blockTime / epoch;
@@ -49,6 +51,12 @@ class ServiceEarn {
   Future<List<DexPoolData>> getDexPools() async {
     final pools = await api.swap.getTokenPairs();
     store.earn.setDexPools(pools);
+    return pools;
+  }
+
+  Future<List<DexPoolData>> getBootstraps() async {
+    final pools = await api.swap.getBootstraps();
+    store.earn.setBootstraps(pools);
     return pools;
   }
 

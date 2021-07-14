@@ -17,6 +17,16 @@ function _computeExchangeFee(path: Token[], fee: FixedPointNumber) {
   );
 }
 
+function _getTokenDecimal(api: ApiPromise, token: string): number {
+  let res = 18;
+  api.registry.chainTokens.forEach((t, i) => {
+    if (token === t) {
+      res = api.registry.chainDecimals[i];
+    }
+  });
+  return res;
+}
+
 let swapper: SwapPromise;
 /**
  * calc token swap amount
@@ -26,8 +36,8 @@ async function calcTokenSwapAmount(api: ApiPromise, input: number, output: numbe
     swapper = new SwapPromise(api);
   }
 
-  const inputToken = Token.fromCurrencyId(api.createType("CurrencyId" as any, { token: swapPair[0] }));
-  const outputToken = Token.fromCurrencyId(api.createType("CurrencyId" as any, { token: swapPair[1] }));
+  const inputToken = Token.fromCurrencyId(api.createType("CurrencyId" as any, { token: swapPair[0] }), _getTokenDecimal(api, swapPair[0]));
+  const outputToken = Token.fromCurrencyId(api.createType("CurrencyId" as any, { token: swapPair[1] }), _getTokenDecimal(api, swapPair[1]));
   const i = new FixedPointNumber(input || 0, inputToken.decimal);
   const o = new FixedPointNumber(output || 0, outputToken.decimal);
 
@@ -84,19 +94,37 @@ async function getTokenPairs(api: ApiPromise) {
         },
       ]) => {
         const pair = item.toJSON() as any[];
-        const decimals = api.registry.chainDecimals;
-        const symbols = api.registry.chainTokens;
-        const pairDecimals = [18, 18];
-        pair.forEach((e, index) => {
-          symbols.forEach((s, i) => {
-            if (e.token.toString() == s) {
-              pairDecimals[index] = decimals[i];
-            }
-          });
-        });
+        const pairDecimals = [_getTokenDecimal(api, pair[0]?.token?.toString()), _getTokenDecimal(api, pair[1]?.token?.toString())];
         return {
           decimals: pairDecimals[0] > pairDecimals[1] ? pairDecimals[0] : pairDecimals[1],
+          pairDecimals,
           tokens: pair,
+        };
+      }
+    );
+}
+
+/**
+ * getBootstraps
+ */
+async function getBootstraps(api: ApiPromise) {
+  const tokenPairs = await api.query.dex.tradingPairStatuses.entries();
+  return tokenPairs
+    .filter((item) => (item[1] as any).isProvisioning)
+    .map(
+      ([
+        {
+          args: [item],
+        },
+        provisioning,
+      ]) => {
+        const pair = item.toJSON() as any[];
+        const pairDecimals = [_getTokenDecimal(api, pair[0]?.token?.toString()), _getTokenDecimal(api, pair[1]?.token?.toString())];
+        return {
+          decimals: pairDecimals[0] > pairDecimals[1] ? pairDecimals[0] : pairDecimals[1],
+          pairDecimals,
+          tokens: pair,
+          provisioning: (provisioning as any).asProvisioning,
         };
       }
     );
@@ -140,7 +168,7 @@ async function fetchCollateralRewards(api: ApiPromise, pool: any, address: strin
  */
 async function fetchDexPoolInfo(api: ApiPromise, pool: any, address: string) {
   const res = (await Promise.all([
-    api.query.dex.liquidityPool(pool.DEXShare.map((e: any) => ({ Token: e }))),
+    api.query.dex.liquidityPool(pool.DEXShare),
     api.query.rewards.pools({ DexIncentive: pool }),
     api.query.rewards.pools({ DexSaving: pool }),
     api.query.rewards.shareAndWithdrawnReward({ DexIncentive: pool }, address),
@@ -154,7 +182,7 @@ async function fetchDexPoolInfo(api: ApiPromise, pool: any, address: string) {
   const decimalsACA = 13;
   const decimalsAUSD = 12;
   return {
-    token: pool.DEXShare.join("-"),
+    token: pool.DEXShare.map((e) => e.Token).join("-"),
     pool: res[0],
     sharesTotal: res[1].totalShares,
     shares: res[3][0],
@@ -334,6 +362,7 @@ export default {
   calcTokenSwapAmount,
   queryLPTokens,
   getTokenPairs,
+  getBootstraps,
   getAllTokenSymbols,
   fetchCollateralRewards,
   fetchDexPoolInfo,

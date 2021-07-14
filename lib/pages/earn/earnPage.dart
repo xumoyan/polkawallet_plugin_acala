@@ -36,7 +36,7 @@ class EarnPage extends StatefulWidget {
 }
 
 class _EarnPageState extends State<EarnPage> {
-  String _tab;
+  String _poolId;
 
   Timer _timer;
 
@@ -44,7 +44,7 @@ class _EarnPageState extends State<EarnPage> {
     if (widget.plugin.store.earn.dexPools.length == 0) {
       await widget.plugin.service.earn.getDexPools();
     }
-    final tabNow = _tab ??
+    final tabNow = _poolId ??
         (widget.plugin.basic.name == plugin_name_karura
             ? 'kUSD-KSM'
             : 'aUSD-DOT');
@@ -65,14 +65,14 @@ class _EarnPageState extends State<EarnPage> {
   Future<void> _onStake() async {
     Navigator.of(context).pushNamed(
       LPStakePage.route,
-      arguments: LPStakePageParams(_tab, LPStakePage.actionStake),
+      arguments: LPStakePageParams(_poolId, LPStakePage.actionStake),
     );
   }
 
   Future<void> _onUnStake() async {
     Navigator.of(context).pushNamed(
       LPStakePage.route,
-      arguments: LPStakePageParams(_tab, LPStakePage.actionUnStake),
+      arguments: LPStakePageParams(_poolId, LPStakePage.actionUnStake),
     );
   }
 
@@ -80,7 +80,7 @@ class _EarnPageState extends State<EarnPage> {
     final symbol = widget.plugin.networkState.tokenSymbol[0];
     final incentiveReward = Fmt.priceFloor(reward.incentive, lengthFixed: 4);
     final savingReward = Fmt.priceFloor(reward.saving, lengthFixed: 4);
-    final pool = jsonEncode(_tab.toUpperCase().split('-'));
+    final pool = jsonEncode(_poolId.toUpperCase().split('-'));
 
     if (reward.saving > 0 && reward.incentive > 0) {
       final params = [
@@ -94,7 +94,7 @@ class _EarnPageState extends State<EarnPage> {
             txTitle: I18n.of(context)
                 .getDic(i18n_full_dic_acala, 'acala')['earn.get'],
             txDisplay: {
-              "poolId": _tab,
+              "poolId": _poolId,
               "incentiveReward": '$incentiveReward $symbol',
               "savingReward": '$savingReward $acala_stable_coin_view',
             },
@@ -109,7 +109,7 @@ class _EarnPageState extends State<EarnPage> {
             txTitle: I18n.of(context)
                 .getDic(i18n_full_dic_acala, 'acala')['earn.get'],
             txDisplay: {
-              "poolId": _tab,
+              "poolId": _poolId,
               "incentiveReward": '$incentiveReward $symbol',
             },
             params: [],
@@ -123,7 +123,7 @@ class _EarnPageState extends State<EarnPage> {
             txTitle: I18n.of(context)
                 .getDic(i18n_full_dic_acala, 'acala')['earn.get'],
             txDisplay: {
-              "poolId": _tab,
+              "poolId": _poolId,
               "savingReward": '$savingReward $acala_stable_coin_view',
             },
             params: [],
@@ -141,7 +141,7 @@ class _EarnPageState extends State<EarnPage> {
 
       final isKar = widget.plugin.basic.name == plugin_name_karura;
       setState(() {
-        _tab = isKar ? 'kUSD-KSM' : 'aUSD-DOT';
+        _poolId = isKar ? 'KAR-kUSD' : 'ACA-aUSD';
       });
     });
   }
@@ -162,9 +162,10 @@ class _EarnPageState extends State<EarnPage> {
     final decimals = widget.plugin.networkState.tokenDecimals;
     final isKar = widget.plugin.basic.name == plugin_name_karura;
 
-    final bool enabled = !isKar || ModalRoute.of(context).settings.arguments;
+    // final bool enabled = !isKar || ModalRoute.of(context).settings.arguments;
+    final bool enabled = true;
     final stableCoinSymbol = isKar ? karura_stable_coin : acala_stable_coin;
-    final tabNow = _tab ?? (isKar ? 'kUSD-KSM' : 'aUSD-DOT');
+    final tabNow = _poolId ?? (isKar ? 'KAR-kUSD' : 'ACA-aUSD');
     final pair = tabNow.toUpperCase().split('-');
     final stableCoinIndex = pair.indexOf(stableCoinSymbol);
     final stableCoinDecimals = decimals[symbols.indexOf(stableCoinSymbol)];
@@ -245,7 +246,7 @@ class _EarnPageState extends State<EarnPage> {
                   tokenIcons: widget.plugin.tokenIcons,
                   onSelect: (res) {
                     setState(() {
-                      _tab = res;
+                      _poolId = res;
                     });
                     widget.plugin.service.earn.queryDexPoolInfo(tabNow);
                   },
@@ -265,7 +266,7 @@ class _EarnPageState extends State<EarnPage> {
                           children: [
                             Expanded(
                               child: RoundedButton(
-                                color: Colors.blue,
+                                color: isKar ? Colors.redAccent : Colors.blue,
                                 text: dic['earn.stake'],
                                 onPressed: enabled && balance > BigInt.zero
                                     ? _onStake

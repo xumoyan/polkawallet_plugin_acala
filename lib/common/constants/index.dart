@@ -82,7 +82,7 @@ const acala_lp_token_ids = {
     'ACA-AUSD',
   ],
   plugin_name_karura: [
-    'KUSD-KSM',
+    'KAR-KSM',
     'KUSD-LKSM',
     // 'KUSD-XBTC',
     // 'KUSD-RENBTC',

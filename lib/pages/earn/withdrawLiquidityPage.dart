@@ -83,12 +83,14 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
     if (_formKey.currentState.validate()) {
       final String poolId = ModalRoute.of(context).settings.arguments;
       final pair = poolId.toUpperCase().split('-');
-      String amount = _amountCtrl.text.trim();
+      final amount = _amountCtrl.text.trim();
 
       final params = [
         {'Token': pair[0]},
         {'Token': pair[1]},
         _shareInput.toString(),
+        '0',
+        '0',
         _fromPool,
       ];
       final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,

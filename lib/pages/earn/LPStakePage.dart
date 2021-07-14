@@ -69,7 +69,10 @@ class _LPStakePage extends State<LPStakePage> {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
     final LPStakePageParams params = ModalRoute.of(context).settings.arguments;
     final isStake = params.action == LPStakePage.actionStake;
-    final pool = params.poolId.split('-').map((e) => e.toUpperCase()).toList();
+    final pool = params.poolId
+        .split('-')
+        .map((e) => ({'Token': e.toUpperCase()}))
+        .toList();
     String input = _amountCtrl.text.trim();
     BigInt amount = Fmt.tokenInt(input, decimals);
     if (_isMax || max - amount < BigInt.one) {

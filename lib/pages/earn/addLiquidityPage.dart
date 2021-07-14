@@ -149,7 +149,6 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
 
   bool _onValidate() {
     final errorLeft = _onValidateInput(0);
-    print(errorLeft);
     if (errorLeft != null) {
       setState(() {
         _errorLeft = errorLeft;
@@ -211,6 +210,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
         {'Token': pair[1]},
         Fmt.tokenInt(amountLeft, decimalsLeft).toString(),
         Fmt.tokenInt(amountRight, decimalsRight).toString(),
+        '0',
         _withStake,
       ];
       final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
@@ -285,11 +285,9 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
             : stableCoinDecimals;
 
         double userShare = 0;
-        double userShareNew = 0;
 
         double amountLeft = 0;
         double amountRight = 0;
-        double amountLeftUser = 0;
 
         TokenBalanceData balanceLeftUser;
         TokenBalanceData balanceRightUser;
@@ -317,18 +315,14 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
 
         final poolInfo = widget.plugin.store.earn.dexPoolInfoMap[poolId];
         if (poolInfo != null) {
-          userShare = poolInfo.proportion;
-
           amountLeft = Fmt.bigIntToDouble(poolInfo.amountLeft, decimalsLeft);
           amountRight = Fmt.bigIntToDouble(poolInfo.amountRight, decimalsRight);
-          amountLeftUser = amountLeft * userShare;
 
           String input = _amountLeftCtrl.text.trim();
           try {
             final double amountInput =
                 double.parse(input.isEmpty ? '0' : input);
-            userShareNew =
-                (amountInput + amountLeftUser) / (amountInput + amountLeft);
+            userShare = amountInput / (amountInput + amountLeft);
           } catch (_) {
             // parse double failed
           }
@@ -446,7 +440,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                               style: TextStyle(color: colorGray),
                             ),
                           ),
-                          Text(Fmt.ratio(userShareNew)),
+                          Text(Fmt.ratio(userShare)),
                         ],
                       )
                     ],

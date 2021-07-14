@@ -410,15 +410,17 @@ class CurrencySelector extends StatelessWidget {
               )
             : null,
         trailing: Icon(Icons.arrow_forward_ios, size: 18),
-        onTap: () async {
-          final res = await Navigator.of(context).pushNamed(
-            CurrencySelectPage.route,
-            arguments: tokenOptions,
-          );
-          if (res != null) {
-            onSelect(res);
-          }
-        },
+        onTap: tokenOptions.length > 0
+            ? () async {
+                final res = await Navigator.of(context).pushNamed(
+                  CurrencySelectPage.route,
+                  arguments: tokenOptions,
+                );
+                if (res != null) {
+                  onSelect(res);
+                }
+              }
+            : null,
       ),
     );
   }
