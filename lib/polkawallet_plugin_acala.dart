@@ -1,5 +1,7 @@
 library polkawallet_plugin_acala;
 
+import 'dart:math';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,7 +9,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:polkawallet_plugin_acala/api/acalaApi.dart';
 import 'package:polkawallet_plugin_acala/api/acalaService.dart';
-import 'package:polkawallet_plugin_acala/common/constants.dart';
+import 'package:polkawallet_plugin_acala/common/constants/base.dart';
+import 'package:polkawallet_plugin_acala/common/constants/index.dart';
+import 'package:polkawallet_plugin_acala/common/constants/nodeList.dart';
 import 'package:polkawallet_plugin_acala/pages/acalaEntry.dart';
 import 'package:polkawallet_plugin_acala/pages/assets/tokenDetailPage.dart';
 import 'package:polkawallet_plugin_acala/pages/assets/transferDetailPage.dart';
@@ -31,6 +35,7 @@ import 'package:polkawallet_plugin_acala/pages/loan/loanHistoryPage.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanPage.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanTxDetailPage.dart';
 import 'package:polkawallet_plugin_acala/pages/nft/nftPage.dart';
+import 'package:polkawallet_plugin_acala/pages/swap/bootstrapPage.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/swapDetailPage.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/swapHistoryPage.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/swapPage.dart';
@@ -44,7 +49,6 @@ import 'package:polkawallet_sdk/plugin/index.dart';
 import 'package:polkawallet_sdk/plugin/store/balances.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_sdk/storage/types/keyPairData.dart';
-import 'package:polkawallet_ui/components/tokenIcon.dart';
 import 'package:polkawallet_ui/pages/accountQrCodePage.dart';
 import 'package:polkawallet_ui/pages/txConfirmPage.dart';
 
@@ -86,7 +90,9 @@ class PluginAcala extends PolkawalletPlugin {
 
   @override
   List<NetworkParams> get nodeList {
-    return node_list[basic.name].map((e) => NetworkParams.fromJson(e)).toList();
+    return _randomList(node_list[basic.name])
+        .map((e) => NetworkParams.fromJson(e))
+        .toList();
   }
 
   Map<String, Widget> _getTokenIcons() {
@@ -94,9 +100,6 @@ class PluginAcala extends PolkawalletPlugin {
     acala_token_ids[basic.name].forEach((token) {
       all[token] = Image.asset(
           'packages/polkawallet_plugin_acala/assets/images/tokens/$token.png');
-    });
-    acala_lp_token_ids[basic.name].forEach((token) {
-      all[token] = TokenIcon(token, all);
     });
     return all;
   }
@@ -171,6 +174,7 @@ class PluginAcala extends PolkawalletPlugin {
             subscriptionUri: GraphQLConfig['wsUri'],
           ),
       SwapDetailPage.route: (_) => SwapDetailPage(this, keyring),
+      BootstrapPage.route: (_) => BootstrapPage(this, keyring),
       // earn pages
       EarnPage.route: (_) => EarnPage(this, keyring),
       EarnHistoryPage.route: (_) => ClientProvider(
@@ -211,8 +215,9 @@ class PluginAcala extends PolkawalletPlugin {
   PluginService get service => _service;
 
   Future<void> _subscribeTokenBalances(KeyPairData acc) async {
-    final enabled = basic.name != plugin_name_karura ||
-        _store.setting.liveModules['assets']['enabled'];
+    // final enabled = basic.name != plugin_name_karura ||
+    //     _store.setting.liveModules['assets']['enabled'];
+    final enabled = true;
 
     _api.assets.subscribeTokenBalances(basic.name, acc.address, (data) {
       _store.assets.setTokenBalanceMap(data, acc.pubKey);
@@ -289,5 +294,17 @@ class PluginAcala extends PolkawalletPlugin {
       _api.assets.unsubscribeTokenBalances(basic.name, acc.address);
       _subscribeTokenBalances(acc);
     }
+  }
+
+  List _randomList(List input) {
+    final data = input.toList();
+    final res = [];
+    final _random = Random();
+    for (var i = 0; i < input.length; i++) {
+      final item = data[_random.nextInt(data.length)];
+      res.add(item);
+      data.remove(item);
+    }
+    return res;
   }
 }

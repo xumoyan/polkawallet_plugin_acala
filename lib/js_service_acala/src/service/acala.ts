@@ -27,14 +27,15 @@ function _getTokenDecimal(api: ApiPromise, token: string): number {
   return res;
 }
 
-let swapper: SwapPromise;
+// let swapper: SwapPromise;
 /**
  * calc token swap amount
  */
 async function calcTokenSwapAmount(api: ApiPromise, input: number, output: number, swapPair: string[], slippage: number) {
-  if (!swapper) {
-    swapper = new SwapPromise(api);
-  }
+  // if (!swapper) {
+  //   swapper = new SwapPromise(api);
+  // }
+  const swapper = new SwapPromise(api);
 
   const inputToken = Token.fromCurrencyId(api.createType("CurrencyId" as any, { token: swapPair[0] }), _getTokenDecimal(api, swapPair[0]));
   const outputToken = Token.fromCurrencyId(api.createType("CurrencyId" as any, { token: swapPair[1] }), _getTokenDecimal(api, swapPair[1]));

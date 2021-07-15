@@ -56,6 +56,21 @@ mixin _$EarnStore on _EarnStore, Store {
     });
   }
 
+  final _$bootstrapsAtom = Atom(name: '_EarnStore.bootstraps');
+
+  @override
+  List<DexPoolData> get bootstraps {
+    _$bootstrapsAtom.reportRead();
+    return super.bootstraps;
+  }
+
+  @override
+  set bootstraps(List<DexPoolData> value) {
+    _$bootstrapsAtom.reportWrite(value, super.bootstraps, () {
+      super.bootstraps = value;
+    });
+  }
+
   final _$dexPoolInfoMapAtom = Atom(name: '_EarnStore.dexPoolInfoMap');
 
   @override
@@ -79,6 +94,17 @@ mixin _$EarnStore on _EarnStore, Store {
         name: '_EarnStore.setDexPools');
     try {
       return super.setDexPools(list);
+    } finally {
+      _$_EarnStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
+  void setBootstraps(List<DexPoolData> list) {
+    final _$actionInfo = _$_EarnStoreActionController.startAction(
+        name: '_EarnStore.setBootstraps');
+    try {
+      return super.setBootstraps(list);
     } finally {
       _$_EarnStoreActionController.endAction(_$actionInfo);
     }
@@ -123,6 +149,7 @@ mixin _$EarnStore on _EarnStore, Store {
 swapPoolRewards: ${swapPoolRewards},
 swapPoolSavingRewards: ${swapPoolSavingRewards},
 dexPools: ${dexPools},
+bootstraps: ${bootstraps},
 dexPoolInfoMap: ${dexPoolInfoMap}
     ''';
   }

@@ -23,12 +23,20 @@ abstract class _EarnStore with Store {
   List<DexPoolData> dexPools = [];
 
   @observable
+  List<DexPoolData> bootstraps = [];
+
+  @observable
   ObservableMap<String, DexPoolInfoData> dexPoolInfoMap =
       ObservableMap<String, DexPoolInfoData>();
 
   @action
   void setDexPools(List<DexPoolData> list) {
     dexPools = list;
+  }
+
+  @action
+  void setBootstraps(List<DexPoolData> list) {
+    bootstraps = list;
   }
 
   @action

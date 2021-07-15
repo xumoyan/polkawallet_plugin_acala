@@ -8,6 +8,7 @@ const Map<String, String> zhCommon = {
   'success': '成功',
   'failed': '失败',
   'custom': '自定义',
+  'min': '最小数量',
   'list.empty': '暂无数据',
   'list.end': '加载完成',
   'address': '收款地址',

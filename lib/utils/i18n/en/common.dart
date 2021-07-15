@@ -8,6 +8,7 @@ const Map<String, String> enCommon = {
   'success': 'Success',
   'failed': 'Failed',
   'custom': 'Customized',
+  'min': 'Min amount',
   'list.empty': 'No Data',
   'list.end': 'No More Data',
   'address': 'Send to Address',

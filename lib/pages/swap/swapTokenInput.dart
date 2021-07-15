@@ -17,7 +17,7 @@ class SwapTokenInput extends StatelessWidget {
     this.inputCtrl,
     this.focusNode,
     this.balance,
-    this.tokenOptions,
+    this.tokenOptions = const [],
     this.tokenIconsMap,
     this.onInputChange,
     this.onTokenChange,
