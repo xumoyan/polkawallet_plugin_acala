@@ -8,6 +8,7 @@ import 'package:polkawallet_plugin_acala/api/types/dexPoolInfoData.dart';
 import 'package:polkawallet_plugin_acala/common/constants/base.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/bootstrapPage.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
+import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
@@ -120,10 +121,6 @@ class _BootstrapListState extends State<BootstrapList> {
 
   @override
   Widget build(BuildContext context) {
-    final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
-
-    final primaryColor = Theme.of(context).primaryColor;
-    final colorGrey = Theme.of(context).unselectedWidgetColor;
     return Observer(builder: (_) {
       final bootstraps = widget.plugin.store.earn.bootstraps.toList();
       final dexPools = widget.plugin.store.earn.dexPools.toList();
@@ -192,6 +189,7 @@ class _BootStrapCard extends StatelessWidget {
 
     final tokenPair = pool.tokens.map((e) => e['token']).toList();
     final poolId = tokenPair.join('-');
+    final tokenPairView = tokenPair.map((e) => PluginFmt.tokenView(e)).toList();
 
     final targetLeft =
         Fmt.balanceInt(pool.provisioning.targetProvision[0].toString());
@@ -203,7 +201,7 @@ class _BootStrapCard extends StatelessWidget {
         Fmt.balanceInt(pool.provisioning.accumulatedProvision[1].toString());
     final progressLeft = nowLeft / targetLeft;
     final progressRight = nowRight / targetRight;
-    final ratio = nowLeft > BigInt.zero ? nowRight / nowLeft : double.infinity;
+    final ratio = nowLeft > BigInt.zero ? nowRight / nowLeft : 1.0;
     final blocksEnd = pool.provisioning.notBefore - bestNumber;
     final time = bestNumber > 0
         ? DateTime.now()
@@ -222,7 +220,7 @@ class _BootStrapCard extends StatelessWidget {
               ),
               Expanded(
                   child: Text(
-                poolId,
+                tokenPairView.join('-'),
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -260,7 +258,7 @@ class _BootStrapCard extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                          '${Fmt.priceCeilBigInt(targetLeft, pool.pairDecimals[0])} ${tokenPair[0]}'),
+                          '${Fmt.priceCeilBigInt(targetLeft, pool.pairDecimals[0])} ${tokenPairView[0]}'),
                       Text(
                         ' (${Fmt.ratio(progressLeft)} ${dic['boot.provision.met']})',
                         style: TextStyle(color: primaryColor),
@@ -277,7 +275,7 @@ class _BootStrapCard extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                          '${Fmt.priceCeilBigInt(targetRight, pool.pairDecimals[1])} ${tokenPair[1]}'),
+                          '${Fmt.priceCeilBigInt(targetRight, pool.pairDecimals[1])} ${tokenPairView[1]}'),
                       Text(
                         ' (${Fmt.ratio(progressRight)} ${dic['boot.provision.met']})',
                         style: TextStyle(color: primaryColor),
@@ -311,7 +309,7 @@ class _BootStrapCard extends StatelessWidget {
           Container(
             margin: EdgeInsets.only(bottom: 16),
             child: InfoItemRow(dic['boot.ratio'],
-                '1 ${tokenPair[0]} : ${Fmt.priceCeil(ratio, lengthMax: 6)} ${tokenPair[1]}'),
+                '1 ${tokenPairView[0]} : ${Fmt.priceCeil(ratio, lengthMax: 6)} ${tokenPairView[1]}'),
           ),
           RoundedButton(
             text: dic['boot.title'],

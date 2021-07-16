@@ -1,6 +1,6 @@
 name: polkawallet_plugin_acala
 description: Acala network plugin for polkawallet.
-version: 0.2.2
+version: 0.2.5
 homepage:
 
 environment:
@@ -21,12 +21,12 @@ dependencies:
   device_info: ^2.0.1
   graphql_flutter: ^5.0.0-nullsafety.5
   liquid_progress_indicator: ^0.3.2
-  polkawallet_sdk: ^0.2.2
+  polkawallet_sdk: ^0.2.5
   polkawallet_ui:
     path: ../ui
 #    git:
 #      url: https://github.com/polkawallet-io/ui.git
-#      ref: dee6fc6074f546e914c8794fd5e3a3e2b829b53c
+#      ref: 144a244b038e56aead4fc97a189057819bfeab08
 
 dependency_overrides:
   polkawallet_sdk:

@@ -217,7 +217,9 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
           amountLeft = poolLeft * shareInput / shareTotal;
           amountRight = poolRight * shareInput / shareTotal;
 
-          shareRatioNew = (share - shareInput) / (shareTotal - shareInput);
+          shareRatioNew = shareTotal - shareInput == 0.0
+              ? 0.0
+              : (share - shareInput) / (shareTotal - shareInput);
         }
 
         return Scaffold(
@@ -226,32 +228,35 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
             child: ListView(
               padding: EdgeInsets.all(16),
               children: <Widget>[
-                Padding(
-                  padding: EdgeInsets.only(bottom: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TapTooltip(
-                        message: dic['earn.fromPool.txt'],
-                        child: Icon(Icons.info,
-                            color: Theme.of(context).unselectedWidgetColor,
-                            size: 16),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(left: 8),
-                        child: Text(dic['earn.fromPool']),
-                      ),
-                      CupertinoSwitch(
-                        value: _fromPool,
-                        onChanged: (res) {
-                          setState(() {
-                            _fromPool = res;
-                          });
-                        },
+                poolInfo.shares > BigInt.zero
+                    ? Padding(
+                        padding: EdgeInsets.only(bottom: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TapTooltip(
+                              message: dic['earn.fromPool.txt'],
+                              child: Icon(Icons.info,
+                                  color:
+                                      Theme.of(context).unselectedWidgetColor,
+                                  size: 16),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.only(left: 8),
+                              child: Text(dic['earn.fromPool']),
+                            ),
+                            CupertinoSwitch(
+                              value: _fromPool,
+                              onChanged: (res) {
+                                setState(() {
+                                  _fromPool = res;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
                       )
-                    ],
-                  ),
-                ),
+                    : Container(),
                 RoundedCard(
                   padding: EdgeInsets.fromLTRB(16, 8, 16, 16),
                   child: Column(

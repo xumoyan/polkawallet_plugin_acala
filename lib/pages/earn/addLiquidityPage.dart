@@ -77,33 +77,20 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
     }
   }
 
-  Future<void> _onSupplyAmountChange(String v) async {
-    String supply = v.trim();
-    try {
-      if (supply.isEmpty || double.parse(supply) == 0) {
-        return;
-      }
-    } catch (err) {
-      return;
-    }
+  Future<void> _onSupplyAmountChange(String supply) async {
+    final value = supply.trim();
+    final v = value.isEmpty ? 0 : double.parse(value);
     setState(() {
-      _amountRightCtrl.text =
-          (double.parse(supply) * _price).toStringAsFixed(6);
+      _amountRightCtrl.text = v == 0 ? '' : (v * _price).toStringAsFixed(6);
     });
     _onValidate();
   }
 
-  Future<void> _onTargetAmountChange(String v) async {
-    String target = v.trim();
-    try {
-      if (target.isEmpty || double.parse(target) == 0) {
-        return;
-      }
-    } catch (err) {
-      return;
-    }
+  Future<void> _onTargetAmountChange(String target) async {
+    final value = target.trim();
+    final v = value.isEmpty ? 0 : double.parse(value);
     setState(() {
-      _amountLeftCtrl.text = (double.parse(target) / _price).toStringAsFixed(6);
+      _amountLeftCtrl.text = v == 0 ? '' : (v / _price).toStringAsFixed(6);
     });
     _onValidate();
   }

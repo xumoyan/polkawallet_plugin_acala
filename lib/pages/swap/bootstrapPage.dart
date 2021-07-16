@@ -7,6 +7,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:polkawallet_plugin_acala/api/types/dexPoolInfoData.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/swapTokenInput.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
+import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/plugin/store/balances.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
@@ -161,7 +162,6 @@ class _BootstrapPageState extends State<BootstrapPage> {
   @override
   Widget build(BuildContext context) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
-    final primaryColor = Theme.of(context).primaryColor;
     final colorGrey = Theme.of(context).unselectedWidgetColor;
 
     final symbols = widget.plugin.networkState.tokenSymbol;
@@ -169,37 +169,38 @@ class _BootstrapPageState extends State<BootstrapPage> {
 
     final DexPoolData args = ModalRoute.of(context).settings.arguments;
     final pair = args.tokens.map((e) => e['token']).toList();
+    final pairView = pair.map((e) => PluginFmt.tokenView(e)).toList();
 
     return Observer(builder: (_) {
       final pool = widget.plugin.store.earn.bootstraps.firstWhere(
           (e) => e.tokens.map((e) => e['token']).join('-') == pair.join('-'));
 
-      final nowLeft =
-          Fmt.balanceInt(pool.provisioning.accumulatedProvision[0].toString());
-      final nowRight =
-          Fmt.balanceInt(pool.provisioning.accumulatedProvision[1].toString());
-      final totalShare = nowLeft + nowRight * nowLeft ~/ nowRight;
-
-      final myLeft = Fmt.balanceInt(
-          _userProvisioning != null ? _userProvisioning[0].toString() : '0');
-      final myRight = Fmt.balanceInt(
-          _userProvisioning != null ? _userProvisioning[1].toString() : '0');
-      final myShare = myLeft + myRight * nowLeft ~/ nowRight;
-
-      final addLeft = Fmt.tokenInt(
-          _amountLeftCtrl.text.trim().isEmpty
-              ? null
-              : _amountLeftCtrl.text.trim(),
+      final nowLeft = Fmt.balanceDouble(
+          pool.provisioning.accumulatedProvision[0].toString(),
           pool.pairDecimals[0]);
-      final addRight = Fmt.tokenInt(
-          _amountRightCtrl.text.trim().isEmpty
-              ? null
-              : _amountRightCtrl.text.trim(),
+      final nowRight = Fmt.balanceDouble(
+          pool.provisioning.accumulatedProvision[1].toString(),
           pool.pairDecimals[1]);
-      final addShare =
-          addLeft + addRight * (nowLeft + addLeft) ~/ (nowRight + addRight);
-      final afterTotalShare = (nowLeft + addLeft) +
-          (nowRight + addRight) * (nowLeft + addLeft) ~/ (nowRight + addRight);
+      final myLeft = Fmt.balanceDouble(
+          _userProvisioning != null ? _userProvisioning[0].toString() : '0',
+          pool.pairDecimals[0]);
+      final myRight = Fmt.balanceDouble(
+          _userProvisioning != null ? _userProvisioning[1].toString() : '0',
+          pool.pairDecimals[1]);
+      final poolInfo =
+          PluginFmt.calcLiquidityShare([nowLeft, nowRight], [myLeft, myRight]);
+
+      final addLeft = double.parse(_amountLeftCtrl.text.trim().isEmpty
+          ? '0'
+          : _amountLeftCtrl.text.trim());
+      final addRight = double.parse(_amountRightCtrl.text.trim().isEmpty
+          ? '0'
+          : _amountRightCtrl.text.trim());
+      final poolInfoAfter = PluginFmt.calcLiquidityShare(
+          [nowLeft + addLeft, nowRight + addRight], [addLeft, addRight]);
+
+      final estShareLabel = '${dic['boot.my.est']}${dic['boot.my.share']}';
+      final estTokenLabel = '${dic['boot.my.est']}${dic['boot.my.token']}';
 
       TokenBalanceData leftBalance;
       TokenBalanceData rightBalance;
@@ -228,7 +229,7 @@ class _BootstrapPageState extends State<BootstrapPage> {
 
       return Scaffold(
         appBar: AppBar(
-            title: Text('${pair.join('-')} ${dic['boot.title']}'),
+            title: Text('${pairView.join('-')} ${dic['boot.title']}'),
             centerTitle: true),
         body: SafeArea(
           child: Column(
@@ -249,12 +250,10 @@ class _BootstrapPageState extends State<BootstrapPage> {
                               child: Text(dic['boot.my']),
                             ),
                             Text(
-                              Fmt.priceFloorBigInt(
-                                      myLeft, pool.pairDecimals[0]) +
-                                  '${pair[0]} + ' +
-                                  Fmt.priceFloorBigInt(
-                                      myRight, pool.pairDecimals[1]) +
-                                  pair[1],
+                              Fmt.priceFloor(myLeft) +
+                                  '${pairView[0]} + ' +
+                                  Fmt.priceFloor(myRight) +
+                                  pairView[1],
                               style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
@@ -268,17 +267,14 @@ class _BootstrapPageState extends State<BootstrapPage> {
                                   InfoItem(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.center,
-                                    title:
-                                        '${dic['boot.my.est']}${dic['boot.my.share']}',
-                                    content: Fmt.ratio(myShare / totalShare),
+                                    title: estShareLabel,
+                                    content: Fmt.ratio(poolInfo.ratio),
                                   ),
                                   InfoItem(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.center,
-                                    title:
-                                        '${dic['boot.my.est']}${dic['boot.my.token']}',
-                                    content: Fmt.priceFloorBigInt(
-                                        myShare, pool.decimals,
+                                    title: estTokenLabel,
+                                    content: Fmt.priceFloor(poolInfo.lp,
                                         lengthMax: 6),
                                   )
                                 ],
@@ -301,7 +297,7 @@ class _BootstrapPageState extends State<BootstrapPage> {
                               child: Row(
                                 children: [
                                   OutlinedButtonSmall(
-                                    content: pair[0],
+                                    content: pairView[0],
                                     active: _addTab == 0,
                                     onPressed: () {
                                       if (_addTab != 0) {
@@ -314,7 +310,7 @@ class _BootstrapPageState extends State<BootstrapPage> {
                                     },
                                   ),
                                   OutlinedButtonSmall(
-                                    content: pair[1],
+                                    content: pairView[1],
                                     active: _addTab == 1,
                                     onPressed: () {
                                       if (_addTab != 1) {
@@ -327,7 +323,7 @@ class _BootstrapPageState extends State<BootstrapPage> {
                                     },
                                   ),
                                   OutlinedButtonSmall(
-                                    content: '${pair[0]} + ${pair[1]}',
+                                    content: '${pairView[0]} + ${pairView[1]}',
                                     active: _addTab == 2,
                                     onPressed: () {
                                       if (_addTab != 2) {
@@ -383,11 +379,11 @@ class _BootstrapPageState extends State<BootstrapPage> {
                                 : Container(),
                             Container(
                               margin: EdgeInsets.only(top: 8),
-                              child: InfoItemRow(dic['boot.my.share'],
-                                  '+${Fmt.ratio(addShare / afterTotalShare)}'),
+                              child: InfoItemRow(estShareLabel,
+                                  '+${Fmt.ratio(poolInfoAfter.ratio)}'),
                             ),
-                            InfoItemRow(dic['boot.my.token'],
-                                '+${Fmt.priceFloorBigInt(addShare, pool.decimals, lengthMax: 6)}'),
+                            InfoItemRow(estTokenLabel,
+                                '+${Fmt.priceFloor(poolInfoAfter.lp, lengthMax: 6)}'),
                           ],
                         ),
                       )

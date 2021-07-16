@@ -180,7 +180,7 @@ async function fetchDexPoolInfo(api: ApiPromise, pool: any, address: string) {
   if (res[1] && res[3]) {
     proportion = FPNum(res[3][0]).div(FPNum(res[1].totalShares));
   }
-  const decimalsACA = 13;
+  const decimalsACA = 12;
   const decimalsAUSD = 12;
   return {
     token: pool.DEXShare.map((e) => e.Token).join("-"),
@@ -189,14 +189,18 @@ async function fetchDexPoolInfo(api: ApiPromise, pool: any, address: string) {
     shares: res[3][0],
     proportion: proportion.toNumber() || 0,
     reward: {
-      incentive: FPNum(res[1].totalRewards, decimalsACA)
-        .times(proportion)
-        .minus(FPNum(res[3][1], decimalsACA))
-        .toString(),
-      saving: FPNum(res[2].totalRewards, decimalsAUSD)
-        .times(proportion)
-        .minus(FPNum(res[4][1], decimalsAUSD))
-        .toString(),
+      incentive: (
+        FPNum(res[1].totalRewards, decimalsACA)
+          .times(proportion)
+          .minus(FPNum(res[3][1], decimalsACA))
+          .toNumber() || 0
+      ).toString(),
+      saving: (
+        FPNum(res[2].totalRewards, decimalsAUSD)
+          .times(proportion)
+          .minus(FPNum(res[4][1], decimalsAUSD))
+          .toNumber() || 0
+      ).toString(),
     },
     issuance: res[5],
   };

@@ -211,19 +211,21 @@ class _SwapFormState extends State<SwapForm> {
         _swapPair,
         _slippage.toString(),
       );
-      setState(() {
-        if (!init) {
-          if (target.isNotEmpty) {
-            _amountPayCtrl.text = output.amount.toString();
-          } else {
-            _amountPayCtrl.text = '';
+      if (mounted) {
+        setState(() {
+          if (!init) {
+            if (target.isNotEmpty) {
+              _amountPayCtrl.text = output.amount.toString();
+            } else {
+              _amountPayCtrl.text = '';
+            }
           }
-        }
-        _swapRatio = target.isEmpty
-            ? output.amount
-            : double.parse(target) / output.amount;
-        _swapOutput = output;
-      });
+          _swapRatio = target.isEmpty
+              ? output.amount
+              : double.parse(target) / output.amount;
+          _swapOutput = output;
+        });
+      }
       if (!init) {
         _onCheckBalance();
       }
@@ -234,19 +236,21 @@ class _SwapFormState extends State<SwapForm> {
         _swapPair,
         _slippage.toString(),
       );
-      setState(() {
-        if (!init) {
-          if (supply.isNotEmpty) {
-            _amountReceiveCtrl.text = output.amount.toString();
-          } else {
-            _amountReceiveCtrl.text = '';
+      if (mounted) {
+        setState(() {
+          if (!init) {
+            if (supply.isNotEmpty) {
+              _amountReceiveCtrl.text = output.amount.toString();
+            } else {
+              _amountReceiveCtrl.text = '';
+            }
           }
-        }
-        _swapRatio = supply.isEmpty
-            ? output.amount
-            : output.amount / double.parse(supply);
-        _swapOutput = output;
-      });
+          _swapRatio = supply.isEmpty
+              ? output.amount
+              : output.amount / double.parse(supply);
+          _swapOutput = output;
+        });
+      }
       if (!init) {
         _onCheckBalance();
       }

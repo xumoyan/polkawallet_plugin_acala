@@ -62,17 +62,10 @@ class _EarnPageState extends State<EarnPage> {
     });
   }
 
-  Future<void> _onStake() async {
+  Future<void> _onStake(String action) async {
     Navigator.of(context).pushNamed(
       LPStakePage.route,
-      arguments: LPStakePageParams(_poolId, LPStakePage.actionStake),
-    );
-  }
-
-  Future<void> _onUnStake() async {
-    Navigator.of(context).pushNamed(
-      LPStakePage.route,
-      arguments: LPStakePageParams(_poolId, LPStakePage.actionUnStake),
+      arguments: LPStakePageParams(_poolId, action),
     );
   }
 
@@ -269,7 +262,7 @@ class _EarnPageState extends State<EarnPage> {
                                 color: isKar ? Colors.redAccent : Colors.blue,
                                 text: dic['earn.stake'],
                                 onPressed: enabled && balance > BigInt.zero
-                                    ? _onStake
+                                    ? () => _onStake(LPStakePage.actionStake)
                                     : null,
                               ),
                             ),
@@ -280,7 +273,8 @@ class _EarnPageState extends State<EarnPage> {
                                 ? Expanded(
                                     child: RoundedButton(
                                       text: dic['earn.unStake'],
-                                      onPressed: _onUnStake,
+                                      onPressed: () =>
+                                          _onStake(LPStakePage.actionUnStake),
                                     ),
                                   )
                                 : Container()
@@ -409,7 +403,7 @@ class _SystemCard extends StatelessWidget {
               InfoItem(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 title: dic['earn.share'],
-                content: Fmt.ratio(userStaked / total),
+                content: Fmt.ratio(total > 0 ? userStaked / total : 0),
               ),
             ],
           ),

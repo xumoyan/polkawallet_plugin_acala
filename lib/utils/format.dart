@@ -21,4 +21,23 @@ class PluginFmt {
     }
     return tokenView;
   }
+
+  static LiquidityShareInfo calcLiquidityShare(
+      List<double> pool, List<double> user) {
+    final isPoolLeftZero = pool[0] == 0.0;
+    final isPoolRightZero = pool[1] == 0.0;
+    final xRate = isPoolRightZero ? 0 : pool[0] / pool[1];
+    final totalShare =
+        isPoolLeftZero ? (pool[1] * 2) : pool[0] + pool[1] * xRate;
+
+    final userShare =
+        isPoolLeftZero ? (user[1] * 2) : user[0] + user[1] * xRate;
+    return LiquidityShareInfo(userShare, userShare / totalShare);
+  }
+}
+
+class LiquidityShareInfo {
+  LiquidityShareInfo(this.lp, this.ratio);
+  final double lp;
+  final double ratio;
 }
