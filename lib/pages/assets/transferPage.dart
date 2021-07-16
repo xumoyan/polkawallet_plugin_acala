@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:polkawallet_plugin_acala/common/constants/base.dart';
 import 'package:polkawallet_plugin_acala/common/constants/index.dart';
 import 'package:polkawallet_plugin_acala/pages/currencySelectPage.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
@@ -203,13 +204,18 @@ class _TransferPageState extends State<TransferPage> {
       }
 
       /// else return normal transfer
+      final dexShare = _token.toUpperCase().split('-');
+      // todo: fix this after new acala online
+      final isTC6 = widget.plugin.basic.name == plugin_name_acala;
       final params = [
         // params.to
         _accountTo.address,
         // params.currencyId
         _token.contains('-')
             ? {
-                'DEXShare': _token.toUpperCase().split('-'),
+                'DEXShare': isTC6
+                    ? dexShare
+                    : dexShare.map((e) => ({'Token': e})).toList(),
                 'decimals': decimals
               }
             : {'Token': _token.toUpperCase(), 'decimals': decimals},
@@ -288,7 +294,7 @@ class _TransferPageState extends State<TransferPage> {
 
         final nativeToken = widget.plugin.networkState.tokenSymbol[0];
         final decimals =
-            widget.plugin.store.assets.tokenBalanceMap[token].decimals;
+            widget.plugin.store.assets.tokenBalanceMap[token]?.decimals ?? 12;
         final available = Fmt.balanceInt(widget
             .plugin.store.assets.tokenBalanceMap[token.toUpperCase()].amount);
         final existDeposit = token == nativeToken

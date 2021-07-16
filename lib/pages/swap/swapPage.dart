@@ -25,26 +25,34 @@ class SwapPage extends StatefulWidget {
 class _SwapPageState extends State<SwapPage> {
   int _tab = 0;
 
+  bool _loading = true;
+
+  Future<void> _updateData() async {
+    await widget.plugin.service.earn.getDexPools();
+    if (mounted) {
+      setState(() {
+        _loading = false;
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      widget.plugin.service.earn.getDexPools();
+      _updateData();
     });
   }
 
   @override
   Widget build(_) {
     final isKar = widget.plugin.basic.name == plugin_name_karura;
-    // final bool enabled = !isKar || ModalRoute.of(context).settings.arguments;
-    final bool enabled = true;
+    final bool enabled = !isKar || ModalRoute.of(context).settings.arguments;
+    // final bool enabled = true;
     return Observer(
       builder: (BuildContext context) {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
-
-        final dexPools = widget.plugin.store.earn.dexPools;
-
         return Scaffold(
           extendBodyBehindAppBar: true,
           body: Stack(
@@ -66,41 +74,44 @@ class _SwapPageState extends State<SwapPage> {
               SafeArea(
                 child: Column(
                   children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.arrow_back_ios,
-                              color: Theme.of(context).cardColor),
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
-                        Expanded(
-                          child: PageTitleTabs(
-                            names: isKar
-                                ? [dic['dex.title'], dic['boot.title']]
-                                : [dic['dex.title']],
-                            activeTab: _tab,
-                            onTab: (i) {
-                              if (i != _tab) {
-                                setState(() {
-                                  _tab = i;
-                                });
-                              }
-                            },
+                    Container(
+                      margin: EdgeInsets.only(top: 8),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.arrow_back_ios,
+                                color: Theme.of(context).cardColor),
+                            onPressed: () => Navigator.of(context).pop(),
                           ),
-                        ),
-                        IconButton(
-                          padding: EdgeInsets.fromLTRB(0, 8, 8, 8),
-                          icon: Icon(Icons.history,
-                              color: Theme.of(context).cardColor),
-                          onPressed: enabled
-                              ? () => Navigator.of(context)
-                                  .pushNamed(SwapHistoryPage.route)
-                              : null,
-                        ),
-                      ],
+                          Expanded(
+                            child: PageTitleTabs(
+                              names: isKar
+                                  ? [dic['dex.title'], dic['boot.title']]
+                                  : [dic['dex.title']],
+                              activeTab: _tab,
+                              onTab: (i) {
+                                if (i != _tab) {
+                                  setState(() {
+                                    _tab = i;
+                                  });
+                                }
+                              },
+                            ),
+                          ),
+                          IconButton(
+                            padding: EdgeInsets.fromLTRB(0, 8, 8, 8),
+                            icon: Icon(Icons.history,
+                                color: Theme.of(context).cardColor),
+                            onPressed: enabled
+                                ? () => Navigator.of(context)
+                                    .pushNamed(SwapHistoryPage.route)
+                                : null,
+                          ),
+                        ],
+                      ),
                     ),
                     Expanded(
-                      child: dexPools.length == 0
+                      child: _loading
                           ? Center(
                               child: CupertinoActivityIndicator(),
                             )

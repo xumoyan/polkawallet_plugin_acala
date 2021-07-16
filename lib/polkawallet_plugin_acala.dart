@@ -215,9 +215,9 @@ class PluginAcala extends PolkawalletPlugin {
   PluginService get service => _service;
 
   Future<void> _subscribeTokenBalances(KeyPairData acc) async {
-    // final enabled = basic.name != plugin_name_karura ||
-    //     _store.setting.liveModules['assets']['enabled'];
-    final enabled = true;
+    final enabled = basic.name != plugin_name_karura ||
+        _store.setting.liveModules['assets']['enabled'];
+    // final enabled = true;
 
     _api.assets.subscribeTokenBalances(basic.name, acc.address, (data) {
       _store.assets.setTokenBalanceMap(data, acc.pubKey);
