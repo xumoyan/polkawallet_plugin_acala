@@ -357,8 +357,7 @@ class _BootStrapCardEnabled extends StatelessWidget {
         Fmt.balanceDouble(userProvision[0].toString(), pool.pairDecimals[0]);
     final userRight =
         Fmt.balanceDouble(userProvision[1].toString(), pool.pairDecimals[1]);
-    final ratio = BigInt.parse(shareRate[0].toString()) /
-        BigInt.parse(shareRate[1].toString());
+    final ratio = Fmt.balanceDouble(shareRate[1].toString(), 18);
     final amount = Fmt.priceFloor(userLeft + userRight * ratio, lengthMax: 4);
     return RoundedCard(
       margin: EdgeInsets.only(bottom: 16),

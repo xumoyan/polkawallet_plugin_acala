@@ -205,14 +205,24 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
       final amountLeft = _amountLeftCtrl.text.trim();
       final amountRight = _amountRightCtrl.text.trim();
 
-      final params = [
-        {'Token': pair[0]},
-        {'Token': pair[1]},
-        Fmt.tokenInt(amountLeft, decimalsLeft).toString(),
-        Fmt.tokenInt(amountRight, decimalsRight).toString(),
-        '0',
-        _withStake,
-      ];
+      // todo: fix this after new acala online
+      final isTC6 = widget.plugin.basic.name == plugin_name_acala;
+      final params = isTC6
+          ? [
+              {'Token': pair[0]},
+              {'Token': pair[1]},
+              Fmt.tokenInt(amountLeft, decimalsLeft).toString(),
+              Fmt.tokenInt(amountRight, decimalsRight).toString(),
+              _withStake,
+            ]
+          : [
+              {'Token': pair[0]},
+              {'Token': pair[1]},
+              Fmt.tokenInt(amountLeft, decimalsLeft).toString(),
+              Fmt.tokenInt(amountRight, decimalsRight).toString(),
+              '0',
+              _withStake,
+            ];
       final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
           arguments: TxConfirmParams(
             module: 'dex',

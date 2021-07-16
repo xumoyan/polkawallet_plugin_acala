@@ -69,9 +69,11 @@ class _LPStakePage extends State<LPStakePage> {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
     final LPStakePageParams params = ModalRoute.of(context).settings.arguments;
     final isStake = params.action == LPStakePage.actionStake;
+    // todo: fix this after new acala online
+    final isTC6 = widget.plugin.basic.name == plugin_name_acala;
     final pool = params.poolId
         .split('-')
-        .map((e) => ({'Token': e.toUpperCase()}))
+        .map((e) => isTC6 ? e.toUpperCase() : ({'Token': e.toUpperCase()}))
         .toList();
     String input = _amountCtrl.text.trim();
     BigInt amount = Fmt.tokenInt(input, decimals);

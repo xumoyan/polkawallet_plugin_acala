@@ -98,8 +98,8 @@ async function getAllTokenSymbols(chain: string) {
  */
 async function fetchCollateralRewards(api: ApiPromise, pool: any, address: string) {
   const res = (await Promise.all([
-    api.query.rewards.pools({ Loans: pool }),
-    api.query.rewards.shareAndWithdrawnReward({ Loans: pool }, address),
+    api.query.rewards.pools({ LoansIncentive: pool }),
+    api.query.rewards.shareAndWithdrawnReward({ LoansIncentive: pool }, address),
   ])) as any;
   let proportion = new FixedPointNumber(0);
   if (res[0] && res[1]) {

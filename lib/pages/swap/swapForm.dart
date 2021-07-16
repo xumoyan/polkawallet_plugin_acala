@@ -23,9 +23,10 @@ import 'package:polkawallet_ui/utils/format.dart';
 import 'package:polkawallet_ui/utils/index.dart';
 
 class SwapForm extends StatefulWidget {
-  SwapForm(this.plugin, this.keyring);
+  SwapForm(this.plugin, this.keyring, this.enabled);
   final PluginAcala plugin;
   final Keyring keyring;
+  final bool enabled;
 
   @override
   _SwapFormState createState() => _SwapFormState();
@@ -380,9 +381,6 @@ class _SwapFormState extends State<SwapForm> {
 
   @override
   Widget build(_) {
-    final isKar = widget.plugin.basic.name == plugin_name_karura;
-    // final bool enabled = !isKar || ModalRoute.of(context).settings.arguments;
-    final bool enabled = true;
     return Observer(
       builder: (BuildContext context) {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
@@ -715,7 +713,7 @@ class _SwapFormState extends State<SwapForm> {
               padding: EdgeInsets.only(top: 24),
               child: RoundedButton(
                 text: dic['dex.title'],
-                onPressed: !enabled || _swapRatio == 0
+                onPressed: !widget.enabled || _swapRatio == 0
                     ? null
                     : () => _onSubmit(pairDecimals, minMax),
               ),

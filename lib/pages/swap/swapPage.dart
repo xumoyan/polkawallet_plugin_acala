@@ -75,7 +75,9 @@ class _SwapPageState extends State<SwapPage> {
                         ),
                         Expanded(
                           child: PageTitleTabs(
-                            names: [dic['dex.title'], dic['boot.title']],
+                            names: isKar
+                                ? [dic['dex.title'], dic['boot.title']]
+                                : [dic['dex.title']],
                             activeTab: _tab,
                             onTab: (i) {
                               if (i != _tab) {
@@ -102,8 +104,9 @@ class _SwapPageState extends State<SwapPage> {
                           ? Center(
                               child: CupertinoActivityIndicator(),
                             )
-                          : _tab == 0
-                              ? SwapForm(widget.plugin, widget.keyring)
+                          // todo: enable bootstrap for aca while new aca online
+                          : !isKar || _tab == 0
+                              ? SwapForm(widget.plugin, widget.keyring, enabled)
                               : BootstrapList(widget.plugin, widget.keyring),
                     )
                   ],

@@ -85,14 +85,23 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
       final pair = poolId.toUpperCase().split('-');
       final amount = _amountCtrl.text.trim();
 
-      final params = [
-        {'Token': pair[0]},
-        {'Token': pair[1]},
-        _shareInput.toString(),
-        '0',
-        '0',
-        _fromPool,
-      ];
+      // todo: fix this after new acala online
+      final isTC6 = widget.plugin.basic.name == plugin_name_acala;
+      final params = isTC6
+          ? [
+              {'Token': pair[0]},
+              {'Token': pair[1]},
+              _shareInput.toString(),
+              _fromPool,
+            ]
+          : [
+              {'Token': pair[0]},
+              {'Token': pair[1]},
+              _shareInput.toString(),
+              '0',
+              '0',
+              _fromPool,
+            ];
       final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
           arguments: TxConfirmParams(
             module: 'dex',

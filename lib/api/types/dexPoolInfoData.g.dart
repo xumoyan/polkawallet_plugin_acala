@@ -10,7 +10,9 @@ DexPoolData _$DexPoolDataFromJson(Map<String, dynamic> json) {
   return DexPoolData()
     ..decimals = json['decimals'] as int
     ..tokens = json['tokens'] as List<dynamic>
-    ..pairDecimals = List<int>.from(json['pairDecimals'])
+    ..pairDecimals = json['pairDecimals'] != null
+        ? List<int>.from(json['pairDecimals'])
+        : null
     ..provisioning = json['provisioning'] == null
         ? null
         : ProvisioningData.fromJson(

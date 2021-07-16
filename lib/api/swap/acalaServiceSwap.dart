@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:polkawallet_plugin_acala/common/constants/base.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 
 class AcalaServiceSwap {
@@ -29,16 +30,22 @@ class AcalaServiceSwap {
   }
 
   Future<Map> queryDexLiquidityPoolRewards(List<List> dexPools) async {
+    // todo: fix this after new acala online
+    final isTC6 = plugin.basic.name == plugin_name_acala;
     final pools = dexPools
-        .map((pool) => jsonEncode({
-              'DexIncentive': {'DEXShare': pool}
-            }))
+        .map((pool) => jsonEncode(isTC6
+            ? {'DEXShare': pool.map((e) => e['token']).toList()}
+            : {
+                'DexIncentive': {'DEXShare': pool}
+              }))
         .toList();
     final incentiveQuery = pools
-        .map((i) => 'api.query.incentives.incentiveRewardAmount($i)')
+        .map((i) =>
+            'api.query.incentives.${isTC6 ? 'dEXIncentiveRewards' : 'incentiveRewardAmount'}($i)')
         .join(',');
     final savingRateQuery = pools
-        .map((i) => 'api.query.incentives.dexSavingRewardRate($i)')
+        .map((i) =>
+            'api.query.incentives.${isTC6 ? 'dEXSavingRates' : 'dexSavingRewardRate'}($i)')
         .join(',');
     final res = await Future.wait([
       plugin.sdk.webView.evalJavascript('Promise.all([$incentiveQuery])'),
@@ -59,10 +66,16 @@ class AcalaServiceSwap {
   }
 
   Future<Map> queryDexPoolInfo(String pool, address) async {
+    // todo: fix this after new acala online
+    final isTC6 = plugin.basic.name == plugin_name_acala;
     final Map info = await plugin.sdk.webView
         .evalJavascript('acala.fetchDexPoolInfo(api, ${jsonEncode({
-          'DEXShare':
-              pool.split('-').map((e) => ({'Token': e.toUpperCase()})).toList()
+          'DEXShare': isTC6
+              ? pool.split('-').map((e) => e.toUpperCase()).toList()
+              : pool
+                  .split('-')
+                  .map((e) => ({'Token': e.toUpperCase()}))
+                  .toList()
         })}, "$address")');
     return info;
   }

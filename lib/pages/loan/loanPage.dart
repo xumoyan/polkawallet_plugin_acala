@@ -441,7 +441,7 @@ class CollateralIncentiveList extends StatelessWidget {
                               '${dic['earn.claim']} $rewardView $incentiveTokenSymbol',
                           getTxParams: () async {
                             final pool = {
-                              'Loans': {'Token': token}
+                              'LoansIncentive': {'Token': token}
                             };
                             return TxConfirmParams(
                               module: 'incentives',
