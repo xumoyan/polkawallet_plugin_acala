@@ -352,7 +352,7 @@ class _BootstrapPageState extends State<BootstrapPage> {
                                               0, leftBalance, v),
                                         ),
                                       ),
-                                      _ErrorMessage(_leftAmountError),
+                                      ErrorMessage(_leftAmountError),
                                     ],
                                   )
                                 : Container(),
@@ -373,7 +373,7 @@ class _BootstrapPageState extends State<BootstrapPage> {
                                               1, rightBalance, v),
                                         ),
                                       ),
-                                      _ErrorMessage(_rightAmountError),
+                                      ErrorMessage(_rightAmountError),
                                     ],
                                   )
                                 : Container(),
@@ -411,8 +411,8 @@ class _BootstrapPageState extends State<BootstrapPage> {
   }
 }
 
-class _ErrorMessage extends StatelessWidget {
-  _ErrorMessage(this.error);
+class ErrorMessage extends StatelessWidget {
+  ErrorMessage(this.error);
   final error;
   @override
   Widget build(BuildContext context) {

@@ -6,12 +6,12 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:polkawallet_plugin_acala/api/types/swapOutputData.dart';
 import 'package:polkawallet_plugin_acala/common/constants/base.dart';
 import 'package:polkawallet_plugin_acala/common/constants/index.dart';
+import 'package:polkawallet_plugin_acala/pages/swap/bootstrapPage.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/swapTokenInput.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/api/types/txInfoData.dart';
-import 'package:polkawallet_sdk/plugin/store/balances.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
 import 'package:polkawallet_ui/components/outlinedButtonSmall.dart';
@@ -42,6 +42,7 @@ class _SwapFormState extends State<SwapForm> {
   final _slippageFocusNode = FocusNode();
 
   String _error;
+  String _errorReceive;
   double _slippage = 0.005;
   bool _slippageSettingVisible = false;
   String _slippageError;
@@ -104,30 +105,14 @@ class _SwapFormState extends State<SwapForm> {
   }
 
   bool _onCheckBalance() {
-    if (_maxInput != null) {
-      setState(() {
-        _error = null;
-      });
-      return true;
-    }
-
+    final symbols = widget.plugin.networkState.tokenSymbol;
+    final decimals = widget.plugin.networkState.tokenDecimals;
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
     final v = _amountPayCtrl.text.trim();
-    TokenBalanceData balance;
-    if (_swapPair.length > 0) {
-      if (_swapPair[0] == widget.plugin.networkState.tokenSymbol[0]) {
-        balance = TokenBalanceData(
-            symbol: _swapPair[0],
-            decimals: widget.plugin.networkState.tokenDecimals[0],
-            amount:
-                (widget.plugin.balances.native?.freeBalance ?? 0).toString());
-      } else {
-        balance = widget
-            .plugin.store.assets.tokenBalanceMap[_swapPair[0].toUpperCase()];
-      }
-    }
+    final balancePair = PluginFmt.getBalancePair(widget.plugin, _swapPair);
 
     String error;
+    String errorReceive;
     try {
       if (v.isEmpty || double.parse(v) == 0) {
         error = dic['amount.error'];
@@ -136,16 +121,30 @@ class _SwapFormState extends State<SwapForm> {
       error = dic['amount.error'];
     }
     if (error == null) {
-      if (double.parse(v) >
-          Fmt.bigIntToDouble(
-              Fmt.balanceInt(balance?.amount ?? '0'), balance.decimals)) {
+      if (_maxInput == null &&
+          double.parse(v) >
+              Fmt.bigIntToDouble(Fmt.balanceInt(balancePair[0]?.amount ?? '0'),
+                  balancePair[0]?.decimals)) {
         error = dic['amount.low'];
+      }
+
+      // check if user's receive token balance meet existential deposit.
+      final decimalReceive = decimals[symbols.indexOf(_swapPair[1])];
+      final receiveMin =
+          Fmt.balanceDouble(existential_deposit[_swapPair[1]], decimalReceive);
+      if ((balancePair[1] == null ||
+              Fmt.balanceDouble(balancePair[1].amount, decimalReceive) ==
+                  0.0) &&
+          _swapOutput.amount < receiveMin) {
+        errorReceive =
+            '${dic['amount.min']} ${Fmt.priceCeil(receiveMin, lengthMax: 6)}';
       }
     }
     setState(() {
       _error = error;
+      _errorReceive = errorReceive;
     });
-    return error == null;
+    return error == null && _errorReceive == null;
   }
 
   void _onSupplyAmountChange(String v) {
@@ -192,11 +191,13 @@ class _SwapFormState extends State<SwapForm> {
   void _setUpdateTimer({init = true}) {
     _updateSwapAmount(init: init);
 
-    _timer = Timer(Duration(seconds: 10), () {
-      _setUpdateTimer(
-          init: _amountPayCtrl.text.trim().isEmpty &&
-              _amountReceiveCtrl.text.trim().isEmpty);
-    });
+    if (mounted) {
+      _timer = Timer(Duration(seconds: 10), () {
+        _setUpdateTimer(
+            init: _amountPayCtrl.text.trim().isEmpty &&
+                _amountReceiveCtrl.text.trim().isEmpty);
+      });
+    }
   }
 
   Future<void> _calcSwapAmount(
@@ -225,9 +226,9 @@ class _SwapFormState extends State<SwapForm> {
               : double.parse(target) / output.amount;
           _swapOutput = output;
         });
-      }
-      if (!init) {
-        _onCheckBalance();
+        if (!init) {
+          _onCheckBalance();
+        }
       }
     } else if (target == null) {
       final output = await widget.plugin.api.swap.queryTokenSwapAmount(
@@ -250,9 +251,9 @@ class _SwapFormState extends State<SwapForm> {
               : output.amount / double.parse(supply);
           _swapOutput = output;
         });
-      }
-      if (!init) {
-        _onCheckBalance();
+        if (!init) {
+          _onCheckBalance();
+        }
       }
     }
   }
@@ -308,6 +309,8 @@ class _SwapFormState extends State<SwapForm> {
       _swapMode = 0;
       _amountPayCtrl.text = amount;
       _maxInput = max;
+      _error = null;
+      _errorReceive = null;
     });
     _onInputChange(amount);
   }
@@ -374,6 +377,9 @@ class _SwapFormState extends State<SwapForm> {
   void dispose() {
     _amountPayCtrl.dispose();
     _amountReceiveCtrl.dispose();
+    _payFocusNode.dispose();
+    _receiveFocusNode.dispose();
+    _slippageFocusNode.dispose();
 
     if (_timer != null) {
       _timer.cancel();
@@ -403,32 +409,7 @@ class _SwapFormState extends State<SwapForm> {
               .retainWhere((i) => i != _swapPair[0] && i != _swapPair[1]);
         }
 
-        TokenBalanceData payBalance;
-        TokenBalanceData receiveBalance;
-        if (_swapPair.length > 0) {
-          if (_swapPair[0] == symbols[0]) {
-            payBalance = TokenBalanceData(
-                symbol: _swapPair[0],
-                decimals: widget.plugin.networkState.tokenDecimals[0],
-                amount: (widget.plugin.balances.native?.availableBalance ?? 0)
-                    .toString());
-            receiveBalance = widget.plugin.store.assets
-                .tokenBalanceMap[_swapPair[1].toUpperCase()];
-          } else if (_swapPair[1] == symbols[0]) {
-            receiveBalance = TokenBalanceData(
-                symbol: _swapPair[1],
-                decimals: widget.plugin.networkState.tokenDecimals[0],
-                amount: (widget.plugin.balances.native?.availableBalance ?? 0)
-                    .toString());
-            payBalance = widget.plugin.store.assets
-                .tokenBalanceMap[_swapPair[0].toUpperCase()];
-          } else if (currencyOptions.length > 0) {
-            payBalance = widget.plugin.store.assets
-                .tokenBalanceMap[_swapPair[0].toUpperCase()];
-            receiveBalance = widget.plugin.store.assets
-                .tokenBalanceMap[_swapPair[1].toUpperCase()];
-          }
-        }
+        final balancePair = PluginFmt.getBalancePair(widget.plugin, _swapPair);
 
         double minMax = 0;
         if (_swapOutput.output != null) {
@@ -457,7 +438,7 @@ class _SwapFormState extends State<SwapForm> {
                           title: dic['dex.pay'],
                           inputCtrl: _amountPayCtrl,
                           focusNode: _payFocusNode,
-                          balance: payBalance,
+                          balance: balancePair[0],
                           tokenOptions: currencyOptions,
                           tokenIconsMap: widget.plugin.tokenIcons,
                           onInputChange: _onSupplyAmountChange,
@@ -470,19 +451,14 @@ class _SwapFormState extends State<SwapForm> {
                             }
                           },
                           onSetMax: (v) => _onSetMax(v, pairDecimals[0]),
+                          onClear: () {
+                            setState(() {
+                              _maxInput = null;
+                              _amountPayCtrl.text = '';
+                            });
+                          },
                         ),
-                        Container(
-                          margin: EdgeInsets.only(left: 16, top: 2),
-                          child: _error == null
-                              ? null
-                              : Row(children: [
-                                  Text(
-                                    _error,
-                                    style: TextStyle(
-                                        fontSize: 12, color: Colors.red),
-                                  )
-                                ]),
-                        ),
+                        ErrorMessage(_error),
                         GestureDetector(
                           child: Padding(
                             padding: EdgeInsets.fromLTRB(8, 10, 8, 0),
@@ -500,7 +476,7 @@ class _SwapFormState extends State<SwapForm> {
                             title: dic['dex.receive'],
                             inputCtrl: _amountReceiveCtrl,
                             focusNode: _receiveFocusNode,
-                            balance: receiveBalance,
+                            balance: balancePair[1],
                             tokenOptions: currencyOptions,
                             tokenIconsMap: widget.plugin.tokenIcons,
                             onInputChange: _onTargetAmountChange,
@@ -512,8 +488,15 @@ class _SwapFormState extends State<SwapForm> {
                                 _updateSwapAmount();
                               }
                             },
+                            onClear: () {
+                              setState(() {
+                                _maxInput = null;
+                                _amountReceiveCtrl.text = '';
+                              });
+                            },
                           ),
                         ),
+                        ErrorMessage(_errorReceive),
                         showExchangeRate
                             ? Container(
                                 margin: EdgeInsets.only(

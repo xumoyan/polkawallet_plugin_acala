@@ -1,4 +1,6 @@
 import 'package:polkawallet_plugin_acala/common/constants/index.dart';
+import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
+import 'package:polkawallet_sdk/plugin/store/balances.dart';
 
 class PluginFmt {
   static String tokenView(String token) {
@@ -33,6 +35,37 @@ class PluginFmt {
     final userShare =
         isPoolLeftZero ? (user[1] * 2) : user[0] + user[1] * xRate;
     return LiquidityShareInfo(userShare, userShare / totalShare);
+  }
+
+  static List<TokenBalanceData> getBalancePair(
+      PluginAcala plugin, List<String> tokenPair) {
+    final symbols = plugin.networkState.tokenSymbol;
+
+    TokenBalanceData balanceLeft;
+    TokenBalanceData balanceRight;
+    if (tokenPair.length > 0) {
+      if (tokenPair[0] == symbols[0]) {
+        balanceLeft = TokenBalanceData(
+            symbol: tokenPair[0],
+            decimals: plugin.networkState.tokenDecimals[0],
+            amount: (plugin.balances.native?.availableBalance ?? 0).toString());
+        balanceRight =
+            plugin.store.assets.tokenBalanceMap[tokenPair[1].toUpperCase()];
+      } else if (tokenPair[1] == symbols[0]) {
+        balanceRight = TokenBalanceData(
+            symbol: tokenPair[1],
+            decimals: plugin.networkState.tokenDecimals[0],
+            amount: (plugin.balances.native?.availableBalance ?? 0).toString());
+        balanceLeft =
+            plugin.store.assets.tokenBalanceMap[tokenPair[0].toUpperCase()];
+      } else {
+        balanceLeft =
+            plugin.store.assets.tokenBalanceMap[tokenPair[0].toUpperCase()];
+        balanceRight =
+            plugin.store.assets.tokenBalanceMap[tokenPair[1].toUpperCase()];
+      }
+    }
+    return [balanceLeft, balanceRight];
   }
 }
 

@@ -22,6 +22,7 @@ class SwapTokenInput extends StatelessWidget {
     this.onInputChange,
     this.onTokenChange,
     this.onSetMax,
+    this.onClear,
   });
   final String title;
   final TextEditingController inputCtrl;
@@ -32,6 +33,7 @@ class SwapTokenInput extends StatelessWidget {
   final Function(String) onInputChange;
   final Function(String) onTokenChange;
   final Function(BigInt) onSetMax;
+  final Function onClear;
 
   Future<void> _selectCurrencyPay(BuildContext context) async {
     var selected = await Navigator.of(context)
@@ -94,6 +96,15 @@ class SwapTokenInput extends StatelessWidget {
                   errorStyle: TextStyle(height: 0.3),
                   contentPadding: EdgeInsets.all(0),
                   border: InputBorder.none,
+                  suffix: focusNode != null &&
+                          focusNode.hasFocus &&
+                          inputCtrl.text.isNotEmpty
+                      ? IconButton(
+                          padding: EdgeInsets.fromLTRB(0, 0, 4, 0),
+                          icon: Icon(Icons.cancel, size: 16, color: colorGray),
+                          onPressed: onClear,
+                        )
+                      : null,
                 ),
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 inputFormatters: [UI.decimalInputFormatter(balance.decimals)],

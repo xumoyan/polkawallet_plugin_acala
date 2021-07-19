@@ -37,24 +37,12 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
 
   Timer _timer;
 
-  BigInt _shareInput = BigInt.zero;
-  double _price = 0;
   bool _fromPool = false;
 
   Future<void> _refreshData() async {
     final String poolId = ModalRoute.of(context).settings.arguments;
     await widget.plugin.service.earn.queryDexPoolInfo(poolId);
-
-    final output = await widget.plugin.api.swap.queryTokenSwapAmount(
-      '1',
-      null,
-      poolId.toUpperCase().split('-'),
-      '0.005',
-    );
     if (mounted) {
-      setState(() {
-        _price = output.amount;
-      });
       _timer = Timer(Duration(seconds: 10), () {
         if (mounted) {
           _refreshData();
@@ -63,23 +51,58 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
     }
   }
 
-  void _onAmountChange(String v, int decimals) {
-    final amountInput = v.trim();
-    setState(() {
-      _shareInput = Fmt.tokenInt(amountInput, decimals);
-    });
-    _formKey.currentState.validate();
-  }
-
   void _onAmountSelect(BigInt v, int decimals) {
     setState(() {
-      _shareInput = v;
       _amountCtrl.text = Fmt.bigIntToDouble(v, decimals).toStringAsFixed(4);
     });
     _formKey.currentState.validate();
   }
 
-  Future<void> _onSubmit() async {
+  String _validateInput(String value, int shareDecimals) {
+    final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
+
+    final v = value.trim();
+    if (v.isEmpty || double.parse(v.trim()) == 0) {
+      return dic['amount.error'];
+    }
+
+    final symbols = widget.plugin.networkState.tokenSymbol;
+    final String poolId = ModalRoute.of(context).settings.arguments;
+    final pair = poolId.toUpperCase().split('-');
+    final poolInfo = widget.plugin.store.earn.dexPoolInfoMap[poolId];
+
+    final shareInput = Fmt.tokenInt(v, shareDecimals);
+    final shareBalance = _fromPool
+        ? poolInfo.shares
+        : Fmt.balanceInt(widget
+            .plugin.store.assets.tokenBalanceMap[poolId.toUpperCase()].amount);
+    if (shareInput > shareBalance) {
+      return dic['amount.low'];
+    }
+
+    final balancePair = PluginFmt.getBalancePair(widget.plugin, pair);
+    if (pair[0] != symbols[0] &&
+        Fmt.balanceInt(balancePair[0].amount) == BigInt.zero) {
+      final min = Fmt.balanceDouble(
+          existential_deposit[pair[0]], balancePair[0].decimals);
+      if (Fmt.bigIntToDouble(shareInput, shareDecimals) / 2 < min) {
+        return '${dic['amount.min']} ${Fmt.priceCeil(min * 2, lengthMax: 6)}';
+      }
+    }
+    if (pair[1] != symbols[0] &&
+        Fmt.balanceInt(balancePair[1].amount) == BigInt.zero) {
+      final min = Fmt.balanceDouble(
+          existential_deposit[pair[1]], balancePair[1].decimals);
+      final exchangeRate = poolInfo.amountLeft / poolInfo.amountRight;
+      if (Fmt.bigIntToDouble(shareInput, shareDecimals) / 2 / exchangeRate <
+          min) {
+        return '${dic['amount.min']} ${Fmt.priceCeil(min * 2 * exchangeRate, lengthMax: 6)}';
+      }
+    }
+    return null;
+  }
+
+  Future<void> _onSubmit(int shareDecimals) async {
     if (_formKey.currentState.validate()) {
       final String poolId = ModalRoute.of(context).settings.arguments;
       final pair = poolId.toUpperCase().split('-');
@@ -91,13 +114,13 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
           ? [
               {'Token': pair[0]},
               {'Token': pair[1]},
-              _shareInput.toString(),
+              Fmt.tokenInt(amount, shareDecimals).toString(),
               _fromPool,
             ]
           : [
               {'Token': pair[0]},
               {'Token': pair[1]},
-              _shareInput.toString(),
+              Fmt.tokenInt(amount, shareDecimals).toString(),
               '0',
               '0',
               _fromPool,
@@ -148,29 +171,18 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
         final dicAssets =
             I18n.of(context).getDic(i18n_full_dic_acala, 'common');
-        final symbols = widget.plugin.networkState.tokenSymbol;
-        final decimals = widget.plugin.networkState.tokenDecimals;
-        final isKar = widget.plugin.basic.name == plugin_name_karura;
-        final stableCoinSymbol = isKar ? karura_stable_coin : acala_stable_coin;
 
         final String poolId = ModalRoute.of(context).settings.arguments;
         final pair = poolId.toUpperCase().split('-');
         final pairView = pair.map((e) => PluginFmt.tokenView(e)).toList();
 
-        final stableCoinIndex = pair.indexOf(stableCoinSymbol);
-        final stableCoinDecimals = decimals[symbols.indexOf(stableCoinSymbol)];
-        final tokenDecimals =
-            decimals[symbols.indexOf(stableCoinIndex == 0 ? pair[1] : pair[0])];
+        final balancePair = PluginFmt.getBalancePair(widget.plugin, pair);
+        final shareDecimals = balancePair[0].decimals > balancePair[1].decimals
+            ? balancePair[0].decimals
+            : balancePair[1].decimals;
 
-        final leftDecimal =
-            stableCoinIndex == 0 ? stableCoinDecimals : tokenDecimals;
-        final rightDecimal =
-            stableCoinIndex == 0 ? tokenDecimals : stableCoinDecimals;
-
-        final shareDecimals = stableCoinDecimals >= tokenDecimals
-            ? stableCoinDecimals
-            : tokenDecimals;
-
+        final shareInput = double.parse(_amountCtrl.text.trim());
+        final shareInputInt = Fmt.tokenInt(_amountCtrl.text, shareDecimals);
         double shareTotal = 0;
         BigInt shareInt = BigInt.zero;
         BigInt shareInt10 = BigInt.zero;
@@ -178,15 +190,17 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
         BigInt shareInt50 = BigInt.zero;
         double share = 0;
         double shareRatioNew = 0;
-        double shareInput = Fmt.bigIntToDouble(_shareInput, shareDecimals);
 
         double poolLeft = 0;
         double poolRight = 0;
+        double exchangeRate = 1;
         double amountLeft = 0;
         double amountRight = 0;
 
         final poolInfo = widget.plugin.store.earn.dexPoolInfoMap[poolId];
         if (poolInfo != null) {
+          exchangeRate = poolInfo.amountLeft / poolInfo.amountRight;
+
           if (_fromPool) {
             shareInt = poolInfo.shares;
             shareTotal =
@@ -194,19 +208,21 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
 
             poolLeft = Fmt.bigIntToDouble(
                 poolInfo.amountLeft * poolInfo.sharesTotal ~/ poolInfo.issuance,
-                leftDecimal);
+                balancePair[0].decimals);
             poolRight = Fmt.bigIntToDouble(
                 poolInfo.amountRight *
                     poolInfo.sharesTotal ~/
                     poolInfo.issuance,
-                rightDecimal);
+                balancePair[1].decimals);
           } else {
             shareInt = Fmt.balanceInt(widget.plugin.store.assets
                 .tokenBalanceMap[poolId.toUpperCase()].amount);
             shareTotal = Fmt.bigIntToDouble(poolInfo.issuance, shareDecimals);
 
-            poolLeft = Fmt.bigIntToDouble(poolInfo.amountLeft, leftDecimal);
-            poolRight = Fmt.bigIntToDouble(poolInfo.amountRight, rightDecimal);
+            poolLeft = Fmt.bigIntToDouble(
+                poolInfo.amountLeft, balancePair[0].decimals);
+            poolRight = Fmt.bigIntToDouble(
+                poolInfo.amountRight, balancePair[1].decimals);
           }
           shareInt10 = BigInt.from(shareInt / BigInt.from(10));
           shareInt25 = BigInt.from(shareInt / BigInt.from(4));
@@ -228,7 +244,7 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
             child: ListView(
               padding: EdgeInsets.all(16),
               children: <Widget>[
-                poolInfo.shares > BigInt.zero
+                (poolInfo?.shares ?? BigInt.zero) > BigInt.zero
                     ? Padding(
                         padding: EdgeInsets.only(bottom: 16),
                         child: Row(
@@ -287,21 +303,7 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
                           controller: _amountCtrl,
                           keyboardType:
                               TextInputType.numberWithOptions(decimal: true),
-                          validator: (v) {
-                            try {
-                              if (v.trim().isEmpty ||
-                                  double.parse(v.trim()) == 0) {
-                                return dicAssets['amount.error'];
-                              }
-                            } catch (err) {
-                              return dicAssets['amount.error'];
-                            }
-                            if (_shareInput > shareInt) {
-                              return dicAssets['amount.low'];
-                            }
-                            return null;
-                          },
-                          onChanged: (v) => _onAmountChange(v, shareDecimals),
+                          validator: (v) => _validateInput(v, shareDecimals),
                         ),
                       ),
                       Padding(
@@ -311,26 +313,26 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
                           children: <Widget>[
                             OutlinedButtonSmall(
                               content: '10%',
-                              active: _shareInput == shareInt10,
+                              active: shareInputInt == shareInt10,
                               onPressed: () =>
                                   _onAmountSelect(shareInt10, shareDecimals),
                             ),
                             OutlinedButtonSmall(
                               content: '25%',
-                              active: _shareInput == shareInt25,
+                              active: shareInputInt == shareInt25,
                               onPressed: () =>
                                   _onAmountSelect(shareInt25, shareDecimals),
                             ),
                             OutlinedButtonSmall(
                               content: '50%',
-                              active: _shareInput == shareInt50,
+                              active: shareInputInt == shareInt50,
                               onPressed: () =>
                                   _onAmountSelect(shareInt50, shareDecimals),
                             ),
                             OutlinedButtonSmall(
                               margin: EdgeInsets.only(right: 0),
                               content: '100%',
-                              active: _shareInput == shareInt,
+                              active: shareInputInt == shareInt,
                               onPressed: () =>
                                   _onAmountSelect(shareInt, shareDecimals),
                             )
@@ -368,9 +370,9 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
                           ),
                           Column(children: [
                             Text(
-                                '1 ${pairView[0]} = ${Fmt.doubleFormat(_price)} ${pairView[1]}'),
+                                '1 ${pairView[0]} = ${Fmt.doubleFormat(1 / exchangeRate)} ${pairView[1]}'),
                             Text(
-                                '1 ${pairView[1]} = ${Fmt.doubleFormat(1 / _price)} ${pairView[0]}'),
+                                '1 ${pairView[1]} = ${Fmt.doubleFormat(exchangeRate)} ${pairView[0]}'),
                           ])
                         ],
                       ),
@@ -413,7 +415,7 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
                   padding: EdgeInsets.only(top: 24),
                   child: RoundedButton(
                     text: dic['earn.withdraw'],
-                    onPressed: _onSubmit,
+                    onPressed: () => _onSubmit(shareDecimals),
                   ),
                 )
               ],

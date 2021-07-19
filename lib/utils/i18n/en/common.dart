@@ -16,6 +16,7 @@ const Map<String, String> enCommon = {
   'amount.available': 'Available',
   'amount.error': 'Invalid amount',
   'amount.low': 'Insufficient balance',
+  'amount.min': 'Min amount is',
   'input.invalid': 'Invalid input',
   'balance': 'Balance',
   'currency': 'Currency',

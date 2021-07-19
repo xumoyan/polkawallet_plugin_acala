@@ -36,6 +36,9 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
   final TextEditingController _amountLeftCtrl = new TextEditingController();
   final TextEditingController _amountRightCtrl = new TextEditingController();
 
+  final _leftFocusNode = FocusNode();
+  final _rightFocusNode = FocusNode();
+
   Timer _timer;
   double _price = 0;
   bool _withStake = false;
@@ -102,11 +105,12 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
     final String poolId = ModalRoute.of(context).settings.arguments;
     final tokenPair = poolId.toUpperCase().split('-');
+    final isNativeToken =
+        tokenPair[0] == widget.plugin.networkState.tokenSymbol[0];
     final v =
         index == 0 ? _amountLeftCtrl.text.trim() : _amountRightCtrl.text.trim();
     TokenBalanceData balance;
-    if (index == 0 &&
-        tokenPair[0] == widget.plugin.networkState.tokenSymbol[0]) {
+    if (index == 0 && isNativeToken) {
       balance = TokenBalanceData(
           symbol: tokenPair[0],
           decimals: widget.plugin.networkState.tokenDecimals[0],
@@ -125,12 +129,31 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
       error = dic['amount.error'];
     }
     if (error == null) {
-      if (double.parse(v) >
-          Fmt.bigIntToDouble(
-              Fmt.balanceInt(balance?.amount ?? '0'), balance.decimals)) {
-        error = dic['amount.low'];
+      if ((index == 0 && _maxInputLeft == null) ||
+          (index == 1 && _maxInputRight == null)) {
+        if (double.parse(v) >
+            Fmt.bigIntToDouble(
+                Fmt.balanceInt(balance?.amount ?? '0'), balance.decimals)) {
+          error = dic['amount.low'];
+        }
       }
     }
+
+    // check if user's lp token balance meet existential deposit.
+    final balanceLP = Fmt.balanceInt(widget
+        .plugin.store.assets.tokenBalanceMap[poolId.toUpperCase()]?.amount);
+    if (error == null && index == 0 && balanceLP == BigInt.zero) {
+      final min = Fmt.balanceDouble(
+              isNativeToken
+                  ? widget.plugin.networkConst['balances']['existentialDeposit']
+                  : existential_deposit[balance.symbol],
+              balance.decimals) /
+          2;
+      if (double.parse(_amountLeftCtrl.text.trim()) < min) {
+        error = '${dic['amount.min']} ${Fmt.priceCeil(min, lengthMax: 6)}';
+      }
+    }
+
     return error;
   }
 
@@ -250,6 +273,8 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
 
     _amountLeftCtrl.dispose();
     _amountRightCtrl.dispose();
+    _leftFocusNode.dispose();
+    _rightFocusNode.dispose();
     super.dispose();
   }
 
@@ -286,29 +311,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
         double amountLeft = 0;
         double amountRight = 0;
 
-        TokenBalanceData balanceLeftUser;
-        TokenBalanceData balanceRightUser;
-        if (tokenPair[0] == symbols[0]) {
-          balanceLeftUser = TokenBalanceData(
-              symbol: tokenPair[0],
-              decimals: widget.plugin.networkState.tokenDecimals[0],
-              amount:
-                  (widget.plugin.balances.native?.freeBalance ?? 0).toString());
-          balanceRightUser =
-              widget.plugin.store.assets.tokenBalanceMap[tokenPair[1]];
-        } else if (tokenPair[1] == symbols[0]) {
-          balanceRightUser = TokenBalanceData(
-              symbol: tokenPair[1],
-              decimals: widget.plugin.networkState.tokenDecimals[0],
-              amount: (widget.plugin.balances.native?.freeBalance ?? 0));
-          balanceLeftUser =
-              widget.plugin.store.assets.tokenBalanceMap[tokenPair[0]];
-        } else {
-          balanceLeftUser =
-              widget.plugin.store.assets.tokenBalanceMap[tokenPair[0]];
-          balanceRightUser =
-              widget.plugin.store.assets.tokenBalanceMap[tokenPair[1]];
-        }
+        final balancePair = PluginFmt.getBalancePair(widget.plugin, tokenPair);
 
         final poolInfo = widget.plugin.store.earn.dexPoolInfoMap[poolId];
         if (poolInfo != null) {
@@ -341,11 +344,18 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                       SwapTokenInput(
                         title: 'token 1',
                         inputCtrl: _amountLeftCtrl,
-                        balance: balanceLeftUser,
+                        focusNode: _leftFocusNode,
+                        balance: balancePair[0],
                         tokenIconsMap: widget.plugin.tokenIcons,
                         onInputChange: _onSupplyAmountChange,
                         onSetMax: (v) =>
-                            _onSetLeftMax(v, balanceLeftUser.decimals),
+                            _onSetLeftMax(v, balancePair[0].decimals),
+                        onClear: () {
+                          setState(() {
+                            _maxInputLeft = null;
+                            _amountLeftCtrl.text = '';
+                          });
+                        },
                       ),
                       Container(
                         margin: EdgeInsets.only(left: 16, top: 2),
@@ -371,11 +381,18 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                       SwapTokenInput(
                         title: 'token 2',
                         inputCtrl: _amountRightCtrl,
-                        balance: balanceRightUser,
+                        focusNode: _rightFocusNode,
+                        balance: balancePair[1],
                         tokenIconsMap: widget.plugin.tokenIcons,
                         onInputChange: _onTargetAmountChange,
                         onSetMax: (v) =>
-                            _onSetRightMax(v, balanceRightUser.decimals),
+                            _onSetRightMax(v, balancePair[1].decimals),
+                        onClear: () {
+                          setState(() {
+                            _maxInputRight = null;
+                            _amountRightCtrl.text = '';
+                          });
+                        },
                       ),
                       Container(
                         margin: EdgeInsets.only(left: 16, top: 2),

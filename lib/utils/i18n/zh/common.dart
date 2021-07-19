@@ -16,6 +16,7 @@ const Map<String, String> zhCommon = {
   'amount.available': '可用',
   'amount.error': '数量无效',
   'amount.low': '余额不足',
+  'amount.min': '最小数量为',
   'input.invalid': '输入格式错误',
   'balance': '余额',
   'currency': '币种',

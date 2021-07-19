@@ -48,8 +48,8 @@ class _SwapPageState extends State<SwapPage> {
   @override
   Widget build(_) {
     final isKar = widget.plugin.basic.name == plugin_name_karura;
-    final bool enabled = !isKar || ModalRoute.of(context).settings.arguments;
-    // final bool enabled = true;
+    // final bool enabled = !isKar || ModalRoute.of(context).settings.arguments;
+    final bool enabled = true;
     return Observer(
       builder: (BuildContext context) {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
