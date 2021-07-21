@@ -9,7 +9,6 @@ import 'package:polkawallet_plugin_acala/pages/swap/swapTokenInput.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
-import 'package:polkawallet_sdk/plugin/store/balances.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
 import 'package:polkawallet_ui/components/infoItem.dart';
@@ -60,8 +59,12 @@ class _BootstrapPageState extends State<BootstrapPage> {
     }
   }
 
-  void _onAmountChange(int index, TokenBalanceData balance, String value) {
+  void _onAmountChange(int index, String value) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
+    final DexPoolData args = ModalRoute.of(context).settings.arguments;
+    final pair = args.tokens.map((e) => e['token'] as String).toList();
+    final balancePair = PluginFmt.getBalancePair(widget.plugin, pair);
+    final balance = balancePair[index];
 
     final v = value.trim();
     String error;
@@ -168,7 +171,7 @@ class _BootstrapPageState extends State<BootstrapPage> {
     final decimals = widget.plugin.networkState.tokenDecimals;
 
     final DexPoolData args = ModalRoute.of(context).settings.arguments;
-    final pair = args.tokens.map((e) => e['token']).toList();
+    final pair = args.tokens.map((e) => e['token'] as String).toList();
     final pairView = pair.map((e) => PluginFmt.tokenView(e)).toList();
 
     return Observer(builder: (_) {
@@ -202,30 +205,7 @@ class _BootstrapPageState extends State<BootstrapPage> {
       final estShareLabel = '${dic['boot.my.est']}${dic['boot.my.share']}';
       final estTokenLabel = '${dic['boot.my.est']}${dic['boot.my.token']}';
 
-      TokenBalanceData leftBalance;
-      TokenBalanceData rightBalance;
-      if (pair[0] == symbols[0]) {
-        leftBalance = TokenBalanceData(
-            symbol: pair[0],
-            decimals: decimals[0],
-            amount: (widget.plugin.balances.native?.availableBalance ?? 0)
-                .toString());
-        rightBalance =
-            widget.plugin.store.assets.tokenBalanceMap[pair[1].toUpperCase()];
-      } else if (pair[1] == symbols[0]) {
-        rightBalance = TokenBalanceData(
-            symbol: pair[1],
-            decimals: decimals[0],
-            amount: (widget.plugin.balances.native?.availableBalance ?? 0)
-                .toString());
-        leftBalance =
-            widget.plugin.store.assets.tokenBalanceMap[pair[0].toUpperCase()];
-      } else {
-        leftBalance =
-            widget.plugin.store.assets.tokenBalanceMap[pair[0].toUpperCase()];
-        rightBalance =
-            widget.plugin.store.assets.tokenBalanceMap[pair[1].toUpperCase()];
-      }
+      final balancePair = PluginFmt.getBalancePair(widget.plugin, pair);
 
       return Scaffold(
         appBar: AppBar(
@@ -342,14 +322,14 @@ class _BootstrapPageState extends State<BootstrapPage> {
                                       Container(
                                         margin: EdgeInsets.only(top: 8),
                                         child: SwapTokenInput(
-                                          title: dic['earn.deposit'],
+                                          title: dic['earn.add'],
                                           inputCtrl: _amountLeftCtrl,
                                           focusNode: _leftFocusNode,
-                                          balance: leftBalance,
+                                          balance: balancePair[0],
                                           tokenIconsMap:
                                               widget.plugin.tokenIcons,
-                                          onInputChange: (v) => _onAmountChange(
-                                              0, leftBalance, v),
+                                          onInputChange: (v) =>
+                                              _onAmountChange(0, v),
                                         ),
                                       ),
                                       ErrorMessage(_leftAmountError),
@@ -363,14 +343,14 @@ class _BootstrapPageState extends State<BootstrapPage> {
                                       Container(
                                         margin: EdgeInsets.only(top: 8),
                                         child: SwapTokenInput(
-                                          title: dic['earn.deposit'],
+                                          title: dic['earn.add'],
                                           inputCtrl: _amountRightCtrl,
                                           focusNode: _rightFocusNode,
-                                          balance: rightBalance,
+                                          balance: balancePair[1],
                                           tokenIconsMap:
                                               widget.plugin.tokenIcons,
-                                          onInputChange: (v) => _onAmountChange(
-                                              1, rightBalance, v),
+                                          onInputChange: (v) =>
+                                              _onAmountChange(1, v),
                                         ),
                                       ),
                                       ErrorMessage(_rightAmountError),

@@ -41,19 +41,33 @@ class _LPStakePage extends State<LPStakePage> {
   bool _isMax = false;
 
   String _validateAmount(String value, BigInt available, int decimals) {
-    final assetDic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
+    final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
 
     String v = value.trim();
     try {
       if (v.isEmpty || double.parse(v) == 0) {
-        return assetDic['amount.error'];
+        return dic['amount.error'];
       }
     } catch (err) {
-      return assetDic['amount.error'];
+      return dic['amount.error'];
     }
     BigInt input = Fmt.tokenInt(v, decimals);
     if (!_isMax && input > available) {
-      return assetDic['amount.low'];
+      return dic['amount.low'];
+    }
+    final LPStakePageParams args = ModalRoute.of(context).settings.arguments;
+    final balance = Fmt.balanceInt(widget.plugin.store.assets
+            .tokenBalanceMap[args.poolId.toUpperCase()]?.amount ??
+        '0');
+    if (balance == BigInt.zero) {
+      final pair = args.poolId.toUpperCase().split('-').toList();
+      final min = pair[0] == widget.plugin.networkState.tokenSymbol[0]
+          ? Fmt.balanceInt(
+              widget.plugin.networkConst['balances']['existentialDeposit'])
+          : Fmt.balanceInt(existential_deposit[pair[0]]);
+      if (input < min) {
+        return '${dic['amount.min']} ${Fmt.priceCeilBigInt(min, decimals, lengthMax: 6)}';
+      }
     }
     return null;
   }
@@ -66,6 +80,8 @@ class _LPStakePage extends State<LPStakePage> {
   }
 
   Future<void> _onSubmit(BigInt max, int decimals) async {
+    if (!_formKey.currentState.validate()) return;
+
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
     final LPStakePageParams params = ModalRoute.of(context).settings.arguments;
     final isStake = params.action == LPStakePage.actionStake;
@@ -172,6 +188,7 @@ class _LPStakePage extends State<LPStakePage> {
                           inputFormatters: [
                             UI.decimalInputFormatter(shareDecimals)
                           ],
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
                           controller: _amountCtrl,
                           keyboardType:
                               TextInputType.numberWithOptions(decimal: true),

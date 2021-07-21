@@ -6,6 +6,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:intl/intl.dart';
 import 'package:polkawallet_plugin_acala/api/types/dexPoolInfoData.dart';
 import 'package:polkawallet_plugin_acala/common/constants/base.dart';
+import 'package:polkawallet_plugin_acala/common/constants/index.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/bootstrapPage.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
@@ -18,6 +19,7 @@ import 'package:polkawallet_ui/components/linearProgressBar.dart';
 import 'package:polkawallet_ui/components/listTail.dart';
 import 'package:polkawallet_ui/components/roundedButton.dart';
 import 'package:polkawallet_ui/components/roundedCard.dart';
+import 'package:polkawallet_ui/components/tapTooltip.dart';
 import 'package:polkawallet_ui/components/tokenIcon.dart';
 import 'package:polkawallet_ui/components/txButton.dart';
 import 'package:polkawallet_ui/utils/format.dart';
@@ -150,11 +152,19 @@ class _BootstrapListState extends State<BootstrapList> {
                   }).toList(),
                   ...dexPools.map((e) {
                     final poolId = e.tokens.map((e) => e['token']).join('-');
+                    final existDeposit = Fmt.balanceInt(e.tokens[0]['token'] ==
+                            widget.plugin.networkState.tokenSymbol[0]
+                        ? widget.plugin.networkConst['balances']
+                            ['existentialDeposit']
+                        : existential_deposit[e.tokens[0]['token']]);
                     return _BootStrapCardEnabled(
                       pool: e,
                       userProvision: _userProvisions[poolId],
                       shareRate: _initialShareRates[poolId],
                       tokenIcons: widget.plugin.tokenIcons,
+                      existentialDeposit: Fmt.priceCeilBigInt(
+                          existDeposit, e.pairDecimals[0],
+                          lengthMax: 6),
                       onClaimLP: _claimLPToken,
                       onFinish: (res) async {
                         if (res != null) {
@@ -330,6 +340,7 @@ class _BootStrapCardEnabled extends StatelessWidget {
       this.userProvision,
       this.shareRate,
       this.tokenIcons,
+      this.existentialDeposit,
       this.onClaimLP,
       this.onFinish,
       this.submitting});
@@ -338,6 +349,7 @@ class _BootStrapCardEnabled extends StatelessWidget {
   final List userProvision;
   final List shareRate;
   final Map<String, Widget> tokenIcons;
+  final String existentialDeposit;
   final TxConfirmParams Function(List, String) onClaimLP;
   final Function(Map) onFinish;
   final bool submitting;
@@ -357,6 +369,7 @@ class _BootStrapCardEnabled extends StatelessWidget {
         Fmt.balanceDouble(userProvision[1].toString(), pool.pairDecimals[1]);
     final ratio = Fmt.balanceDouble(shareRate[1].toString(), 18);
     final amount = Fmt.priceFloor(userLeft + userRight * ratio, lengthMax: 4);
+
     return RoundedCard(
       margin: EdgeInsets.only(bottom: 16),
       padding: EdgeInsets.all(16),
@@ -406,6 +419,29 @@ class _BootStrapCardEnabled extends StatelessWidget {
             ],
           ),
           Divider(height: 24),
+          Container(
+            margin: EdgeInsets.only(bottom: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(right: 4),
+                  child: Text(dic['transfer.exist']),
+                ),
+                TapTooltip(
+                  message: dic['cross.exist.msg'],
+                  child: Icon(
+                    Icons.info,
+                    size: 16,
+                    color: Theme.of(context).unselectedWidgetColor,
+                  ),
+                ),
+                Expanded(child: Container(width: 2)),
+                Text(existentialDeposit,
+                    style: Theme.of(context).textTheme.headline4),
+              ],
+            ),
+          ),
           Container(
             margin: EdgeInsets.only(bottom: 16),
             child: InfoItemRow(

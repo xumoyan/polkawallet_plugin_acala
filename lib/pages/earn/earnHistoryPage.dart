@@ -29,8 +29,8 @@ class EarnHistoryPage extends StatefulWidget {
 }
 
 const _actionsMap = {
-  'addLiquidity': 'earn.deposit',
-  'removeLiquidity': 'earn.withdraw',
+  'addLiquidity': 'earn.add',
+  'removeLiquidity': 'earn.remove',
   'depositDexShare': 'earn.stake',
   'withdrawDexShare': 'earn.unStake',
   'dexIncentive': 'earn.incentive',

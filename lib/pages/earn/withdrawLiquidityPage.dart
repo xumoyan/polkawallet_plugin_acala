@@ -71,33 +71,35 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
     final pair = poolId.toUpperCase().split('-');
     final poolInfo = widget.plugin.store.earn.dexPoolInfoMap[poolId];
 
-    final shareInput = Fmt.tokenInt(v, shareDecimals);
+    final shareInputInt = Fmt.tokenInt(v, shareDecimals);
     final shareBalance = _fromPool
         ? poolInfo.shares
         : Fmt.balanceInt(widget
             .plugin.store.assets.tokenBalanceMap[poolId.toUpperCase()].amount);
-    if (shareInput > shareBalance) {
+    if (shareInputInt > shareBalance) {
       return dic['amount.low'];
     }
 
     final balancePair = PluginFmt.getBalancePair(widget.plugin, pair);
+    final shareInput = double.parse(v.trim());
+    double min = 0;
     if (pair[0] != symbols[0] &&
         Fmt.balanceInt(balancePair[0].amount) == BigInt.zero) {
-      final min = Fmt.balanceDouble(
-          existential_deposit[pair[0]], balancePair[0].decimals);
-      if (Fmt.bigIntToDouble(shareInput, shareDecimals) / 2 < min) {
-        return '${dic['amount.min']} ${Fmt.priceCeil(min * 2, lengthMax: 6)}';
-      }
+      min = Fmt.balanceDouble(
+              existential_deposit[pair[0]], balancePair[0].decimals) *
+          2;
     }
     if (pair[1] != symbols[0] &&
         Fmt.balanceInt(balancePair[1].amount) == BigInt.zero) {
-      final min = Fmt.balanceDouble(
-          existential_deposit[pair[1]], balancePair[1].decimals);
       final exchangeRate = poolInfo.amountLeft / poolInfo.amountRight;
-      if (Fmt.bigIntToDouble(shareInput, shareDecimals) / 2 / exchangeRate <
-          min) {
-        return '${dic['amount.min']} ${Fmt.priceCeil(min * 2 * exchangeRate, lengthMax: 6)}';
-      }
+      final min2 = Fmt.balanceDouble(
+              existential_deposit[pair[1]], balancePair[1].decimals) *
+          2 *
+          exchangeRate;
+      min = min > min2 ? min : min2;
+    }
+    if (shareInput < min) {
+      return '${dic['amount.min']} ${Fmt.priceCeil(min, lengthMax: 6)}';
     }
     return null;
   }
@@ -130,7 +132,7 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
             module: 'dex',
             call: 'removeLiquidity',
             txTitle: I18n.of(context)
-                .getDic(i18n_full_dic_acala, 'acala')['earn.withdraw'],
+                .getDic(i18n_full_dic_acala, 'acala')['earn.remove'],
             txDisplay: {
               "poolId": poolId,
               "amount": amount,
@@ -181,8 +183,12 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
             ? balancePair[0].decimals
             : balancePair[1].decimals;
 
-        final shareInput = double.parse(_amountCtrl.text.trim());
-        final shareInputInt = Fmt.tokenInt(_amountCtrl.text, shareDecimals);
+        final shareInput = _amountCtrl.text.isEmpty
+            ? 0
+            : double.parse(_amountCtrl.text.trim());
+        final shareInputInt = _amountCtrl.text.isEmpty
+            ? BigInt.zero
+            : Fmt.tokenInt(_amountCtrl.text.trim(), shareDecimals);
         double shareTotal = 0;
         BigInt shareInt = BigInt.zero;
         BigInt shareInt10 = BigInt.zero;
@@ -239,7 +245,7 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
         }
 
         return Scaffold(
-          appBar: AppBar(title: Text(dic['earn.withdraw']), centerTitle: true),
+          appBar: AppBar(title: Text(dic['earn.remove']), centerTitle: true),
           body: SafeArea(
             child: ListView(
               padding: EdgeInsets.all(16),
@@ -280,6 +286,7 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
                     children: <Widget>[
                       Form(
                         key: _formKey,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
                         child: TextFormField(
                           decoration: InputDecoration(
                             hintText: dicAssets['amount'],
@@ -414,7 +421,7 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
                 Padding(
                   padding: EdgeInsets.only(top: 24),
                   child: RoundedButton(
-                    text: dic['earn.withdraw'],
+                    text: dic['earn.remove'],
                     onPressed: () => _onSubmit(shareDecimals),
                   ),
                 )

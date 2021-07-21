@@ -126,7 +126,7 @@ packages:
       name: dropdown_search
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.4.9"
+    version: "0.6.3"
   ffi:
     dependency: transitive
     description:
@@ -521,21 +521,21 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "0.2.2"
+    version: "0.2.5"
   polkawallet_sdk:
     dependency: transitive
     description:
       name: polkawallet_sdk
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.2.3"
+    version: "0.2.5"
   polkawallet_ui:
     dependency: "direct main"
     description:
       path: "../../ui"
       relative: true
     source: path
-    version: "0.2.2"
+    version: "0.2.5"
   process:
     dependency: transitive
     description:
@@ -724,7 +724,7 @@ packages:
       name: webview_flutter
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "2.0.7"
+    version: "2.0.10"
   win32:
     dependency: transitive
     description:
@@ -748,4 +748,4 @@ packages:
     version: "5.1.1"
 sdks:
   dart: ">=2.12.0 <3.0.0"
-  flutter: ">=1.24.0-7.0"
+  flutter: ">=2.0.0"

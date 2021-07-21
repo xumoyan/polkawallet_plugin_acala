@@ -238,7 +238,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
             module: 'dex',
             call: 'addLiquidity',
             txTitle: I18n.of(context)
-                .getDic(i18n_full_dic_acala, 'acala')['earn.deposit'],
+                .getDic(i18n_full_dic_acala, 'acala')['earn.add'],
             txDisplay: {
               "poolId": poolId,
               "amount": [amountLeft, amountRight],
@@ -331,7 +331,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
         final colorGray = Theme.of(context).unselectedWidgetColor;
 
         return Scaffold(
-          appBar: AppBar(title: Text(dic['earn.deposit']), centerTitle: true),
+          appBar: AppBar(title: Text(dic['earn.add']), centerTitle: true),
           body: SafeArea(
             child: ListView(
               padding: EdgeInsets.fromLTRB(8, 16, 8, 32),
@@ -487,7 +487,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                 Padding(
                   padding: EdgeInsets.only(top: 16),
                   child: RoundedButton(
-                    text: dic['earn.deposit'],
+                    text: dic['earn.add'],
                     onPressed: () => _onSubmit(
                         stableCoinSymbol, stableCoinDecimals, tokenDecimals),
                   ),

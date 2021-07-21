@@ -72,7 +72,12 @@ class _EarnPageState extends State<EarnPage> {
     final symbol = widget.plugin.networkState.tokenSymbol[0];
     final incentiveReward = Fmt.priceFloor(reward.incentive, lengthFixed: 4);
     final savingReward = Fmt.priceFloor(reward.saving, lengthFixed: 4);
-    final pool = jsonEncode(_poolId.toUpperCase().split('-'));
+
+    // todo: fix this after new acala online
+    final isTC6 = widget.plugin.basic.name == plugin_name_acala;
+    final pool = jsonEncode(isTC6
+        ? _poolId.toUpperCase().split('-')
+        : _poolId.toUpperCase().split('-').map((e) => ({'Token': e})).toList());
 
     if (reward.saving > 0 && reward.incentive > 0) {
       final params = [
@@ -291,6 +296,7 @@ class _EarnPageState extends State<EarnPage> {
                             _onWithdrawReward(poolInfo.reward),
                         incentiveCoinSymbol: symbols[0],
                         stableCoinSymbol: stableCoinSymbol,
+                        stableCoinDecimal: stableCoinDecimals,
                       )
                     ],
                   ),
@@ -306,7 +312,7 @@ class _EarnPageState extends State<EarnPage> {
                                 : Colors.blue,
                         child: TextButton(
                             child: Text(
-                              dic['earn.deposit'],
+                              dic['earn.add'],
                               style: TextStyle(color: cardColor),
                             ),
                             onPressed: enabled
@@ -325,7 +331,7 @@ class _EarnPageState extends State<EarnPage> {
                               color: primaryColor,
                               child: TextButton(
                                 child: Text(
-                                  dic['earn.withdraw'],
+                                  dic['earn.remove'],
                                   style: TextStyle(color: cardColor),
                                 ),
                                 onPressed: () =>
@@ -425,6 +431,7 @@ class _UserCard extends StatelessWidget {
     this.onWithdrawReward,
     this.incentiveCoinSymbol,
     this.stableCoinSymbol,
+    this.stableCoinDecimal,
   });
   final double share;
   final DexPoolInfoData poolInfo;
@@ -435,6 +442,7 @@ class _UserCard extends StatelessWidget {
   final Function onWithdrawReward;
   final String incentiveCoinSymbol;
   final String stableCoinSymbol;
+  final int stableCoinDecimal;
   @override
   Widget build(BuildContext context) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
@@ -454,7 +462,9 @@ class _UserCard extends StatelessWidget {
       color: primary,
     );
 
-    final canClaim = reward > 0 || rewardSaving > 0;
+    final savingRewardTokenMin = Fmt.balanceDouble(
+        existential_deposit[stableCoinSymbol], stableCoinDecimal);
+    final canClaim = reward > 0 || rewardSaving > savingRewardTokenMin;
 
     return RoundedCard(
       margin: EdgeInsets.fromLTRB(16, 0, 16, 24),
