@@ -296,12 +296,14 @@ class _TransferPageState extends State<TransferPage> {
         final decimals =
             widget.plugin.store.assets.tokenBalanceMap[token]?.decimals ?? 12;
         final available = Fmt.balanceInt(widget
-            .plugin.store.assets.tokenBalanceMap[token.toUpperCase()].amount);
-        final existDeposit = token == nativeToken
+            .plugin.store.assets.tokenBalanceMap[token.toUpperCase()]?.amount);
+        final existDepositToken =
+            token.contains('-') ? token.split('-')[0] : token;
+        final existDeposit = existDepositToken == nativeToken
             ? Fmt.balanceInt(widget
                 .plugin.networkConst['balances']['existentialDeposit']
                 .toString())
-            : Fmt.balanceInt(existential_deposit[token]);
+            : Fmt.balanceInt(existential_deposit[existDepositToken]);
 
         final chainTo = _chainTo ?? widget.plugin.basic.name;
         final isCrossChain = widget.plugin.basic.name != chainTo;

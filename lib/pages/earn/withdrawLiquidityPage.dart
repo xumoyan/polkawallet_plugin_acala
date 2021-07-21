@@ -53,12 +53,13 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
 
   void _onAmountSelect(BigInt v, int decimals) {
     setState(() {
-      _amountCtrl.text = Fmt.bigIntToDouble(v, decimals).toStringAsFixed(4);
+      _amountCtrl.text =
+          Fmt.bigIntToDouble(v, decimals).toStringAsFixed(decimals);
     });
     _formKey.currentState.validate();
   }
 
-  String _validateInput(String value, int shareDecimals) {
+  String _validateInput(String value) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
 
     final v = value.trim();
@@ -69,9 +70,11 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
     final symbols = widget.plugin.networkState.tokenSymbol;
     final String poolId = ModalRoute.of(context).settings.arguments;
     final pair = poolId.toUpperCase().split('-');
+    final balancePair = PluginFmt.getBalancePair(widget.plugin, pair);
+
     final poolInfo = widget.plugin.store.earn.dexPoolInfoMap[poolId];
 
-    final shareInputInt = Fmt.tokenInt(v, shareDecimals);
+    final shareInputInt = Fmt.tokenInt(v, balancePair[0].decimals);
     final shareBalance = _fromPool
         ? poolInfo.shares
         : Fmt.balanceInt(widget
@@ -80,22 +83,19 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
       return dic['amount.low'];
     }
 
-    final balancePair = PluginFmt.getBalancePair(widget.plugin, pair);
     final shareInput = double.parse(v.trim());
     double min = 0;
     if (pair[0] != symbols[0] &&
         Fmt.balanceInt(balancePair[0].amount) == BigInt.zero) {
-      min = Fmt.balanceDouble(
-              existential_deposit[pair[0]], balancePair[0].decimals) *
-          2;
+      min = Fmt.balanceInt(existential_deposit[pair[0]]) /
+          poolInfo.amountLeft *
+          Fmt.bigIntToDouble(poolInfo.issuance, balancePair[0].decimals);
     }
     if (pair[1] != symbols[0] &&
         Fmt.balanceInt(balancePair[1].amount) == BigInt.zero) {
-      final exchangeRate = poolInfo.amountLeft / poolInfo.amountRight;
-      final min2 = Fmt.balanceDouble(
-              existential_deposit[pair[1]], balancePair[1].decimals) *
-          2 *
-          exchangeRate;
+      final min2 = Fmt.balanceInt(existential_deposit[pair[1]]) /
+          poolInfo.amountRight *
+          Fmt.bigIntToDouble(poolInfo.issuance, balancePair[0].decimals);
       min = min > min2 ? min : min2;
     }
     if (shareInput < min) {
@@ -179,16 +179,13 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
         final pairView = pair.map((e) => PluginFmt.tokenView(e)).toList();
 
         final balancePair = PluginFmt.getBalancePair(widget.plugin, pair);
-        final shareDecimals = balancePair[0].decimals > balancePair[1].decimals
-            ? balancePair[0].decimals
-            : balancePair[1].decimals;
 
         final shareInput = _amountCtrl.text.isEmpty
             ? 0
             : double.parse(_amountCtrl.text.trim());
         final shareInputInt = _amountCtrl.text.isEmpty
             ? BigInt.zero
-            : Fmt.tokenInt(_amountCtrl.text.trim(), shareDecimals);
+            : Fmt.tokenInt(_amountCtrl.text.trim(), balancePair[0].decimals);
         double shareTotal = 0;
         BigInt shareInt = BigInt.zero;
         BigInt shareInt10 = BigInt.zero;
@@ -209,8 +206,8 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
 
           if (_fromPool) {
             shareInt = poolInfo.shares;
-            shareTotal =
-                Fmt.bigIntToDouble(poolInfo.sharesTotal, shareDecimals);
+            shareTotal = Fmt.bigIntToDouble(
+                poolInfo.sharesTotal, balancePair[0].decimals);
 
             poolLeft = Fmt.bigIntToDouble(
                 poolInfo.amountLeft * poolInfo.sharesTotal ~/ poolInfo.issuance,
@@ -223,7 +220,8 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
           } else {
             shareInt = Fmt.balanceInt(widget.plugin.store.assets
                 .tokenBalanceMap[poolId.toUpperCase()].amount);
-            shareTotal = Fmt.bigIntToDouble(poolInfo.issuance, shareDecimals);
+            shareTotal =
+                Fmt.bigIntToDouble(poolInfo.issuance, balancePair[0].decimals);
 
             poolLeft = Fmt.bigIntToDouble(
                 poolInfo.amountLeft, balancePair[0].decimals);
@@ -234,7 +232,7 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
           shareInt25 = BigInt.from(shareInt / BigInt.from(4));
           shareInt50 = BigInt.from(shareInt / BigInt.from(2));
 
-          share = Fmt.bigIntToDouble(shareInt, shareDecimals);
+          share = Fmt.bigIntToDouble(shareInt, balancePair[0].decimals);
 
           amountLeft = poolLeft * shareInput / shareTotal;
           amountRight = poolRight * shareInput / shareTotal;
@@ -291,7 +289,7 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
                           decoration: InputDecoration(
                             hintText: dicAssets['amount'],
                             labelText:
-                                '${dicAssets['amount']} (${dic['earn.available']}: ${Fmt.priceFloorBigInt(shareInt, shareDecimals, lengthMax: 4)} Shares)',
+                                '${dicAssets['amount']} (${dic['earn.available']}: ${Fmt.priceFloorBigInt(shareInt, balancePair[0].decimals, lengthMax: 4)} Shares)',
                             suffix: GestureDetector(
                               child: Icon(
                                 CupertinoIcons.clear_thick_circled,
@@ -305,12 +303,12 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
                             ),
                           ),
                           inputFormatters: [
-                            UI.decimalInputFormatter(shareDecimals)
+                            UI.decimalInputFormatter(balancePair[0].decimals)
                           ],
                           controller: _amountCtrl,
                           keyboardType:
                               TextInputType.numberWithOptions(decimal: true),
-                          validator: (v) => _validateInput(v, shareDecimals),
+                          validator: _validateInput,
                         ),
                       ),
                       Padding(
@@ -321,27 +319,27 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
                             OutlinedButtonSmall(
                               content: '10%',
                               active: shareInputInt == shareInt10,
-                              onPressed: () =>
-                                  _onAmountSelect(shareInt10, shareDecimals),
+                              onPressed: () => _onAmountSelect(
+                                  shareInt10, balancePair[0].decimals),
                             ),
                             OutlinedButtonSmall(
                               content: '25%',
                               active: shareInputInt == shareInt25,
-                              onPressed: () =>
-                                  _onAmountSelect(shareInt25, shareDecimals),
+                              onPressed: () => _onAmountSelect(
+                                  shareInt25, balancePair[0].decimals),
                             ),
                             OutlinedButtonSmall(
                               content: '50%',
                               active: shareInputInt == shareInt50,
-                              onPressed: () =>
-                                  _onAmountSelect(shareInt50, shareDecimals),
+                              onPressed: () => _onAmountSelect(
+                                  shareInt50, balancePair[0].decimals),
                             ),
                             OutlinedButtonSmall(
                               margin: EdgeInsets.only(right: 0),
                               content: '100%',
                               active: shareInputInt == shareInt,
-                              onPressed: () =>
-                                  _onAmountSelect(shareInt, shareDecimals),
+                              onPressed: () => _onAmountSelect(
+                                  shareInt, balancePair[0].decimals),
                             )
                           ],
                         ),
@@ -422,7 +420,7 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
                   padding: EdgeInsets.only(top: 24),
                   child: RoundedButton(
                     text: dic['earn.remove'],
-                    onPressed: () => _onSubmit(shareDecimals),
+                    onPressed: () => _onSubmit(balancePair[0].decimals),
                   ),
                 )
               ],

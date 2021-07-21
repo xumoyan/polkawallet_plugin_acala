@@ -135,7 +135,7 @@ class _SwapFormState extends State<SwapForm> {
       if ((balancePair[1] == null ||
               Fmt.balanceDouble(balancePair[1].amount, decimalReceive) ==
                   0.0) &&
-          _swapOutput.amount < receiveMin) {
+          double.parse(_amountReceiveCtrl.text) < receiveMin) {
         errorReceive =
             '${dic['amount.min']} ${Fmt.priceCeil(receiveMin, lengthMax: 6)}';
       }

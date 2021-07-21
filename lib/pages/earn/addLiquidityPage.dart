@@ -9,8 +9,6 @@ import 'package:polkawallet_plugin_acala/pages/swap/swapTokenInput.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
-import 'package:polkawallet_sdk/api/types/txInfoData.dart';
-import 'package:polkawallet_sdk/plugin/store/balances.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
 import 'package:polkawallet_ui/components/roundedButton.dart';
@@ -43,39 +41,28 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
   double _price = 0;
   bool _withStake = false;
 
-  TxFeeEstimateResult _fee;
+  int _inputIndex = 0;
   BigInt _maxInputLeft;
   BigInt _maxInputRight;
   String _errorLeft;
   String _errorRight;
 
-  Future<void> _refreshData(String stableCoinSymbol) async {
-    final symbols = widget.plugin.networkState.tokenSymbol;
-    final decimals = widget.plugin.networkState.tokenDecimals;
-
+  Future<void> _refreshData() async {
     final String poolId = ModalRoute.of(context).settings.arguments;
-    final tokenPair = poolId.toUpperCase().split('-');
-
-    final token = tokenPair.firstWhere((e) => e != stableCoinSymbol);
-    final stableCoinDecimals = decimals[symbols.indexOf(stableCoinSymbol)];
-    final tokenDecimals = decimals[symbols.indexOf(token)];
-    final decimalsLeft =
-        tokenPair[0] == stableCoinSymbol ? stableCoinDecimals : tokenDecimals;
-    final decimalsRight =
-        tokenPair[0] == stableCoinSymbol ? tokenDecimals : stableCoinDecimals;
 
     await widget.plugin.service.earn.queryDexPoolInfo(poolId);
 
     final poolInfo = widget.plugin.store.earn.dexPoolInfoMap[poolId];
     if (mounted) {
+      final tokenPair = poolId.toUpperCase().split('-');
+      final balancePair = PluginFmt.getBalancePair(widget.plugin, tokenPair);
       setState(() {
-        _price = Fmt.bigIntToDouble(poolInfo.amountRight, decimalsRight) /
-            Fmt.bigIntToDouble(poolInfo.amountLeft, decimalsLeft);
+        _price = Fmt.bigIntToDouble(
+                poolInfo.amountRight, balancePair[0].decimals) /
+            Fmt.bigIntToDouble(poolInfo.amountLeft, balancePair[1].decimals);
       });
       _timer = Timer(Duration(seconds: 10), () {
-        if (mounted) {
-          _refreshData(stableCoinSymbol);
-        }
+        _refreshData();
       });
     }
   }
@@ -84,7 +71,8 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
     final value = supply.trim();
     final v = value.isEmpty ? 0 : double.parse(value);
     setState(() {
-      _amountRightCtrl.text = v == 0 ? '' : (v * _price).toStringAsFixed(6);
+      _inputIndex = 0;
+      _amountRightCtrl.text = v == 0 ? '' : (v * _price).toStringAsFixed(8);
     });
     _onValidate();
   }
@@ -93,7 +81,8 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
     final value = target.trim();
     final v = value.isEmpty ? 0 : double.parse(value);
     setState(() {
-      _amountLeftCtrl.text = v == 0 ? '' : (v / _price).toStringAsFixed(6);
+      _inputIndex = 1;
+      _amountLeftCtrl.text = v == 0 ? '' : (v / _price).toStringAsFixed(8);
     });
     _onValidate();
   }
@@ -105,20 +94,11 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
     final String poolId = ModalRoute.of(context).settings.arguments;
     final tokenPair = poolId.toUpperCase().split('-');
-    final isNativeToken =
-        tokenPair[0] == widget.plugin.networkState.tokenSymbol[0];
+    final balancePair = PluginFmt.getBalancePair(widget.plugin, tokenPair);
+
     final v =
         index == 0 ? _amountLeftCtrl.text.trim() : _amountRightCtrl.text.trim();
-    TokenBalanceData balance;
-    if (index == 0 && isNativeToken) {
-      balance = TokenBalanceData(
-          symbol: tokenPair[0],
-          decimals: widget.plugin.networkState.tokenDecimals[0],
-          amount: (widget.plugin.balances.native?.freeBalance ?? 0).toString());
-    } else {
-      balance = widget
-          .plugin.store.assets.tokenBalanceMap[tokenPair[index].toUpperCase()];
-    }
+    final balance = balancePair[index];
 
     String error;
     try {
@@ -143,13 +123,17 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
     final balanceLP = Fmt.balanceInt(widget
         .plugin.store.assets.tokenBalanceMap[poolId.toUpperCase()]?.amount);
     if (error == null && index == 0 && balanceLP == BigInt.zero) {
-      final min = Fmt.balanceDouble(
-              isNativeToken
+      final poolInfo = widget.plugin.store.earn.dexPoolInfoMap[poolId];
+      final min = Fmt.balanceInt(
+              tokenPair[0] == widget.plugin.networkState.tokenSymbol[0]
                   ? widget.plugin.networkConst['balances']['existentialDeposit']
-                  : existential_deposit[balance.symbol],
-              balance.decimals) /
-          2;
-      if (double.parse(_amountLeftCtrl.text.trim()) < min) {
+                  : existential_deposit[balance.symbol]) /
+          poolInfo.issuance *
+          Fmt.bigIntToDouble(poolInfo.amountLeft, balancePair[0].decimals);
+      final inputLeft = _inputIndex == 0
+          ? double.parse(_amountLeftCtrl.text.trim())
+          : (double.parse(_amountRightCtrl.text.trim()) / _price);
+      if (inputLeft < min) {
         error = '${dic['amount.min']} ${Fmt.priceCeil(min, lengthMax: 6)}';
       }
     }
@@ -201,16 +185,10 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
     _onTargetAmountChange(amount);
   }
 
-  Future<void> _onSubmit(String stableCoinSymbol, int stableCoinDecimals,
-      int tokenDecimals) async {
+  Future<void> _onSubmit(int decimalsLeft, int decimalsRight) async {
     if (_onValidate()) {
       final String poolId = ModalRoute.of(context).settings.arguments;
       final pair = poolId.toUpperCase().split('-');
-
-      final decimalsLeft =
-          pair[0] == stableCoinSymbol ? stableCoinDecimals : tokenDecimals;
-      final decimalsRight =
-          pair[0] == stableCoinSymbol ? tokenDecimals : stableCoinDecimals;
 
       final amountLeft = _amountLeftCtrl.text.trim();
       final amountRight = _amountRightCtrl.text.trim();
@@ -257,10 +235,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final isKar = widget.plugin.basic.name == plugin_name_karura;
-      final stableCoinSymbol = isKar ? karura_stable_coin : acala_stable_coin;
-
-      _refreshData(stableCoinSymbol);
+      _refreshData();
     });
   }
 
@@ -283,8 +258,6 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
     return Observer(
       builder: (BuildContext context) {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
-        final symbols = widget.plugin.networkState.tokenSymbol;
-        final decimals = widget.plugin.networkState.tokenDecimals;
 
         final String poolId = ModalRoute.of(context).settings.arguments;
         final tokenPair = poolId.toUpperCase().split('-');
@@ -293,30 +266,19 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
           PluginFmt.tokenView(tokenPair[1])
         ];
 
-        final isKar = widget.plugin.basic.name == plugin_name_karura;
-        final stableCoinSymbol = isKar ? karura_stable_coin : acala_stable_coin;
-        final stableCoinDecimals = decimals[symbols.indexOf(stableCoinSymbol)];
-
-        final token = tokenPair.firstWhere((e) => e != stableCoinSymbol);
-        final tokenDecimals = decimals[symbols.indexOf(token)];
-        final decimalsLeft = tokenPair[0] == stableCoinSymbol
-            ? stableCoinDecimals
-            : tokenDecimals;
-        final decimalsRight = tokenPair[0] == stableCoinSymbol
-            ? tokenDecimals
-            : stableCoinDecimals;
+        final balancePair = PluginFmt.getBalancePair(widget.plugin, tokenPair);
 
         double userShare = 0;
 
         double amountLeft = 0;
         double amountRight = 0;
 
-        final balancePair = PluginFmt.getBalancePair(widget.plugin, tokenPair);
-
         final poolInfo = widget.plugin.store.earn.dexPoolInfoMap[poolId];
         if (poolInfo != null) {
-          amountLeft = Fmt.bigIntToDouble(poolInfo.amountLeft, decimalsLeft);
-          amountRight = Fmt.bigIntToDouble(poolInfo.amountRight, decimalsRight);
+          amountLeft =
+              Fmt.bigIntToDouble(poolInfo.amountLeft, balancePair[0].decimals);
+          amountRight =
+              Fmt.bigIntToDouble(poolInfo.amountRight, balancePair[1].decimals);
 
           String input = _amountLeftCtrl.text.trim();
           try {
@@ -489,7 +451,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                   child: RoundedButton(
                     text: dic['earn.add'],
                     onPressed: () => _onSubmit(
-                        stableCoinSymbol, stableCoinDecimals, tokenDecimals),
+                        balancePair[0].decimals, balancePair[1].decimals),
                   ),
                 )
               ],

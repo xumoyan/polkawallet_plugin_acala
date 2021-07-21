@@ -156,7 +156,6 @@ class _EarnPageState extends State<EarnPage> {
   Widget build(BuildContext context) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
     final symbols = widget.plugin.networkState.tokenSymbol;
-    final decimals = widget.plugin.networkState.tokenDecimals;
     final isKar = widget.plugin.basic.name == plugin_name_karura;
 
     // final bool enabled = !isKar || ModalRoute.of(context).settings.arguments;
@@ -164,17 +163,6 @@ class _EarnPageState extends State<EarnPage> {
     final stableCoinSymbol = isKar ? karura_stable_coin : acala_stable_coin;
     final tabNow = _poolId ?? (isKar ? 'KAR-kUSD' : 'ACA-aUSD');
     final pair = tabNow.toUpperCase().split('-');
-    final stableCoinIndex = pair.indexOf(stableCoinSymbol);
-    final stableCoinDecimals = decimals[symbols.indexOf(stableCoinSymbol)];
-    final tokenDecimals =
-        decimals[symbols.indexOf(stableCoinIndex == 0 ? pair[1] : pair[0])];
-    final leftDecimal =
-        stableCoinIndex == 0 ? stableCoinDecimals : tokenDecimals;
-    final rightDecimal =
-        stableCoinIndex == 0 ? tokenDecimals : stableCoinDecimals;
-    final shareDecimals = stableCoinDecimals >= tokenDecimals
-        ? stableCoinDecimals
-        : tokenDecimals;
     return Scaffold(
       appBar: AppBar(
         title: Text(dic['earn.title']),
@@ -191,6 +179,8 @@ class _EarnPageState extends State<EarnPage> {
       ),
       body: Observer(
         builder: (_) {
+          final balancePair = PluginFmt.getBalancePair(widget.plugin, pair);
+
           BigInt issuance = BigInt.zero;
           BigInt shareTotal = BigInt.zero;
           BigInt share = BigInt.zero;
@@ -210,12 +200,12 @@ class _EarnPageState extends State<EarnPage> {
             stakeShare = share / shareTotal;
             poolShare = share / issuance;
 
-            final lpAmount =
-                Fmt.bigIntToDouble(poolInfo.amountLeft, leftDecimal) *
-                    poolShare;
-            final lpAmount2 =
-                Fmt.bigIntToDouble(poolInfo.amountRight, rightDecimal) *
-                    poolShare;
+            final lpAmount = Fmt.bigIntToDouble(
+                    poolInfo.amountLeft, balancePair[0].decimals) *
+                poolShare;
+            final lpAmount2 = Fmt.bigIntToDouble(
+                    poolInfo.amountRight, balancePair[1].decimals) *
+                poolShare;
             lpAmountString =
                 '${Fmt.priceFloor(lpAmount)} ${PluginFmt.tokenView(pair[0])} + ${Fmt.priceFloor(lpAmount2, lengthFixed: 4)} ${PluginFmt.tokenView(pair[1])}';
             reward = (widget.plugin.store.earn.swapPoolRewards[tabNow] ?? 0) *
@@ -253,11 +243,9 @@ class _EarnPageState extends State<EarnPage> {
                     children: <Widget>[
                       _SystemCard(
                         token: tabNow,
-                        total: Fmt.bigIntToDouble(
-                            poolInfo?.sharesTotal ?? BigInt.zero,
-                            shareDecimals),
-                        userStaked: Fmt.bigIntToDouble(
-                            poolInfo?.shares ?? BigInt.zero, shareDecimals),
+                        total: poolInfo?.sharesTotal ?? BigInt.zero,
+                        userStaked: poolInfo?.shares ?? BigInt.zero,
+                        decimals: balancePair[0].decimals,
                         lpAmountString: lpAmountString,
                         actions: Row(
                           children: [
@@ -296,7 +284,8 @@ class _EarnPageState extends State<EarnPage> {
                             _onWithdrawReward(poolInfo.reward),
                         incentiveCoinSymbol: symbols[0],
                         stableCoinSymbol: stableCoinSymbol,
-                        stableCoinDecimal: stableCoinDecimals,
+                        stableCoinDecimal: widget.plugin.networkState
+                            .tokenDecimals[symbols.indexOf(stableCoinSymbol)],
                       )
                     ],
                   ),
@@ -359,12 +348,14 @@ class _SystemCard extends StatelessWidget {
     this.token,
     this.total,
     this.userStaked,
+    this.decimals,
     this.lpAmountString,
     this.actions,
   });
   final String token;
-  final double total;
-  final double userStaked;
+  final BigInt total;
+  final BigInt userStaked;
+  final int decimals;
   final String lpAmountString;
   final Widget actions;
   @override
@@ -386,7 +377,8 @@ class _SystemCard extends StatelessWidget {
               Text('${dic['earn.staked']} ${PluginFmt.tokenView(token)}'),
               Padding(
                 padding: EdgeInsets.only(top: 16, bottom: 8),
-                child: Text(Fmt.priceFloor(userStaked, lengthFixed: 4),
+                child: Text(
+                    Fmt.priceFloorBigInt(userStaked, decimals, lengthFixed: 4),
                     style: primaryText),
               ),
             ],
@@ -403,12 +395,13 @@ class _SystemCard extends StatelessWidget {
               InfoItem(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 title: dic['earn.pool'],
-                content: Fmt.priceFloor(total, lengthFixed: 4),
+                content: Fmt.priceFloorBigInt(total, decimals, lengthFixed: 4),
               ),
               InfoItem(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 title: dic['earn.share'],
-                content: Fmt.ratio(total > 0 ? userStaked / total : 0),
+                content:
+                    Fmt.ratio(total > BigInt.zero ? userStaked / total : 0),
               ),
             ],
           ),

@@ -45,7 +45,7 @@ const xcm_dest_weight = '3000000000';
 const existential_deposit = {
   'KSM': '100000000',
   'KUSD': '10000000000',
-  'LKSM': '50000000000',
+  'LKSM': '500000000',
 };
 
 const acala_token_ids = {
