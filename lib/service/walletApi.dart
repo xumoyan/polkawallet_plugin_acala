@@ -48,4 +48,20 @@ class WalletApi {
       return null;
     }
   }
+
+  static Future<Map> getTokenPrice(String network) async {
+    final url =
+        'https://${network.toLowerCase()}.api.subscan.io/api/scan/token';
+    try {
+      Response res = await get(Uri.parse(url));
+      if (res == null) {
+        return null;
+      } else {
+        return jsonDecode(utf8.decode(res.bodyBytes));
+      }
+    } catch (err) {
+      print(err);
+      return null;
+    }
+  }
 }

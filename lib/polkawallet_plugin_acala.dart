@@ -237,9 +237,13 @@ class PluginAcala extends PolkawalletPlugin {
     }
   }
 
-  void _updateTokenBalances(List<TokenBalanceData> data) {
+  void _updateTokenBalances(List<TokenBalanceData> data,
+      {bool isFromCache = false}) {
     data.removeWhere((e) => e.symbol.contains('-') && e.amount == '0');
-    balances.setTokens(data);
+    data.sort((a, b) => (!a.name.contains('-') && b.name.contains('-'))
+        ? -1
+        : a.name.compareTo(b.name));
+    balances.setTokens(data, isFromCache: isFromCache);
   }
 
   void _loadCacheData(KeyPairData acc) {
@@ -250,7 +254,8 @@ class PluginAcala extends PolkawalletPlugin {
       loadBalances(acc);
 
       _store.assets.loadCache(acc.pubKey);
-      _updateTokenBalances(_store.assets.tokenBalanceMap.values.toList());
+      _updateTokenBalances(_store.assets.tokenBalanceMap.values.toList(),
+          isFromCache: true);
 
       _store.loan.loadCache(acc.pubKey);
       _store.earn.loadCache(acc.pubKey);

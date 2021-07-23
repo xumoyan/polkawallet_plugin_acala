@@ -9,6 +9,7 @@ import 'package:polkawallet_plugin_acala/common/constants/base.dart';
 import 'package:polkawallet_plugin_acala/common/constants/index.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/bootstrapPage.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
+import 'package:polkawallet_plugin_acala/service/walletApi.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
@@ -37,6 +38,8 @@ class _BootstrapListState extends State<BootstrapList> {
   final GlobalKey<RefreshIndicatorState> _refreshKey =
       new GlobalKey<RefreshIndicatorState>();
 
+  String _relayChainTokenPrice;
+
   int _bestNumber = 0;
 
   Map<String, List> _userProvisions = {};
@@ -58,11 +61,20 @@ class _BootstrapListState extends State<BootstrapList> {
   Future<void> _updateData() async {
     _updateBestNumber();
 
-    await Future.wait([
+    final List res = await Future.wait([
       widget.plugin.service.earn.getDexPools(),
       widget.plugin.service.earn.getBootstraps(),
       _queryUserProvisions(),
+      WalletApi.getTokenPrice(relay_chain_name[widget.plugin.basic.name]),
     ]);
+
+    if (res != null && res[3] != null) {
+      final symbol = res[3]['data']['token'][0];
+      setState(() {
+        _relayChainTokenPrice =
+            res[3]['data']['detail'][symbol]['price'] as String;
+      });
+    }
   }
 
   Future<void> _queryUserProvisions() async {
@@ -148,6 +160,7 @@ class _BootstrapListState extends State<BootstrapList> {
                       pool: e,
                       bestNumber: _bestNumber,
                       tokenIcons: widget.plugin.tokenIcons,
+                      relayChainTokenPrice: _relayChainTokenPrice,
                     );
                   }).toList(),
                   ...dexPools.map((e) {
@@ -185,11 +198,13 @@ class _BootstrapListState extends State<BootstrapList> {
 }
 
 class _BootStrapCard extends StatelessWidget {
-  _BootStrapCard({this.pool, this.bestNumber, this.tokenIcons});
+  _BootStrapCard(
+      {this.pool, this.bestNumber, this.tokenIcons, this.relayChainTokenPrice});
 
   final DexPoolData pool;
   final int bestNumber;
   final Map<String, Widget> tokenIcons;
+  final String relayChainTokenPrice;
 
   @override
   Widget build(BuildContext context) {
@@ -217,6 +232,15 @@ class _BootStrapCard extends StatelessWidget {
         ? DateTime.now()
             .add(Duration(milliseconds: BLOCK_TIME_DEFAULT * blocksEnd))
         : null;
+
+    String ratioView =
+        '1 ${tokenPairView[0]} : ${Fmt.priceCeil(ratio, lengthMax: 6)} ${tokenPairView[1]}';
+    if (poolId == 'KAR-KSM') {
+      final priceView = relayChainTokenPrice == null
+          ? '--.--'
+          : Fmt.priceFloor(double.parse(relayChainTokenPrice) * ratio);
+      ratioView += '\n1 ${tokenPairView[0]} ≈ \$$priceView';
+    }
     return RoundedCard(
       margin: EdgeInsets.only(bottom: 16),
       padding: EdgeInsets.all(16),
@@ -317,9 +341,15 @@ class _BootStrapCard extends StatelessWidget {
           ),
           Divider(),
           Container(
+            margin: EdgeInsets.only(bottom: 8),
+            child: InfoItemRow(
+                dic['boot.total'],
+                '${Fmt.priceCeilBigInt(nowLeft, pool.pairDecimals[0])} ${tokenPairView[0]}\n'
+                '+ ${Fmt.priceCeilBigInt(nowRight, pool.pairDecimals[1])} ${tokenPairView[1]}'),
+          ),
+          Container(
             margin: EdgeInsets.only(bottom: 16),
-            child: InfoItemRow(dic['boot.ratio'],
-                '1 ${tokenPairView[0]} : ${Fmt.priceCeil(ratio, lengthMax: 6)} ${tokenPairView[1]}'),
+            child: InfoItemRow(dic['boot.ratio'], ratioView),
           ),
           RoundedButton(
             text: dic['boot.title'],

@@ -122,4 +122,16 @@ class AcalaServiceAssets {
         .evalJavascript('acala.queryNFTs(api, "$address")');
     return res;
   }
+
+  Future<bool> checkExistentialDepositForTransfer(
+    String address,
+    String token,
+    int decimal,
+    String amount, {
+    String direction = 'to',
+  }) async {
+    final res = await plugin.sdk.webView.evalJavascript(
+        'acala.checkExistentialDepositForTransfer(api, "$address", "$token", $decimal, $amount, "$direction")');
+    return res['result'] as bool;
+  }
 }

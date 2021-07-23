@@ -5,8 +5,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:polkawallet_plugin_acala/api/types/dexPoolInfoData.dart';
+import 'package:polkawallet_plugin_acala/common/constants/index.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/swapTokenInput.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
+import 'package:polkawallet_plugin_acala/service/walletApi.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
@@ -41,20 +43,30 @@ class _BootstrapPageState extends State<BootstrapPage> {
   int _addTab = 0;
 
   List _userProvisioning;
+  String _relayChainTokenPrice;
 
   String _leftAmountError;
   String _rightAmountError;
   Timer _delayTimer;
 
-  Future<void> _queryUserProvisioning() async {
+  Future<void> _queryData() async {
     widget.plugin.service.earn.getBootstraps();
 
     final DexPoolData pool = ModalRoute.of(context).settings.arguments;
-    final res = await widget.plugin.sdk.webView.evalJavascript(
-        'api.query.dex.provisioningPool(${jsonEncode(pool.tokens)}, "${widget.keyring.current.address}")');
+    final res = await Future.wait([
+      widget.plugin.sdk.webView.evalJavascript(
+          'api.query.dex.provisioningPool(${jsonEncode(pool.tokens)}, "${widget.keyring.current.address}")'),
+      WalletApi.getTokenPrice(relay_chain_name[widget.plugin.basic.name]),
+    ]);
+
     if (mounted) {
       setState(() {
-        _userProvisioning = res;
+        _userProvisioning = res[0];
+        if (res[1] != null && res[1]['data'] != null) {
+          final symbol = res[1]['data']['token'][0];
+          _relayChainTokenPrice =
+              res[1]['data']['detail'][symbol]['price'] as String;
+        }
       });
     }
   }
@@ -167,9 +179,6 @@ class _BootstrapPageState extends State<BootstrapPage> {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
     final colorGrey = Theme.of(context).unselectedWidgetColor;
 
-    final symbols = widget.plugin.networkState.tokenSymbol;
-    final decimals = widget.plugin.networkState.tokenDecimals;
-
     final DexPoolData args = ModalRoute.of(context).settings.arguments;
     final pair = args.tokens.map((e) => e['token'] as String).toList();
     final pairView = pair.map((e) => PluginFmt.tokenView(e)).toList();
@@ -207,6 +216,18 @@ class _BootstrapPageState extends State<BootstrapPage> {
 
       final balancePair = PluginFmt.getBalancePair(widget.plugin, pair);
 
+      final ratio =
+          nowLeft > 0 ? (nowRight + addRight) / (nowLeft + addLeft) : 1.0;
+      final ratioView1 =
+          '1 ${pairView[0]} : ${Fmt.priceCeil(ratio, lengthMax: 6)} ${pairView[1]}';
+      String ratioView2 = '';
+      if (pair.join('-').toUpperCase() == 'KAR-KSM') {
+        final priceView = _relayChainTokenPrice == null
+            ? '--.--'
+            : Fmt.priceFloor(double.parse(_relayChainTokenPrice) * ratio);
+        ratioView2 += '1 ${pairView[0]} ≈ \$$priceView';
+      }
+
       return Scaffold(
         appBar: AppBar(
             title: Text('${pairView.join('-')} ${dic['boot.title']}'),
@@ -217,7 +238,7 @@ class _BootstrapPageState extends State<BootstrapPage> {
               Expanded(
                 child: RefreshIndicator(
                   key: _refreshKey,
-                  onRefresh: _queryUserProvisioning,
+                  onRefresh: _queryData,
                   child: ListView(
                     padding: EdgeInsets.all(16),
                     children: [
@@ -357,6 +378,19 @@ class _BootstrapPageState extends State<BootstrapPage> {
                                     ],
                                   )
                                 : Container(),
+                            Container(
+                              margin: EdgeInsets.only(top: 8),
+                              child: Row(
+                                children: [
+                                  InfoItem(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    title: ratioView1,
+                                    content: ratioView2,
+                                  )
+                                ],
+                              ),
+                            ),
                             Container(
                               margin: EdgeInsets.only(top: 8),
                               child: InfoItemRow(estShareLabel,

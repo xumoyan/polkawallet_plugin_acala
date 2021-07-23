@@ -26,6 +26,7 @@ const Map<String, String> zhDex = {
   'boot.provision.met': '达成',
   'boot.provision.add': '添加流动性',
   'boot.ratio': '当前配比',
+  'boot.total': '总量',
   'boot.my': '我提供的流动性',
   'boot.my.est': '预估',
   'boot.my.share': '份额',

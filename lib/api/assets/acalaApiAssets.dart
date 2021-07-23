@@ -100,4 +100,15 @@ class AcalaApiAssets {
         .map((e) => NFTData.fromJson(Map<String, dynamic>.of(e)))
         .toList();
   }
+
+  Future<bool> checkExistentialDepositForTransfer(
+    String address,
+    String token,
+    int decimal,
+    String amount, {
+    String direction = 'to',
+  }) async {
+    return service.checkExistentialDepositForTransfer(
+        address, token, decimal, amount);
+  }
 }

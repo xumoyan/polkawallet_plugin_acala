@@ -1,9 +1,10 @@
 import { StakingPool } from "@acala-network/sdk-homa";
-import { FixedPointNumber, Token } from "@acala-network/sdk-core";
+import { FixedPointNumber, Token, createLPCurrencyName } from "@acala-network/sdk-core";
 import { SwapPromise } from "@acala-network/sdk-swap";
 import { ApiPromise } from "@polkadot/api";
 import { tokensForAcala, tokensForKarura } from "../constants/acala";
 import { BN } from "@polkadot/util/bn/bn";
+import { WalletPromise } from "@acala-network/sdk-wallet";
 
 const decimalsDOT = 10;
 const ONE = FixedPointNumber.ONE;
@@ -47,24 +48,24 @@ async function calcTokenSwapAmount(api: ApiPromise, input: number, output: numbe
   return new Promise((resolve, reject) => {
     const exchangeFee = api.consts.dex.getExchangeFee as any;
 
-    try {
-      swapper.swap([inputToken, outputToken], output === null ? i : o, mode, (res: any) => {
-        const feeRate = new FixedPointNumber(exchangeFee[0].toString()).div(new FixedPointNumber(exchangeFee[1].toString()));
-        if (res.input) {
-          resolve({
-            amount: output === null ? res.output.balance.toNumber(6) : res.input.balance.toNumber(6),
-            priceImpact: res.priceImpact.toNumber(6),
-            fee: res.input.balance.times(_computeExchangeFee(res.path, feeRate)).toNumber(6),
-            path: res.path,
-            input: res.input.token.toString(),
-            output: res.output.token.toString(),
-          });
-        }
-      });
-    } catch (error) {
-      console.log(error);
-      reject({ error });
-    }
+    swapper.swap([inputToken, outputToken], output === null ? i : o, mode, (error: any, res: any) => {
+      const feeRate = new FixedPointNumber(exchangeFee[0].toString()).div(new FixedPointNumber(exchangeFee[1].toString()));
+      if (res.input) {
+        resolve({
+          amount: output === null ? res.output.balance.toNumber(6) : res.input.balance.toNumber(6),
+          priceImpact: res.priceImpact.toNumber(6),
+          fee: res.input.balance.times(_computeExchangeFee(res.path, feeRate)).toNumber(6),
+          path: res.path,
+          input: res.input.token.toString(),
+          output: res.output.token.toString(),
+        });
+      }
+      if (!!error) {
+        reject({
+          error,
+        });
+      }
+    });
   });
 }
 
@@ -363,6 +364,37 @@ async function queryNFTs(api: ApiPromise, address: string) {
     .filter((i) => !!i);
 }
 
+let walletPromise: WalletPromise;
+async function checkExistentialDepositForTransfer(
+  api: ApiPromise,
+  address: string,
+  token: string,
+  decimals: number,
+  amount: number,
+  direction = "to"
+) {
+  if (!walletPromise) {
+    walletPromise = new WalletPromise(api);
+  }
+
+  return new Promise((resolve, _) => {
+    const tokenPair = token.split("-");
+    walletPromise
+      .checkTransfer(
+        address,
+        token.match("-") ? createLPCurrencyName(tokenPair[0], tokenPair[1]) : token,
+        new FixedPointNumber(amount, decimals),
+        direction as "from" | "to"
+      )
+      .then((res) => {
+        resolve({ error: null, result: res });
+      })
+      .catch((err) => {
+        resolve({ error: err.message, result: false });
+      });
+  });
+}
+
 export default {
   calcTokenSwapAmount,
   queryLPTokens,
@@ -375,4 +407,5 @@ export default {
   fetchHomaUserInfo,
   queryHomaRedeemAmount,
   queryNFTs,
+  checkExistentialDepositForTransfer,
 };

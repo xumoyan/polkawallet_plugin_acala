@@ -27,6 +27,7 @@ const Map<String, String> enDex = {
   'boot.provision.met': 'met',
   'boot.provision.add': 'Add Provision',
   'boot.ratio': 'Current ratio',
+  'boot.total': 'Total',
   'boot.my': 'My Liquidity Provision',
   'boot.my.est': 'Est.',
   'boot.my.share': ' Share',
