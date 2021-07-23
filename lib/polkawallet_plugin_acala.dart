@@ -82,7 +82,7 @@ class PluginAcala extends PolkawalletPlugin {
           isTestNet: name != plugin_name_karura,
           isXCMSupport: name == plugin_name_karura,
           parachainId: '2000',
-          jsCodeVersion: 20701,
+          jsCodeVersion: 21401,
         );
 
   @override
@@ -215,14 +215,15 @@ class PluginAcala extends PolkawalletPlugin {
   PluginService get service => _service;
 
   Future<void> _subscribeTokenBalances(KeyPairData acc) async {
-    final enabled = basic.name != plugin_name_karura ||
-        _store.setting.liveModules['assets']['enabled'];
-    // final enabled = true;
+    // todo: fix this after new acala online
+    final enabled = basic.name == 'acala'
+        ? _store.setting.liveModules['assets']['enabled']
+        : true;
 
     _api.assets.subscribeTokenBalances(basic.name, acc.address, (data) {
       _store.assets.setTokenBalanceMap(data, acc.pubKey);
 
-      _updateTokenBalances(data);
+      balances.setTokens(data);
     }, transferEnabled: enabled);
 
     if (basic.name == plugin_name_acala) {
@@ -237,15 +238,6 @@ class PluginAcala extends PolkawalletPlugin {
     }
   }
 
-  void _updateTokenBalances(List<TokenBalanceData> data,
-      {bool isFromCache = false}) {
-    data.removeWhere((e) => e.symbol.contains('-') && e.amount == '0');
-    data.sort((a, b) => (!a.name.contains('-') && b.name.contains('-'))
-        ? -1
-        : a.name.compareTo(b.name));
-    balances.setTokens(data, isFromCache: isFromCache);
-  }
-
   void _loadCacheData(KeyPairData acc) {
     balances.setExtraTokens([]);
     _store.assets.setNFTs([]);
@@ -254,7 +246,7 @@ class PluginAcala extends PolkawalletPlugin {
       loadBalances(acc);
 
       _store.assets.loadCache(acc.pubKey);
-      _updateTokenBalances(_store.assets.tokenBalanceMap.values.toList(),
+      balances.setTokens(_store.assets.tokenBalanceMap.values.toList(),
           isFromCache: true);
 
       _store.loan.loadCache(acc.pubKey);

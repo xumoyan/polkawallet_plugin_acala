@@ -43,9 +43,11 @@ class _DexPoolListState extends State<DexPoolList> {
       final poolId = e.tokens.map((e) => e['token']).toList().join('-');
       poolInfoMap[poolId] = res[i];
     });
-    setState(() {
-      _poolInfoMap = poolInfoMap;
-    });
+    if (mounted) {
+      setState(() {
+        _poolInfoMap = poolInfoMap;
+      });
+    }
   }
 
   @override
@@ -143,13 +145,6 @@ class _DexPoolCard extends StatelessWidget {
                   color: colorGrey,
                 ),
               )),
-              Text(
-                dic['boot.enabled'],
-                style: TextStyle(
-                  fontSize: 12,
-                  color: primaryColor,
-                ),
-              )
             ],
           ),
           Divider(height: 24),
@@ -186,6 +181,7 @@ class _DexPoolCard extends StatelessWidget {
                 child: OutlinedButtonSmall(
                   content: dic['dex.lp.remove'],
                   active: false,
+                  padding: EdgeInsets.only(top: 8, bottom: 8),
                   onPressed: () => Navigator.of(context).pushNamed(
                       WithdrawLiquidityPage.route,
                       arguments: poolId),
@@ -195,6 +191,7 @@ class _DexPoolCard extends StatelessWidget {
                 child: OutlinedButtonSmall(
                   content: dic['dex.lp.add'],
                   active: true,
+                  padding: EdgeInsets.only(top: 8, bottom: 8),
                   onPressed: () => Navigator.of(context)
                       .pushNamed(AddLiquidityPage.route, arguments: poolId),
                 ),

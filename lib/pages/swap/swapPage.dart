@@ -49,8 +49,10 @@ class _SwapPageState extends State<SwapPage> {
   Widget build(_) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
     final isKar = widget.plugin.basic.name == plugin_name_karura;
-    // final bool enabled = !isKar || ModalRoute.of(context).settings.arguments;
-    final bool enabled = true;
+    // todo: fix this after new acala online
+    final bool enabled = widget.plugin.basic.name == 'acala'
+        ? ModalRoute.of(context).settings.arguments
+        : true;
     return Scaffold(
       extendBodyBehindAppBar: true,
       body: Stack(

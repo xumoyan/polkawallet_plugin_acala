@@ -1,3 +1,9 @@
+## [0.2.6] - 20210723.
+
+* bump polkawallet_sdk 0.2.6.
+* add Liquidity tab in swap page.
+* add ED limitation for input fields.
+
 ## [0.2.5] - 20210716.
 
 * bump polkawallet_sdk 0.2.5.

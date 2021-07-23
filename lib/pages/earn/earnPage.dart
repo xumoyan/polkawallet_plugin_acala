@@ -158,8 +158,7 @@ class _EarnPageState extends State<EarnPage> {
     final symbols = widget.plugin.networkState.tokenSymbol;
     final isKar = widget.plugin.basic.name == plugin_name_karura;
 
-    // final bool enabled = !isKar || ModalRoute.of(context).settings.arguments;
-    final bool enabled = true;
+    final bool enabled = !isKar || ModalRoute.of(context).settings.arguments;
     final stableCoinSymbol = isKar ? karura_stable_coin : acala_stable_coin;
     final tabNow = _poolId ?? (isKar ? 'KAR-kUSD' : 'ACA-aUSD');
     final pair = tabNow.toUpperCase().split('-');

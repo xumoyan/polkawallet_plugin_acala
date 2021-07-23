@@ -53,7 +53,6 @@ class _LoanPageState extends State<LoanPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final isKar = widget.plugin.basic.name == plugin_name_karura;
       final bool enabled = !isKar || ModalRoute.of(context).settings.arguments;
-      // final bool enabled = true;
       if (enabled) {
         _fetchData();
       } else {
