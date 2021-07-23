@@ -242,6 +242,8 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
               : (share - shareInput) / (shareTotal - shareInput);
         }
 
+        final shareEmpty = shareInt == BigInt.zero;
+
         return Scaffold(
           appBar: AppBar(title: Text(dic['earn.remove']), centerTitle: true),
           body: SafeArea(
@@ -318,28 +320,39 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
                           children: <Widget>[
                             OutlinedButtonSmall(
                               content: '10%',
-                              active: shareInputInt == shareInt10,
-                              onPressed: () => _onAmountSelect(
-                                  shareInt10, balancePair[0].decimals),
+                              active:
+                                  !shareEmpty && shareInputInt == shareInt10,
+                              onPressed: shareEmpty
+                                  ? null
+                                  : () => _onAmountSelect(
+                                      shareInt10, balancePair[0].decimals),
                             ),
                             OutlinedButtonSmall(
                               content: '25%',
-                              active: shareInputInt == shareInt25,
-                              onPressed: () => _onAmountSelect(
-                                  shareInt25, balancePair[0].decimals),
+                              active:
+                                  !shareEmpty && shareInputInt == shareInt25,
+                              onPressed: shareEmpty
+                                  ? null
+                                  : () => _onAmountSelect(
+                                      shareInt25, balancePair[0].decimals),
                             ),
                             OutlinedButtonSmall(
                               content: '50%',
-                              active: shareInputInt == shareInt50,
-                              onPressed: () => _onAmountSelect(
-                                  shareInt50, balancePair[0].decimals),
+                              active:
+                                  !shareEmpty && shareInputInt == shareInt50,
+                              onPressed: shareEmpty
+                                  ? null
+                                  : () => _onAmountSelect(
+                                      shareInt50, balancePair[0].decimals),
                             ),
                             OutlinedButtonSmall(
                               margin: EdgeInsets.only(right: 0),
                               content: '100%',
-                              active: shareInputInt == shareInt,
-                              onPressed: () => _onAmountSelect(
-                                  shareInt, balancePair[0].decimals),
+                              active: !shareEmpty && shareInputInt == shareInt,
+                              onPressed: shareEmpty
+                                  ? null
+                                  : () => _onAmountSelect(
+                                      shareInt, balancePair[0].decimals),
                             )
                           ],
                         ),

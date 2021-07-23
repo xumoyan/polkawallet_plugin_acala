@@ -258,6 +258,8 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
     return Observer(
       builder: (BuildContext context) {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
+        final runtimeVersion =
+            widget.plugin.networkConst['system']['version']['specVersion'];
 
         final String poolId = ModalRoute.of(context).settings.arguments;
         final tokenPair = poolId.toUpperCase().split('-');
@@ -422,30 +424,33 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                     ],
                   ),
                 ),
-                Padding(
-                  padding: EdgeInsets.only(top: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TapTooltip(
-                        message: dic['earn.withStake.txt'],
-                        child: Icon(Icons.info, color: colorGray, size: 16),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(left: 8),
-                        child: Text(dic['earn.withStake']),
-                      ),
-                      CupertinoSwitch(
-                        value: _withStake,
-                        onChanged: (res) {
-                          setState(() {
-                            _withStake = res;
-                          });
-                        },
+                runtimeVersion > 1004
+                    ? Padding(
+                        padding: EdgeInsets.only(top: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TapTooltip(
+                              message: dic['earn.withStake.txt'],
+                              child:
+                                  Icon(Icons.info, color: colorGray, size: 16),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.only(left: 8),
+                              child: Text(dic['earn.withStake']),
+                            ),
+                            CupertinoSwitch(
+                              value: _withStake,
+                              onChanged: (res) {
+                                setState(() {
+                                  _withStake = res;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
                       )
-                    ],
-                  ),
-                ),
+                    : Container(),
                 Padding(
                   padding: EdgeInsets.only(top: 16),
                   child: RoundedButton(
