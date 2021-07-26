@@ -23,6 +23,7 @@ import 'package:polkawallet_ui/components/tokenIcon.dart';
 import 'package:polkawallet_ui/components/txButton.dart';
 import 'package:polkawallet_ui/pages/scanPage.dart';
 import 'package:polkawallet_ui/utils/format.dart';
+import 'package:polkawallet_ui/utils/i18n.dart';
 import 'package:polkawallet_ui/utils/index.dart';
 
 class TransferPage extends StatefulWidget {
@@ -45,7 +46,31 @@ class _TransferPageState extends State<TransferPage> {
   String _token;
   String _chainTo;
 
+  String _accountToError;
+
   TxFeeEstimateResult _fee;
+
+  Future<String> _checkAccountTo(KeyPairData acc) async {
+    final addressCheckValid = await widget.plugin.sdk.webView.evalJavascript(
+        '(account.checkAddressFormat != undefined ? {}:null)',
+        wrapPromise: false);
+    if (addressCheckValid != null) {
+      final res = await widget.plugin.sdk.api.account
+          .checkAddressFormat(acc.address, network_ss58_format[_chainTo]);
+      if (res != null && !res) {
+        return I18n.of(context)
+            .getDic(i18n_full_dic_ui, 'account')['ss58.mismatch'];
+      }
+    }
+    return null;
+  }
+
+  Future<void> _validateAccountTo(KeyPairData acc) async {
+    final error = await _checkAccountTo(acc);
+    setState(() {
+      _accountToError = error;
+    });
+  }
 
   Future<String> _getTxFee({bool isXCM = false, bool reload = false}) async {
     if (_fee?.partialFee != null && !reload) {
@@ -95,13 +120,17 @@ class _TransferPageState extends State<TransferPage> {
     final acc = KeyPairData();
     acc.address = (to as QRCodeResult).address.address;
     acc.name = (to as QRCodeResult).address.name;
-    final icon =
-        await widget.plugin.sdk.api.account.getAddressIcons([acc.address]);
-    if (icon != null && icon[0] != null) {
+    final res = await Future.wait([
+      widget.plugin.sdk.api.account.getAddressIcons([acc.address]),
+      _checkAccountTo(acc),
+    ]);
+    if (res != null && res[0] != null) {
+      final List icon = res[0];
       acc.icon = icon[0][1];
     }
     setState(() {
       _accountTo = acc;
+      _accountToError = res[1];
     });
     print(_accountTo.address);
   }
@@ -144,6 +173,7 @@ class _TransferPageState extends State<TransferPage> {
                 setState(() {
                   _chainTo = e;
                 });
+                _validateAccountTo(_accountTo);
 
                 // update estimated tx fee if switch ToChain
                 _getTxFee(
@@ -166,7 +196,7 @@ class _TransferPageState extends State<TransferPage> {
   }
 
   TxConfirmParams _getTxParams(String chainTo) {
-    if (_formKey.currentState.validate()) {
+    if (_accountToError == null && _formKey.currentState.validate()) {
       final decimals =
           widget.plugin.store.assets.tokenBalanceMap[_token].decimals;
 
@@ -347,13 +377,23 @@ class _TransferPageState extends State<TransferPage> {
                           widget.keyring.allAccounts,
                           label: dic['address'],
                           initialValue: _accountTo,
-                          onChanged: (KeyPairData acc) {
+                          onChanged: (KeyPairData acc) async {
+                            final error = await _checkAccountTo(acc);
                             setState(() {
                               _accountTo = acc;
+                              _accountToError = error;
                             });
                           },
                           key: ValueKey<KeyPairData>(_accountTo),
                         ),
+                        _accountToError != null
+                            ? Container(
+                                margin: EdgeInsets.only(top: 4),
+                                child: Text(_accountToError,
+                                    style: TextStyle(
+                                        fontSize: 12, color: Colors.red)),
+                              )
+                            : Container(),
                         TextFormField(
                           decoration: InputDecoration(
                             hintText: dic['amount'],
@@ -586,6 +626,9 @@ class _TransferPageState extends State<TransferPage> {
                                 ),
                               )
                             : Container(),
+                        _token == 'KSM'
+                            ? _KSMCrossChainTransferWarning()
+                            : Container(),
                       ],
                     ),
                   ),
@@ -607,6 +650,31 @@ class _TransferPageState extends State<TransferPage> {
           ),
         );
       },
+    );
+  }
+}
+
+class _KSMCrossChainTransferWarning extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
+    return Container(
+      margin: EdgeInsets.only(top: 16, bottom: 24),
+      padding: EdgeInsets.all(8),
+      decoration: BoxDecoration(
+          color: Colors.black12,
+          border: Border.all(color: Colors.black26, width: 0.5),
+          borderRadius: BorderRadius.all(Radius.circular(8))),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            dic['cross.warn'],
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
+          ),
+          Text(dic['cross.warn.network'], style: TextStyle(fontSize: 12))
+        ],
+      ),
     );
   }
 }

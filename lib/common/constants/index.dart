@@ -25,6 +25,11 @@ const relay_chain_name = {
   plugin_name_acala: 'polkadot',
   plugin_name_karura: 'kusama',
 };
+const network_ss58_format = {
+  plugin_name_acala: 42, // todo: update this after new acala online
+  plugin_name_karura: 8,
+  'kusama': 2,
+};
 const relay_chain_token_symbol = {
   plugin_name_acala: 'DOT',
   plugin_name_karura: 'KSM',
