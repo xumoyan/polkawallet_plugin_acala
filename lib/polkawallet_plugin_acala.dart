@@ -145,8 +145,7 @@ class PluginAcala extends PolkawalletPlugin {
             child: Builder(
               builder: (_) => TokenDetailPage(this, keyring),
             ),
-            uri: GraphQLConfig['httpUri'],
-            subscriptionUri: GraphQLConfig['wsUri'],
+            uri: GraphQLConfig[_service.plugin.basic.name]['httpUri'],
           ),
       TransferPage.route: (_) => TransferPage(this, keyring),
       TransferDetailPage.route: (_) => TransferDetailPage(this, keyring),
@@ -161,8 +160,7 @@ class PluginAcala extends PolkawalletPlugin {
             child: Builder(
               builder: (_) => LoanHistoryPage(this, keyring),
             ),
-            uri: GraphQLConfig['httpUri'],
-            subscriptionUri: GraphQLConfig['wsUri'],
+            uri: GraphQLConfig[_service.plugin.basic.name]['httpUri'],
           ),
       // swap pages
       SwapPage.route: (_) => SwapPage(this, keyring),
@@ -170,8 +168,7 @@ class PluginAcala extends PolkawalletPlugin {
             child: Builder(
               builder: (_) => SwapHistoryPage(this, keyring),
             ),
-            uri: GraphQLConfig['httpUri'],
-            subscriptionUri: GraphQLConfig['wsUri'],
+            uri: GraphQLConfig[_service.plugin.basic.name]['httpUri'],
           ),
       SwapDetailPage.route: (_) => SwapDetailPage(this, keyring),
       BootstrapPage.route: (_) => BootstrapPage(this, keyring),
@@ -181,8 +178,7 @@ class PluginAcala extends PolkawalletPlugin {
             child: Builder(
               builder: (_) => EarnHistoryPage(this, keyring),
             ),
-            uri: GraphQLConfig['httpUri'],
-            subscriptionUri: GraphQLConfig['wsUri'],
+            uri: GraphQLConfig[_service.plugin.basic.name]['httpUri'],
           ),
       EarnLiquidityDetailPage.route: (_) =>
           EarnLiquidityDetailPage(this, keyring),

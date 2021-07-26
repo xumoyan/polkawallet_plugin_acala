@@ -1,5 +1,5 @@
-import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
 
 String uuidFromObject(Object object) {
   if (object is Map<String, Object>) {
@@ -64,5 +64,3 @@ class ClientProvider extends StatelessWidget {
     );
   }
 }
-
-const GraphQLConfig = {'httpUri': 'https://api.polkawallet.io/acala-subql'};

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:polkawallet_plugin_acala/api/types/txSwapData.dart';
-import 'package:polkawallet_plugin_acala/common/constants/graphQLQuery.dart';
+import 'package:polkawallet_plugin_acala/common/constants/subQuery.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/swapDetailPage.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
@@ -31,7 +31,7 @@ class SwapHistoryPage extends StatelessWidget {
       body: SafeArea(
         child: Query(
           options: QueryOptions(
-            document: gql(graphSwapQuery),
+            document: gql(swapQuery),
             variables: <String, String>{
               'account': keyring.current.address,
             },
@@ -50,7 +50,7 @@ class SwapHistoryPage extends StatelessWidget {
                 ),
               );
             }
-            final list = List.of(result.data['calls']['nodes'])
+            final list = List.of(result.data['dexActions']['nodes'])
                 .map((i) => TxSwapData.fromJson(
                     i as Map,
                     plugin.networkState.tokenSymbol,
@@ -71,8 +71,7 @@ class SwapHistoryPage extends StatelessWidget {
                         bottom: BorderSide(width: 0.5, color: Colors.black12)),
                   ),
                   child: ListTile(
-                    title: Text(
-                        '${dic['dex.tx.pay']} ${detail.amountPay} ${PluginFmt.tokenView(detail.tokenPay['token'])}'),
+                    title: Text(detail.action),
                     subtitle: Text(Fmt.dateTime(DateTime.parse(list[i].time))),
                     leading: SvgPicture.asset(
                         'packages/polkawallet_plugin_acala/assets/images/${detail.isSuccess ? 'assets_down' : 'tx_failed'}.svg',
@@ -80,7 +79,7 @@ class SwapHistoryPage extends StatelessWidget {
                     trailing: Container(
                       width: 140,
                       child: Text(
-                        '${detail.amountReceive} ${PluginFmt.tokenView(detail.tokenReceive['token'])}',
+                        '${PluginFmt.tokenView(detail.tokenPay)}-${PluginFmt.tokenView(detail.tokenReceive)}',
                         style: Theme.of(context).textTheme.headline4,
                         textAlign: TextAlign.end,
                       ),

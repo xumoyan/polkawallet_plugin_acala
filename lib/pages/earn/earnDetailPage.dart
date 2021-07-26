@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:polkawallet_plugin_acala/api/types/txIncentiveData.dart';
 import 'package:polkawallet_plugin_acala/common/constants/base.dart';
-import 'package:polkawallet_plugin_acala/common/constants/index.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
@@ -28,20 +27,20 @@ class EarnIncentiveDetailPage extends StatelessWidget {
 
     final List<TxDetailInfoItem> items = [];
     switch (tx.action) {
-      case TxDexIncentiveData.actionRewardIncentive:
-        items.add(TxDetailInfoItem(
-          label: dic['earn.get'],
-          content: Text(plugin.networkState.tokenSymbol[0], style: amountStyle),
-        ));
-        break;
-      case TxDexIncentiveData.actionRewardSaving:
-        items.add(TxDetailInfoItem(
-          label: dic['earn.get'],
-          content: Text(
-              isKar ? karura_stable_coin_view : acala_stable_coin_view,
-              style: amountStyle),
-        ));
-        break;
+      // case TxDexIncentiveData.actionRewardIncentive:
+      //   items.add(TxDetailInfoItem(
+      //     label: dic['earn.get'],
+      //     content: Text(plugin.networkState.tokenSymbol[0], style: amountStyle),
+      //   ));
+      //   break;
+      // case TxDexIncentiveData.actionRewardSaving:
+      //   items.add(TxDetailInfoItem(
+      //     label: dic['earn.get'],
+      //     content: Text(
+      //         isKar ? karura_stable_coin_view : acala_stable_coin_view,
+      //         style: amountStyle),
+      //   ));
+      //   break;
       case TxDexIncentiveData.actionStake:
         items.add(TxDetailInfoItem(
           label: dic['earn.stake'],

@@ -4,8 +4,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:polkawallet_plugin_acala/api/types/txLoanData.dart';
 import 'package:polkawallet_plugin_acala/common/constants/base.dart';
-import 'package:polkawallet_plugin_acala/common/constants/graphQLQuery.dart';
 import 'package:polkawallet_plugin_acala/common/constants/index.dart';
+import 'package:polkawallet_plugin_acala/common/constants/subQuery.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanTxDetailPage.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
@@ -40,7 +40,7 @@ class LoanHistoryPage extends StatelessWidget {
       body: SafeArea(
         child: Query(
             options: QueryOptions(
-              document: gql(graphLoanQuery),
+              document: gql(loanQuery),
               variables: <String, String>{
                 'account': keyring.current.address,
               },

@@ -167,13 +167,15 @@ class _EarnPageState extends State<EarnPage> {
         title: Text(dic['earn.title']),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: Icon(Icons.history, color: Theme.of(context).cardColor),
-            onPressed: enabled
-                ? () => Navigator.of(context)
-                    .pushNamed(EarnHistoryPage.route, arguments: tabNow)
-                : null,
-          )
+          isKar
+              ? IconButton(
+                  icon: Icon(Icons.history, color: Theme.of(context).cardColor),
+                  onPressed: enabled
+                      ? () => Navigator.of(context)
+                          .pushNamed(EarnHistoryPage.route, arguments: tabNow)
+                      : null,
+                )
+              : Container()
         ],
       ),
       body: Observer(

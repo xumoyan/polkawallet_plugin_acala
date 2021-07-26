@@ -4,7 +4,7 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:polkawallet_plugin_acala/api/types/transferData.dart';
-import 'package:polkawallet_plugin_acala/common/constants/graphQLQuery.dart';
+import 'package:polkawallet_plugin_acala/common/constants/subQuery.dart';
 import 'package:polkawallet_plugin_acala/pages/assets/transferDetailPage.dart';
 import 'package:polkawallet_plugin_acala/pages/assets/transferPage.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
@@ -37,6 +37,8 @@ class TokenDetailPage extends StatelessWidget {
 
     final primaryColor = Theme.of(context).primaryColor;
     final titleColor = Theme.of(context).cardColor;
+
+    final isTC6 = plugin.basic.name == 'acala-tc6';
 
     return Scaffold(
       appBar: AppBar(
@@ -130,49 +132,55 @@ class TokenDetailPage extends StatelessWidget {
                   ],
                 ),
                 Expanded(
-                  child: Container(
-                    color: titleColor,
-                    child: Query(
-                        options: QueryOptions(
-                          document: gql(graphTransferQuery),
-                          variables: <String, String>{
-                            'account': keyring.current.address,
-                            'token': token.symbol,
-                          },
-                        ),
-                        builder: (
-                          QueryResult result, {
-                          Future<QueryResult> Function() refetch,
-                          FetchMore fetchMore,
-                        }) {
-                          if (result.data == null) {
-                            return Container(
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [CupertinoActivityIndicator()],
+                  child: isTC6
+                      ? Container()
+                      : Container(
+                          color: titleColor,
+                          child: Query(
+                              options: QueryOptions(
+                                document: gql(transferQuery),
+                                variables: <String, String>{
+                                  'account': keyring.current.address,
+                                  'token': token.symbol,
+                                },
                               ),
-                            );
-                          }
-                          final txs = List.of(result.data['transfers']['nodes'])
-                              .map((i) => TransferData.fromJson(
-                                  i as Map, token.decimals))
-                              .toList();
-                          return ListView.builder(
-                            itemCount: txs.length + 1,
-                            itemBuilder: (_, i) {
-                              if (i == txs.length) {
-                                return ListTail(
-                                    isEmpty: txs.length == 0, isLoading: false);
-                              }
-                              return TransferListItem(
-                                data: txs[i],
-                                token: token.symbol,
-                                isOut: txs[i].from == keyring.current.address,
-                              );
-                            },
-                          );
-                        }),
-                  ),
+                              builder: (
+                                QueryResult result, {
+                                Future<QueryResult> Function() refetch,
+                                FetchMore fetchMore,
+                              }) {
+                                if (result.data == null) {
+                                  return Container(
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [CupertinoActivityIndicator()],
+                                    ),
+                                  );
+                                }
+                                final txs =
+                                    List.of(result.data['transfers']['nodes'])
+                                        .map((i) => TransferData.fromJson(
+                                            i as Map, token.decimals))
+                                        .toList();
+                                return ListView.builder(
+                                  itemCount: txs.length + 1,
+                                  itemBuilder: (_, i) {
+                                    if (i == txs.length) {
+                                      return ListTail(
+                                          isEmpty: txs.length == 0,
+                                          isLoading: false);
+                                    }
+                                    return TransferListItem(
+                                      data: txs[i],
+                                      token: token.symbol,
+                                      isOut: txs[i].from ==
+                                          keyring.current.address,
+                                    );
+                                  },
+                                );
+                              }),
+                        ),
                 ),
                 Container(
                   color: titleColor,
