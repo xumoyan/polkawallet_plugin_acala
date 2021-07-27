@@ -8,7 +8,6 @@ import 'package:polkawallet_plugin_acala/api/types/dexPoolInfoData.dart';
 import 'package:polkawallet_plugin_acala/common/constants/index.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/swapTokenInput.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
-import 'package:polkawallet_plugin_acala/service/walletApi.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
@@ -43,7 +42,6 @@ class _BootstrapPageState extends State<BootstrapPage> {
   int _addTab = 0;
 
   List _userProvisioning;
-  String _relayChainTokenPrice;
 
   String _leftAmountError;
   String _rightAmountError;
@@ -56,17 +54,13 @@ class _BootstrapPageState extends State<BootstrapPage> {
     final res = await Future.wait([
       widget.plugin.sdk.webView.evalJavascript(
           'api.query.dex.provisioningPool(${jsonEncode(pool.tokens)}, "${widget.keyring.current.address}")'),
-      WalletApi.getTokenPrice(relay_chain_name[widget.plugin.basic.name]),
+      widget.plugin.service.assets
+          .queryMarketPrice(relay_chain_token_symbol[widget.plugin.basic.name]),
     ]);
 
     if (mounted) {
       setState(() {
         _userProvisioning = res[0];
-        if (res[1] != null && res[1]['data'] != null) {
-          final symbol = res[1]['data']['token'][0];
-          _relayChainTokenPrice =
-              res[1]['data']['detail'][symbol]['price'] as String;
-        }
       });
     }
   }
@@ -221,10 +215,15 @@ class _BootstrapPageState extends State<BootstrapPage> {
       final ratioView1 =
           '1 ${pairView[0]} : ${Fmt.priceCeil(ratio, lengthMax: 6)} ${pairView[1]}';
       String ratioView2 = '';
-      if (pair.join('-').toUpperCase() == 'KAR-KSM') {
-        final priceView = _relayChainTokenPrice == null
+      final nativeToken = widget.plugin.networkState.tokenSymbol[0];
+      final relayChainToken =
+          relay_chain_token_symbol[widget.plugin.basic.name];
+      if (pair.join('-').toUpperCase() == '$nativeToken-$relayChainToken') {
+        final relayChainTokenPrice =
+            widget.plugin.store.assets.marketPrices[relayChainToken];
+        final priceView = relayChainTokenPrice == null
             ? '--.--'
-            : Fmt.priceFloor(double.parse(_relayChainTokenPrice) * ratio);
+            : Fmt.priceFloor(double.parse(relayChainTokenPrice) * ratio);
         ratioView2 += '1 ${pairView[0]} ≈ \$$priceView';
       }
 

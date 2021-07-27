@@ -9,7 +9,6 @@ import 'package:polkawallet_plugin_acala/common/constants/base.dart';
 import 'package:polkawallet_plugin_acala/common/constants/index.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/bootstrapPage.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
-import 'package:polkawallet_plugin_acala/service/walletApi.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
@@ -38,8 +37,6 @@ class _BootstrapListState extends State<BootstrapList> {
   final GlobalKey<RefreshIndicatorState> _refreshKey =
       new GlobalKey<RefreshIndicatorState>();
 
-  String _relayChainTokenPrice;
-
   int _bestNumber = 0;
 
   Map<String, List> _userProvisions = {};
@@ -61,20 +58,13 @@ class _BootstrapListState extends State<BootstrapList> {
   Future<void> _updateData() async {
     _updateBestNumber();
 
-    final List res = await Future.wait([
+    await Future.wait([
       widget.plugin.service.earn.getDexPools(),
       widget.plugin.service.earn.getBootstraps(),
       _queryUserProvisions(),
-      WalletApi.getTokenPrice(relay_chain_name[widget.plugin.basic.name]),
+      widget.plugin.service.assets
+          .queryMarketPrice(relay_chain_token_symbol[widget.plugin.basic.name]),
     ]);
-
-    if (res != null && res[3] != null) {
-      final symbol = res[3]['data']['token'][0];
-      setState(() {
-        _relayChainTokenPrice =
-            res[3]['data']['detail'][symbol]['price'] as String;
-      });
-    }
   }
 
   Future<void> _queryUserProvisions() async {
@@ -160,7 +150,9 @@ class _BootstrapListState extends State<BootstrapList> {
                       pool: e,
                       bestNumber: _bestNumber,
                       tokenIcons: widget.plugin.tokenIcons,
-                      relayChainTokenPrice: _relayChainTokenPrice,
+                      relayChainTokenPrice: widget
+                              .plugin.store.assets.marketPrices[
+                          relay_chain_token_symbol[widget.plugin.basic.name]],
                     );
                   }).toList(),
                   ...dexPools.map((e) {

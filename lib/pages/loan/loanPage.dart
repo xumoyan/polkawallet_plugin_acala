@@ -52,7 +52,8 @@ class _LoanPageState extends State<LoanPage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final isKar = widget.plugin.basic.name == plugin_name_karura;
-      final bool enabled = !isKar || ModalRoute.of(context).settings.arguments;
+      // final bool enabled = !isKar || ModalRoute.of(context).settings.arguments;
+      final enabled = true;
       if (enabled) {
         _fetchData();
       } else {
@@ -71,17 +72,20 @@ class _LoanPageState extends State<LoanPage> {
   Widget build(BuildContext context) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
     final isKar = widget.plugin.basic.name == plugin_name_karura;
-    final bool enabled = !isKar || ModalRoute.of(context).settings.arguments;
+    // final bool enabled = !isKar || ModalRoute.of(context).settings.arguments;
+    final enabled = true;
 
-    final stableCoinDecimals = widget.plugin.networkState.tokenDecimals[widget
-        .plugin.networkState.tokenSymbol
-        .indexOf(isKar ? karura_stable_coin : acala_stable_coin)];
-
+    final stableCoinSymbol = isKar ? karura_stable_coin : acala_stable_coin;
+    final stableCoinDecimals = widget.plugin.networkState.tokenDecimals[
+        widget.plugin.networkState.tokenSymbol.indexOf(stableCoinSymbol)];
     return Observer(
       builder: (_) {
         final loans = widget.plugin.store.loan.loans.values.toList();
         loans.retainWhere((loan) =>
             loan.debits > BigInt.zero || loan.collaterals > BigInt.zero);
+
+        final isDataLoading =
+            widget.plugin.store.loan.loansLoading && loans.length == 0;
 
         return Scaffold(
           backgroundColor: Theme.of(context).cardColor,
@@ -117,7 +121,7 @@ class _LoanPageState extends State<LoanPage> {
                         },
                       ),
                     ),
-                    widget.plugin.store.loan.loansLoading
+                    isDataLoading
                         ? Container(
                             height: MediaQuery.of(context).size.width / 2,
                             child: CupertinoActivityIndicator(),
@@ -135,6 +139,7 @@ class _LoanPageState extends State<LoanPage> {
                                                   .indexOf(loan.token)];
                                           return LoanOverviewCard(
                                             loan,
+                                            stableCoinSymbol,
                                             stableCoinDecimals,
                                             tokenDecimals,
                                             widget.plugin.tokenIcons,
@@ -164,7 +169,7 @@ class _LoanPageState extends State<LoanPage> {
                                     'packages/polkawallet_plugin_acala/assets/images/loan-start.svg',
                                     color: Theme.of(context).primaryColor),
                               ),
-                    !widget.plugin.store.loan.loansLoading
+                    !isDataLoading
                         ? Container(
                             padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
                             child: RoundedButton(
@@ -187,9 +192,10 @@ class _LoanPageState extends State<LoanPage> {
 }
 
 class LoanOverviewCard extends StatelessWidget {
-  LoanOverviewCard(this.loan, this.stableCoinDecimals, this.collateralDecimals,
-      this.tokenIcons);
+  LoanOverviewCard(this.loan, this.stableCoinSymbol, this.stableCoinDecimals,
+      this.collateralDecimals, this.tokenIcons);
   final LoanData loan;
+  final String stableCoinSymbol;
   final int stableCoinDecimals;
   final int collateralDecimals;
   final Map<String, Widget> tokenIcons;
@@ -257,7 +263,8 @@ class LoanOverviewCard extends StatelessWidget {
                   children: [
                     Container(
                         margin: EdgeInsets.only(top: 24, bottom: 8),
-                        child: Text(dic['loan.borrowed'] + '(aUSD)')),
+                        child:
+                            Text(dic['loan.borrowed'] + '($stableCoinSymbol)')),
                     Text(
                       Fmt.priceCeilBigInt(loan.debits, stableCoinDecimals),
                       style: Theme.of(context).textTheme.headline4,

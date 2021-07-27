@@ -80,11 +80,13 @@ class LoanType extends _LoanType {
 
   BigInt calcMaxToBorrow(BigInt collaterals, tokenPrice,
       {int stableCoinDecimals, int collateralDecimals}) {
-    return tokenToUSD(collaterals, tokenPrice,
-            stableCoinDecimals: stableCoinDecimals,
-            collateralDecimals: collateralDecimals) *
-        BigInt.from(pow(10, acala_price_decimals)) ~/
-        requiredCollateralRatio;
+    return requiredCollateralRatio > BigInt.zero
+        ? tokenToUSD(collaterals, tokenPrice,
+                stableCoinDecimals: stableCoinDecimals,
+                collateralDecimals: collateralDecimals) *
+            BigInt.from(pow(10, acala_price_decimals)) ~/
+            requiredCollateralRatio
+        : BigInt.zero;
   }
 }
 

@@ -4,7 +4,7 @@ import 'package:polkawallet_plugin_acala/pages/loan/loanAdjustPage.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
-import 'package:polkawallet_ui/components/roundedButton.dart';
+import 'package:polkawallet_ui/components/outlinedButtonSmall.dart';
 import 'package:polkawallet_ui/components/roundedCard.dart';
 import 'package:polkawallet_ui/components/tokenIcon.dart';
 import 'package:polkawallet_ui/utils/format.dart';
@@ -39,14 +39,13 @@ class LoanDebtCard extends StatelessWidget {
                   children: [
                     Container(
                       margin: EdgeInsets.only(bottom: 8),
-                      child: Text('${dic['loan.borrowed']}(aUSD)'),
+                      child: Text('${dic['loan.borrowed']}($stableCoinSymbol)'),
                     ),
                     Row(children: [
                       Container(
                           margin: EdgeInsets.only(right: 8),
                           child: TokenIcon(stableCoinSymbol, tokenIcons)),
-                      Text(
-                          Fmt.priceFloorBigInt(loan.debits, stableCoinDecimals),
+                      Text(Fmt.priceCeilBigInt(loan.debits, stableCoinDecimals),
                           style: TextStyle(
                             fontSize: 30,
                             letterSpacing: -0.8,
@@ -76,34 +75,36 @@ class LoanDebtCard extends StatelessWidget {
             ),
           ]),
           Divider(height: 32),
-          Row(children: [
-            Expanded(
-              child: RoundedButton(
-                text: dic['loan.payback'],
-                color: Colors.blue,
-                onPressed: () {
-                  Navigator.of(context).pushNamed(
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButtonSmall(
+                  content: dic['loan.payback'],
+                  active: false,
+                  padding: EdgeInsets.only(top: 8, bottom: 8),
+                  margin: EdgeInsets.only(right: 8),
+                  onPressed: () => Navigator.of(context).pushNamed(
                     LoanAdjustPage.route,
                     arguments: LoanAdjustPageParams(
                         LoanAdjustPage.actionTypePayback, loan.token),
-                  );
-                },
+                  ),
+                ),
               ),
-            ),
-            Container(width: 16),
-            Expanded(
-              child: RoundedButton(
-                text: dic['loan.borrow'],
-                onPressed: () {
-                  Navigator.of(context).pushNamed(
+              Expanded(
+                child: OutlinedButtonSmall(
+                  content: dic['loan.borrow'],
+                  active: true,
+                  padding: EdgeInsets.only(top: 8, bottom: 8),
+                  margin: EdgeInsets.only(left: 8),
+                  onPressed: () => Navigator.of(context).pushNamed(
                     LoanAdjustPage.route,
                     arguments: LoanAdjustPageParams(
                         LoanAdjustPage.actionTypeBorrow, loan.token),
-                  );
-                },
+                  ),
+                ),
               ),
-            ),
-          ]),
+            ],
+          ),
         ],
       ),
     );
@@ -177,30 +178,36 @@ class LoanCollateralCard extends StatelessWidget {
             ),
           ]),
           Divider(height: 32),
-          Row(children: [
-            Expanded(
-              child: RoundedButton(
-                text: dic['loan.deposit'],
-                color: Colors.blue,
-                onPressed: () => Navigator.of(context).pushNamed(
-                  LoanAdjustPage.route,
-                  arguments: LoanAdjustPageParams(
-                      LoanAdjustPage.actionTypeDeposit, loan.token),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButtonSmall(
+                  content: dic['loan.withdraw'],
+                  active: false,
+                  padding: EdgeInsets.only(top: 8, bottom: 8),
+                  margin: EdgeInsets.only(right: 8),
+                  onPressed: () => Navigator.of(context).pushNamed(
+                    LoanAdjustPage.route,
+                    arguments: LoanAdjustPageParams(
+                        LoanAdjustPage.actionTypeWithdraw, loan.token),
+                  ),
                 ),
               ),
-            ),
-            Container(width: 16),
-            Expanded(
-              child: RoundedButton(
-                text: dic['loan.withdraw'],
-                onPressed: () => Navigator.of(context).pushNamed(
-                  LoanAdjustPage.route,
-                  arguments: LoanAdjustPageParams(
-                      LoanAdjustPage.actionTypeWithdraw, loan.token),
+              Expanded(
+                child: OutlinedButtonSmall(
+                  content: dic['loan.deposit'],
+                  active: true,
+                  padding: EdgeInsets.only(top: 8, bottom: 8),
+                  margin: EdgeInsets.only(left: 8),
+                  onPressed: () => Navigator.of(context).pushNamed(
+                    LoanAdjustPage.route,
+                    arguments: LoanAdjustPageParams(
+                        LoanAdjustPage.actionTypeDeposit, loan.token),
+                  ),
                 ),
               ),
-            ),
-          ]),
+            ],
+          ),
         ],
       ),
     );

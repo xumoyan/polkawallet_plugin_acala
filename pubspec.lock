@@ -733,19 +733,19 @@ packages:
     source: hosted
     version: "2.0.0"
   polkawallet_sdk:
-    dependency: "direct main"
+    dependency: "direct overridden"
     description:
       path: "../sdk"
       relative: true
     source: path
-    version: "0.2.6"
+    version: "0.2.7"
   polkawallet_ui:
     dependency: "direct main"
     description:
       path: "../ui"
       relative: true
     source: path
-    version: "0.2.5"
+    version: "0.2.7"
   pool:
     dependency: transitive
     description:

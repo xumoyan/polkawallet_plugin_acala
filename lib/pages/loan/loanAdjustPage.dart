@@ -6,6 +6,7 @@ import 'package:polkawallet_plugin_acala/common/constants/base.dart';
 import 'package:polkawallet_plugin_acala/common/constants/index.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanInfoPanel.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
+import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
@@ -209,9 +210,8 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
         return '${assetDic['amount.low']}(${assetDic['balance']}: $balance)';
       }
       BigInt debitLeft = loan.debits - _amountDebit;
-      if (debitLeft > BigInt.zero &&
-          loan.type.debitToDebitShare(debitLeft) <
-              loan.type.minimumDebitValue) {
+      print(loan.type.minimumDebitValue);
+      if (debitLeft > BigInt.zero && debitLeft < loan.type.minimumDebitValue) {
         return dic['payback.small'];
       }
     }
@@ -224,7 +224,8 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
         context: context,
         builder: (_) {
           return CupertinoAlertDialog(
-            content: Text(dic['loan.warn']),
+            content: Text(dic[
+                'loan.warn${widget.plugin.basic.name == plugin_name_karura ? '.KSM' : ''}']),
             actions: <Widget>[
               CupertinoDialogAction(
                 child: Text(dic['loan.warn.back']),
@@ -249,7 +250,8 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
         BigInt debitAdd = loan.type.debitToDebitShare(_amountDebit);
         return {
           'detail': {
-            "amount": _amountCtrl2.text.trim(),
+            "amount": _amountCtrl2.text.trim() +
+                ' ${PluginFmt.tokenView(loan.token)}',
           },
           'params': [
             {'token': params.token},
@@ -403,15 +405,17 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
         maxToBorrow = maxToBorrow > BigInt.zero ? maxToBorrow : BigInt.zero;
         maxToBorrowView = Fmt.priceFloorBigInt(maxToBorrow, stableCoinDecimals);
         showCollateral = false;
-        titleSuffix = ' aUSD';
+        titleSuffix = ' $stableCoinSymbol';
         break;
       case LoanAdjustPage.actionTypePayback:
         // max to payback
         maxToBorrow =
             balanceStableCoin > loan.debits ? loan.debits : balanceStableCoin;
-        maxToBorrowView = Fmt.priceCeilBigInt(maxToBorrow, stableCoinDecimals);
+        maxToBorrowView = balanceStableCoin > loan.debits
+            ? Fmt.priceCeilBigInt(maxToBorrow, stableCoinDecimals)
+            : Fmt.priceFloorBigInt(maxToBorrow, stableCoinDecimals);
         showCollateral = false;
-        titleSuffix = ' aUSD';
+        titleSuffix = ' $stableCoinSymbol';
         break;
       case LoanAdjustPage.actionTypeDeposit:
         showDebit = false;

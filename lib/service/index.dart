@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:polkawallet_plugin_acala/common/constants/base.dart';
 import 'package:polkawallet_plugin_acala/common/constants/index.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
+import 'package:polkawallet_plugin_acala/service/serviceAssets.dart';
 import 'package:polkawallet_plugin_acala/service/serviceEarn.dart';
 import 'package:polkawallet_plugin_acala/service/serviceHoma.dart';
 import 'package:polkawallet_plugin_acala/service/serviceLoan.dart';
@@ -14,10 +15,12 @@ import 'package:polkawallet_ui/utils/i18n.dart';
 
 class PluginService {
   PluginService(PluginAcala plugin, Keyring keyring)
-      : loan = ServiceLoan(plugin, keyring),
+      : assets = ServiceAssets(plugin, keyring),
+        loan = ServiceLoan(plugin, keyring),
         earn = ServiceEarn(plugin, keyring),
         homa = ServiceHoma(plugin, keyring),
         plugin = plugin;
+  final ServiceAssets assets;
   final ServiceLoan loan;
   final ServiceEarn earn;
   final ServiceHoma homa;

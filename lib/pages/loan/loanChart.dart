@@ -45,7 +45,7 @@ class LoanDonutChart extends StatelessWidget {
         Container(
           height: chartHeight,
           child: charts.PieChart(seriesList,
-              animate: true,
+              animate: false,
               defaultRenderer: new charts.ArcRendererConfig(arcWidth: 12)),
         ),
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [

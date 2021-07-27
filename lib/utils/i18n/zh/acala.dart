@@ -65,6 +65,7 @@ const Map<String, String> zhDex = {
   'loan.max': '最大值',
   'loan.txs': '交易记录',
   'loan.warn': '借款未还清时，余额不能小于 1aUSD，本次操作还款后将剩余 1aUSD 的债务。确认继续吗？',
+  'loan.warn.KSM': '借款未还清时，余额不能小于 1kUSD，本次操作还款后将剩余 1kUSD 的债务。确认继续吗？',
   'loan.warn.back': '返回修改',
   'loan.my': '我的借贷',
   'loan.incentive': '借贷挖矿',

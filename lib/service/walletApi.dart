@@ -49,9 +49,8 @@ class WalletApi {
     }
   }
 
-  static Future<Map> getTokenPrice(String network) async {
-    final url =
-        'https://${network.toLowerCase()}.api.subscan.io/api/scan/token';
+  static Future<Map> getTokenPrice(String token) async {
+    final url = '$_endpoint/price/price/latest?token=$token';
     try {
       Response res = await get(Uri.parse(url));
       if (res == null) {

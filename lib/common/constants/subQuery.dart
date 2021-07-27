@@ -1,13 +1,13 @@
 // graphql query
-const graphTransferQuery = r'''
-  query ($account: String, $token: String) { 
+const transferQuery = r'''
+  query ($account: String, $token: String) {
     transfers(filter: {
       tokenId: { equalTo: $token },
       or: [
         { fromId: { equalTo: $account } },
         { toId: { equalTo: $account } }
       ]
-    }, first: 20, orderBy: TIMESTAMP_DESC) {
+    }, first: 10, orderBy: TIMESTAMP_DESC) {
       nodes {
         id
         from {id}
@@ -24,7 +24,7 @@ const graphTransferQuery = r'''
     }
   }
 ''';
-const graphLoanQuery = r'''
+const loanQuery = r'''
   query ($account: String) {
     loanActions(condition: {accountId: $account }, orderBy: TIMESTAMP_DESC, first: 20) {
       nodes {
@@ -43,94 +43,43 @@ const graphLoanQuery = r'''
     }
   }
 ''';
-const graphSwapQuery = r'''
+const swapQuery = r'''
   query ($account: String) {
-    calls(filter: {
-      and: [
-        {
-          or: [
-            { method: {equalTo: "swapWithExactSupply"} },
-            { method: {equalTo: "swapWithExactTarget"} },
-          ]
-        },
-        { section: {equalTo: "dex"} },
-        { signerId: { equalTo: $account } }
-      ]
-    }, orderBy: TIMESTAMP_DESC, first: 20) {
+    dexActions(filter: {accountId: {equalTo: $account}},
+      orderBy: TIMESTAMP_DESC, first: 20) {
       nodes {
         id
-        method
-        section
-        args
-        isSuccess
+        data
         extrinsic {
           id
+          method
           block {number}
           timestamp
+          isSuccess
         }
       }
     }
   }
 ''';
-const graphDexPoolQuery = r'''
+const dexStakeQuery = r'''
   query ($account: String) {
-    calls(filter: {
-      and: [
-        {
-          or: [
-            { method: {equalTo: "addLiquidity"} },
-            { method: {equalTo: "removeLiquidity"} },
-          ]
-        },
-        { section: {equalTo: "dex"} },
-        { signerId: { equalTo: $account } }
-      ]
-    }, orderBy: TIMESTAMP_DESC, first: 20) {
+    incentiveActions(filter: {accountId: {equalTo: $account}},
+      orderBy: TIMESTAMP_DESC, first: 20) {
       nodes {
         id
-        method
-        section
-        args
-        isSuccess
+        data
         extrinsic {
           id
+          method
           block {number}
           timestamp
+          isSuccess
         }
       }
     }
   }
 ''';
-const graphDexStakeQuery = r'''
-  query ($account: String) {
-    calls(filter: {
-      and: [
-        {
-          or: [
-            { method: {equalTo: "depositDexShare"} },
-            { method: {equalTo: "withdrawDexShare"} }
-          ]
-        },
-        { section: {equalTo: "incentives"} },
-        { signerId: {equalTo: $account} }
-      ]
-    }, orderBy: TIMESTAMP_DESC, first: 20) {
-      nodes {
-        id
-        method
-        section
-        args
-        isSuccess
-        extrinsic {
-          id
-          block {number}
-          timestamp
-        }
-      }
-    }
-  }
-''';
-const graphEarnQuery = r'''
+const earnQuery = r'''
   query ($account: String) {
     calls(filter: {
       and: [
@@ -160,7 +109,7 @@ const graphEarnQuery = r'''
     }
   }
 ''';
-const graphHomaQuery = r'''
+const homaQuery = r'''
   query ($account: String) {
     calls(filter: {
       and: [

@@ -55,8 +55,9 @@ class _TransferPageState extends State<TransferPage> {
         '(account.checkAddressFormat != undefined ? {}:null)',
         wrapPromise: false);
     if (addressCheckValid != null) {
-      final res = await widget.plugin.sdk.api.account
-          .checkAddressFormat(acc.address, network_ss58_format[_chainTo]);
+      final res = await widget.plugin.sdk.api.account.checkAddressFormat(
+          acc.address,
+          network_ss58_format[_chainTo ?? widget.plugin.basic.name]);
       if (res != null && !res) {
         return I18n.of(context)
             .getDic(i18n_full_dic_ui, 'account')['ss58.mismatch'];
@@ -318,6 +319,7 @@ class _TransferPageState extends State<TransferPage> {
         final dicAcala = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
         final String args = ModalRoute.of(context).settings.arguments;
         final token = _token ?? args;
+        final tokenView = PluginFmt.tokenView(token);
 
         final relayChainToken =
             relay_chain_token_symbol[widget.plugin.basic.name];
@@ -441,7 +443,7 @@ class _TransferPageState extends State<TransferPage> {
                                         MainAxisAlignment.spaceBetween,
                                     children: [
                                       CurrencyWithIcon(
-                                        PluginFmt.tokenView(token),
+                                        tokenView,
                                         TokenIcon(
                                             token, widget.plugin.tokenIcons),
                                       ),
@@ -563,7 +565,7 @@ class _TransferPageState extends State<TransferPage> {
                                     ),
                                     Expanded(child: Container(width: 2)),
                                     Text(
-                                        '${Fmt.priceCeilBigInt(destExistDeposit, decimals, lengthMax: 6)} $token'),
+                                        '${Fmt.priceCeilBigInt(destExistDeposit, decimals, lengthMax: 6)} $tokenView'),
                                   ],
                                 ),
                               )
@@ -580,7 +582,7 @@ class _TransferPageState extends State<TransferPage> {
                                     ),
                                     Expanded(child: Container(width: 2)),
                                     Text(
-                                        '${Fmt.priceCeilBigInt(destFee, decimals, lengthMax: 6)} $token'),
+                                        '${Fmt.priceCeilBigInt(destFee, decimals, lengthMax: 6)} $tokenView'),
                                   ],
                                 ),
                               )
@@ -605,7 +607,7 @@ class _TransferPageState extends State<TransferPage> {
                               ),
                               Expanded(child: Container(width: 2)),
                               Text(
-                                  '${Fmt.priceCeilBigInt(existDeposit, decimals, lengthMax: 6)} $token'),
+                                  '${Fmt.priceCeilBigInt(existDeposit, decimals, lengthMax: 6)} $tokenView'),
                             ],
                           ),
                         ),

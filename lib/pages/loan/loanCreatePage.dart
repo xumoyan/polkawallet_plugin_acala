@@ -36,7 +36,7 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
   final TextEditingController _amountCtrl = new TextEditingController();
   final TextEditingController _amountCtrl2 = new TextEditingController();
 
-  String _token = 'DOT';
+  String _token;
 
   BigInt _amountCollateral = BigInt.zero;
   BigInt _amountDebit = BigInt.zero;
@@ -159,7 +159,10 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
 
   Map _getTxParams(LoanType loanType,
       {int stableCoinDecimals, int collateralDecimals}) {
-    BigInt debitShare = loanType.debitToDebitShare(_amountDebit);
+    BigInt debitShare = loanType.debitToDebitShare(
+        _amountDebit <= Fmt.tokenInt('1', stableCoinDecimals)
+            ? Fmt.tokenInt('1.00000001', stableCoinDecimals)
+            : _amountDebit);
     return {
       'detail': {
         "colleterals": Fmt.token(_amountCollateral, collateralDecimals),
@@ -208,6 +211,7 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final tokenOptions = _getTokenOptions();
+      print('tokenOptions: ');
       print(tokenOptions);
       setState(() {
         _token = tokenOptions[0];
@@ -234,16 +238,18 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
       final stableCoinDecimals = decimals[
           symbols.indexOf(isKar ? karura_stable_coin : acala_stable_coin)];
 
-      final collateralDecimals = decimals[symbols.indexOf(_token)];
+      final token =
+          _token ?? relay_chain_token_symbol[widget.plugin.basic.name];
+      final collateralDecimals = decimals[symbols.indexOf(token)];
 
-      final pageTitle = '${dic['loan.create']} $_token';
+      final pageTitle = '${dic['loan.create']} $token';
 
-      final price = widget.plugin.store.assets.prices[_token];
+      final price = widget.plugin.store.assets.prices[token];
 
       final loanType = widget.plugin.store.loan.loanTypes
-          .firstWhere((i) => i.token == _token);
+          .firstWhere((i) => i.token == token);
       final balance = Fmt.balanceInt(
-          widget.plugin.store.assets.tokenBalanceMap[_token]?.amount);
+          widget.plugin.store.assets.tokenBalanceMap[token]?.amount);
       final available = balance;
 
       final balanceView =
@@ -263,8 +269,8 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
                 CurrencySelector(
                   tokenOptions: _getTokenOptions(),
                   tokenIcons: widget.plugin.tokenIcons,
-                  token: _token,
-                  price: widget.plugin.store.assets.prices[_token],
+                  token: token,
+                  price: widget.plugin.store.assets.prices[token],
                   onSelect: (res) {
                     if (res != null) {
                       setState(() {
@@ -297,7 +303,7 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
                           decoration: InputDecoration(
                             hintText: assetDic['amount'],
                             labelText:
-                                '${assetDic['amount']} (${assetDic['amount.available']}: $balanceView $_token)',
+                                '${assetDic['amount']} (${assetDic['amount.available']}: $balanceView $token)',
                           ),
                           inputFormatters: [
                             UI.decimalInputFormatter(collateralDecimals)

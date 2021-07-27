@@ -1,6 +1,5 @@
 import 'package:polkawallet_plugin_acala/api/acalaApi.dart';
 import 'package:polkawallet_plugin_acala/api/types/loanType.dart';
-import 'package:polkawallet_plugin_acala/api/types/stakingPoolInfoData.dart';
 import 'package:polkawallet_plugin_acala/common/constants/base.dart';
 import 'package:polkawallet_plugin_acala/common/constants/index.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
@@ -18,19 +17,23 @@ class ServiceLoan {
   final AcalaApi api;
   final PluginStore store;
 
-  void _calcLDOTPrice(Map<String, BigInt> prices, double liquidExchangeRate) {
+  void _calcLiquidTokenPrice(
+      Map<String, BigInt> prices, double liquidExchangeRate) {
     // LDOT price may lost precision here
-    prices['LDOT'] = Fmt.tokenInt(
+    final nativeToken = plugin.networkState.tokenSymbol[0];
+    prices['L$nativeToken'] = Fmt.tokenInt(
         (Fmt.bigIntToDouble(
-                    prices['DOT'], plugin.networkState.tokenDecimals[0]) *
+                    prices[nativeToken], plugin.networkState.tokenDecimals[0]) *
                 liquidExchangeRate)
             .toString(),
         plugin.networkState.tokenDecimals[0]);
   }
 
-  Future<double> _fetchACAPrice() async {
-    final output =
-        await api.swap.queryTokenSwapAmount('1', null, ['ACA', 'AUSD'], '0.1');
+  Future<double> _fetchNativeTokenPrice() async {
+    final isKar = plugin.basic.name == plugin_name_karura;
+    final stableCoin = isKar ? karura_stable_coin : acala_stable_coin;
+    final output = await api.swap.queryTokenSwapAmount(
+        '1', null, [plugin.networkState.tokenSymbol[0], stableCoin], '0.1');
     return output.amount;
   }
 
@@ -100,16 +103,17 @@ class ServiceLoan {
 
     // 1. subscribe all token prices, callback triggers per 5s.
     api.assets.subscribeTokenPrices((Map<String, BigInt> prices) async {
-      // 2. we need homa staking pool info to calculate price of LDOT
-      final data = await Future.wait(
-          [api.homa.queryHomaStakingPool(), _fetchACAPrice()]);
-      final StakingPoolInfoData stakingPoolInfo = data[0];
-      store.homa.setStakingPoolInfoData(stakingPoolInfo);
+      final modulesConfig = store.setting.liveModules;
+      if (modulesConfig['homa'] != null && modulesConfig['homa']['enabled']) {
+        // 2. we need homa staking pool info to calculate price of LDOT
+        final stakingPoolInfo = await api.homa.queryHomaStakingPool();
+        store.homa.setStakingPoolInfoData(stakingPoolInfo);
 
-      // 3. set prices
-      _calcLDOTPrice(prices, stakingPoolInfo.liquidExchangeRate);
-      prices['ACA'] =
-          Fmt.tokenInt(data[1].toString(), 18); // decimals of prices are 18.
+        // 3. set prices
+        _calcLiquidTokenPrice(prices, stakingPoolInfo.liquidExchangeRate);
+        // we may not need ACA/KAR prices
+        // prices['ACA'] = Fmt.tokenInt(data[1].toString(), acala_price_decimals);
+      }
       store.assets.setPrices(prices);
 
       // 4. update collateral incentive rewards

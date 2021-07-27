@@ -118,7 +118,8 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                                                   loan.maxToBorrow,
                                                   stableCoinDecimals),
                                               style: titleStyle),
-                                          Text('${dic['borrow.limit']}(aUSD)',
+                                          Text(
+                                              '${dic['borrow.limit']}($stableCoinSymbol)',
                                               style: subtitleStyle)
                                         ],
                                       ))),
