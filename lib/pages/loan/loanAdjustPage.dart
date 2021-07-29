@@ -210,7 +210,6 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
         return '${assetDic['amount.low']}(${assetDic['balance']}: $balance)';
       }
       BigInt debitLeft = loan.debits - _amountDebit;
-      print(loan.type.minimumDebitValue);
       if (debitLeft > BigInt.zero && debitLeft < loan.type.minimumDebitValue) {
         return dic['payback.small'];
       }
@@ -247,11 +246,15 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
         ModalRoute.of(context).settings.arguments;
     switch (params.actionType) {
       case LoanAdjustPage.actionTypeBorrow:
-        BigInt debitAdd = loan.type.debitToDebitShare(_amountDebit);
+        // borrow min 1 debit if user's debit is empty
+        final debitAdd = loan.type.debitToDebitShare(
+            loan.debits == BigInt.zero &&
+                    _amountDebit <= Fmt.tokenInt('1', stableCoinDecimals)
+                ? Fmt.tokenInt('1.00000001', stableCoinDecimals)
+                : _amountDebit);
         return {
           'detail': {
-            "amount": _amountCtrl2.text.trim() +
-                ' ${PluginFmt.tokenView(loan.token)}',
+            "amount": _amountCtrl2.text.trim(),
           },
           'params': [
             {'token': params.token},
@@ -260,14 +263,13 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
           ]
         };
       case LoanAdjustPage.actionTypePayback:
-
-        /// payback all debts if user input more than debts
+        // payback all debts if user input more than debts
         BigInt debitSubtract = _amountDebit >= loan.debits
             ? loan.debitShares
             : loan.type.debitToDebitShare(_amountDebit);
 
-        /// pay less if less than 1 debit(aUSD) will be left,
-        /// make sure tx success by leaving more than 1 debit(aUSD).
+        // pay less if less than 1 debit(aUSD) will be left,
+        // make sure tx success by leaving more than 1 debit(aUSD).
         final debitValueOne = Fmt.tokenInt('1', stableCoinDecimals);
         if (loan.debits - _amountDebit > BigInt.zero &&
             loan.debits - _amountDebit < debitValueOne) {
@@ -291,7 +293,8 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
       case LoanAdjustPage.actionTypeDeposit:
         return {
           'detail': {
-            "amount": _amountCtrl.text.trim(),
+            "amount":
+                _amountCtrl.text.trim() + ' ' + PluginFmt.tokenView(loan.token),
           },
           'params': [
             {'token': params.token},
@@ -302,7 +305,8 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
       case LoanAdjustPage.actionTypeWithdraw:
         return {
           'detail': {
-            "amount": _amountCtrl.text.trim(),
+            "amount":
+                _amountCtrl.text.trim() + ' ' + PluginFmt.tokenView(loan.token),
           },
           'params': [
             {'token': params.token},
@@ -387,7 +391,10 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
     final price = widget.plugin.store.assets.prices[symbol];
     final stableCoinPrice = Fmt.tokenInt('1', stableCoinDecimals);
 
-    String titleSuffix = ' $symbol';
+    final symbolView = PluginFmt.tokenView(symbol);
+    final stableCoinView =
+        isKar ? karura_stable_coin_view : acala_stable_coin_view;
+    String titleSuffix = ' $symbolView';
     bool showCollateral = true;
     bool showDebit = true;
 
@@ -405,7 +412,7 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
         maxToBorrow = maxToBorrow > BigInt.zero ? maxToBorrow : BigInt.zero;
         maxToBorrowView = Fmt.priceFloorBigInt(maxToBorrow, stableCoinDecimals);
         showCollateral = false;
-        titleSuffix = ' $stableCoinSymbol';
+        titleSuffix = ' $stableCoinView';
         break;
       case LoanAdjustPage.actionTypePayback:
         // max to payback
@@ -415,7 +422,7 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
             ? Fmt.priceCeilBigInt(maxToBorrow, stableCoinDecimals)
             : Fmt.priceFloorBigInt(maxToBorrow, stableCoinDecimals);
         showCollateral = false;
-        titleSuffix = ' $stableCoinSymbol';
+        titleSuffix = ' $stableCoinView';
         break;
       case LoanAdjustPage.actionTypeDeposit:
         showDebit = false;
@@ -463,8 +470,8 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
                       Padding(
                         padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
                         child: LoanInfoPanel(
-                          debits: '$debitsView $acala_stable_coin_view',
-                          collateral: '$collateralView $symbol',
+                          debits: '$debitsView $stableCoinView',
+                          collateral: '$collateralView $symbolView',
                           price: price,
                           liquidationRatio: loan.type.liquidationRatio,
                           requiredRatio: loan.type.requiredCollateralRatio,
@@ -479,7 +486,7 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
                                 decoration: InputDecoration(
                                   hintText: assetDic['amount'],
                                   labelText:
-                                      '${assetDic['amount']} (${assetDic['amount.available']}: $availableView $symbol)',
+                                      '${assetDic['amount']} (${assetDic['amount.available']}: $availableView $symbolView)',
                                   suffix: params.actionType ==
                                           LoanAdjustPage.actionTypeDeposit
                                       ? GestureDetector(

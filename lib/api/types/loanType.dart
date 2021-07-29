@@ -178,9 +178,10 @@ abstract class _LoanData {
 }
 
 class CollateralIncentiveData extends _CollateralIncentiveData {
-  static CollateralIncentiveData fromJson(List json) {
+  static CollateralIncentiveData fromJson(List json, {bool isTC6 = false}) {
     final data = CollateralIncentiveData();
-    data.token = json[0][0]['Token'];
+    data.token =
+        isTC6 ? json[0][0]['Token'] : json[0][0]['LoansIncentive']['Token'];
     data.incentive = Fmt.balanceInt(json[1].toString());
     return data;
   }

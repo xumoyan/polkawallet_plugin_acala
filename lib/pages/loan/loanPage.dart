@@ -38,8 +38,11 @@ class _LoanPageState extends State<LoanPage> {
   int _tab = 0;
 
   Future<void> _fetchData() async {
-    await widget.plugin.service.loan
-        .queryLoanTypes(widget.keyring.current.address);
+    await Future.wait([
+      widget.plugin.service.loan.queryLoanTypes(widget.keyring.current.address),
+      widget.plugin.service.assets
+          .queryMarketPrice(widget.plugin.networkState.tokenSymbol[0])
+    ]);
     if (mounted) {
       widget.plugin.service.loan
           .subscribeAccountLoans(widget.keyring.current.address);
@@ -78,6 +81,7 @@ class _LoanPageState extends State<LoanPage> {
     final stableCoinSymbol = isKar ? karura_stable_coin : acala_stable_coin;
     final stableCoinDecimals = widget.plugin.networkState.tokenDecimals[
         widget.plugin.networkState.tokenSymbol.indexOf(stableCoinSymbol)];
+    final incentiveTokenSymbol = widget.plugin.networkState.tokenSymbol[0];
     return Observer(
       builder: (_) {
         final loans = widget.plugin.store.loan.loans.values.toList();
@@ -90,7 +94,7 @@ class _LoanPageState extends State<LoanPage> {
         return Scaffold(
           backgroundColor: Theme.of(context).cardColor,
           appBar: AppBar(
-            title: Text(dic['loan.title']),
+            title: Text(dic['loan.title' + (isKar ? '.KSM' : '')]),
             centerTitle: true,
             actions: <Widget>[
               IconButton(
@@ -155,11 +159,17 @@ class _LoanPageState extends State<LoanPage> {
                                             .collateralIncentives,
                                         rewards: widget.plugin.store.loan
                                             .collateralRewards,
-                                        prices:
-                                            widget.plugin.store.assets.prices,
+                                        incentiveTokenMarketPrice: widget
+                                            .plugin
+                                            .store
+                                            .assets
+                                            .marketPrices[incentiveTokenSymbol],
                                         stableCoinDecimals: stableCoinDecimals,
-                                        incentiveTokenSymbol: widget
-                                            .plugin.networkState.tokenSymbol[0],
+                                        incentiveTokenSymbol:
+                                            incentiveTokenSymbol,
+                                        stableCoinSymbol: isKar
+                                            ? karura_stable_coin_view
+                                            : acala_stable_coin_view,
                                       ),
                               )
                             : RoundedCard(
@@ -263,8 +273,8 @@ class LoanOverviewCard extends StatelessWidget {
                   children: [
                     Container(
                         margin: EdgeInsets.only(top: 24, bottom: 8),
-                        child:
-                            Text(dic['loan.borrowed'] + '($stableCoinSymbol)')),
+                        child: Text(dic['loan.borrowed'] +
+                            '(${PluginFmt.tokenView(stableCoinSymbol)})')),
                     Text(
                       Fmt.priceCeilBigInt(loan.debits, stableCoinDecimals),
                       style: Theme.of(context).textTheme.headline4,
@@ -349,18 +359,20 @@ class CollateralIncentiveList extends StatelessWidget {
       this.rewards,
       this.totalCDPs,
       this.tokenIcons,
-      this.prices,
+      this.incentiveTokenMarketPrice,
       this.stableCoinDecimals,
-      this.incentiveTokenSymbol});
+      this.incentiveTokenSymbol,
+      this.stableCoinSymbol});
 
   final Map<String, LoanData> loans;
   final Map<String, double> incentives;
   final Map<String, CollateralRewardData> rewards;
   final Map<String, TotalCDPData> totalCDPs;
   final Map<String, Widget> tokenIcons;
-  final Map<String, BigInt> prices;
+  final String incentiveTokenMarketPrice;
   final int stableCoinDecimals;
   final String incentiveTokenSymbol;
+  final String stableCoinSymbol;
 
   @override
   Widget build(BuildContext context) {
@@ -370,8 +382,7 @@ class CollateralIncentiveList extends StatelessWidget {
         itemCount: tokens.length,
         itemBuilder: (_, i) {
           final token = tokens[i];
-          final apy = prices[incentiveTokenSymbol] /
-              Fmt.tokenInt('1', acala_price_decimals) *
+          final apy = double.parse(incentiveTokenMarketPrice) *
               incentives[token] /
               Fmt.bigIntToDouble(totalCDPs[token].debit, stableCoinDecimals);
           final borrowed =
@@ -379,6 +390,12 @@ class CollateralIncentiveList extends StatelessWidget {
           final reward = rewards[token];
           final rewardView =
               reward != null ? Fmt.priceFloor(reward.reward, lengthMax: 6) : '';
+          final numStyle = const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            letterSpacing: -0.8,
+            color: Colors.black54,
+          );
           return RoundedCard(
             padding: EdgeInsets.fromLTRB(16, 24, 16, 24),
             margin: EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -412,12 +429,7 @@ class CollateralIncentiveList extends StatelessWidget {
                           child: Text(
                               '${dic['loan.apy']} ($incentiveTokenSymbol)'),
                         ),
-                        Text(Fmt.ratio(apy),
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black54,
-                            )),
+                        Text(Fmt.ratio(apy), style: numStyle),
                       ],
                     )),
                     Expanded(
@@ -427,14 +439,9 @@ class CollateralIncentiveList extends StatelessWidget {
                         Container(
                           margin: EdgeInsets.only(bottom: 8),
                           child: Text(
-                              '${dic['loan.borrowed']} ($acala_stable_coin_view)'),
+                              '${dic['loan.borrowed']} ($stableCoinSymbol)'),
                         ),
-                        Text(borrowed,
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black54,
-                            )),
+                        Text(borrowed, style: numStyle),
                       ],
                     ))
                   ],

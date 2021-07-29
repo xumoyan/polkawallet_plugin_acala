@@ -119,7 +119,7 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                                                   stableCoinDecimals),
                                               style: titleStyle),
                                           Text(
-                                              '${dic['borrow.limit']}($stableCoinSymbol)',
+                                              '${dic['borrow.limit']}(${PluginFmt.tokenView(stableCoinSymbol)})',
                                               style: subtitleStyle)
                                         ],
                                       ))),

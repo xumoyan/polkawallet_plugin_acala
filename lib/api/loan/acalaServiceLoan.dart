@@ -27,9 +27,9 @@ class AcalaServiceLoan {
   }
 
   Future<List> queryCollateralIncentives() async {
-    final pools = await plugin.sdk.webView
-        .evalJavascript('api.query.incentives.incentiveRewardAmount.entries()'
-            '.then(ls => ls.map(i => ([i[0].toHuman(), i[1]])))');
+    final pools = await plugin.sdk.webView.evalJavascript(
+        'api.query.incentives.incentiveRewardAmount.entries()'
+        '.then(ls => ls.map(i => ([i[0].toHuman(), i[1]])).filter(i => !!i[0][0].LoansIncentive))');
     return pools;
   }
 

@@ -4,24 +4,22 @@ import 'package:polkawallet_sdk/plugin/store/balances.dart';
 
 class PluginFmt {
   static String tokenView(String token) {
-    String tokenView = token ?? '';
     if (token == acala_stable_coin) {
-      tokenView = acala_stable_coin_view;
+      return acala_stable_coin_view;
     }
     if (token == karura_stable_coin) {
-      tokenView = karura_stable_coin_view;
+      return karura_stable_coin_view;
     }
     if (token == acala_token_ren_btc) {
-      tokenView = acala_token_ren_btc_view;
+      return acala_token_ren_btc_view;
     }
     if (token == acala_token_polka_btc) {
-      tokenView = acala_token_polka_btc_view;
+      return acala_token_polka_btc_view;
     }
     if (token.contains('-')) {
-      tokenView =
-          '${token.split('-').map((e) => PluginFmt.tokenView(e)).join('-')} LP';
+      return '${token.split('-').map((e) => PluginFmt.tokenView(e)).join('-')} LP';
     }
-    return tokenView;
+    return token ?? '';
   }
 
   static LiquidityShareInfo calcLiquidityShare(

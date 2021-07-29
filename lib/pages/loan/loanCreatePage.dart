@@ -159,7 +159,7 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
 
   Map _getTxParams(LoanType loanType,
       {int stableCoinDecimals, int collateralDecimals}) {
-    BigInt debitShare = loanType.debitToDebitShare(
+    final debitShare = loanType.debitToDebitShare(
         _amountDebit <= Fmt.tokenInt('1', stableCoinDecimals)
             ? Fmt.tokenInt('1.00000001', stableCoinDecimals)
             : _amountDebit);

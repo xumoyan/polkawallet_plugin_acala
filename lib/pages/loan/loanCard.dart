@@ -39,7 +39,8 @@ class LoanDebtCard extends StatelessWidget {
                   children: [
                     Container(
                       margin: EdgeInsets.only(bottom: 8),
-                      child: Text('${dic['loan.borrowed']}($stableCoinSymbol)'),
+                      child: Text(
+                          '${dic['loan.borrowed']}(${PluginFmt.tokenView(stableCoinSymbol)})'),
                     ),
                     Row(children: [
                       Container(
