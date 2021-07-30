@@ -431,6 +431,7 @@ class _SwapFormState extends State<SwapForm> {
                                 _swapPair = token == _swapPair[1]
                                     ? [token, _swapPair[0]]
                                     : [token, _swapPair[1]];
+                                _maxInput = null;
                               });
                               _updateSwapAmount();
                             }
@@ -474,6 +475,7 @@ class _SwapFormState extends State<SwapForm> {
                                   _swapPair = token == _swapPair[0]
                                       ? [_swapPair[1], token]
                                       : [_swapPair[0], token];
+                                  _maxInput = null;
                                 });
                                 _updateSwapAmount();
                               }

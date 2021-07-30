@@ -32,9 +32,12 @@ class ServiceEarn {
       /// poolValue = LPAmountOfPool / LPIssuance * token0Issuance * token0Price * 2;
       final stakingPoolValue = poolInfo.sharesTotal /
           poolInfo.issuance *
-          Fmt.bigIntToDouble(poolInfo.amountLeft, pool.pairDecimals[0]) *
-          store.assets.marketPrices[pool.tokens[0]['token'].toString()] *
-          2;
+          (Fmt.bigIntToDouble(poolInfo.amountLeft, pool.pairDecimals[0]) *
+                  store
+                      .assets.marketPrices[pool.tokens[0]['token'].toString()] +
+              Fmt.bigIntToDouble(poolInfo.amountRight, pool.pairDecimals[1]) *
+                  store
+                      .assets.marketPrices[pool.tokens[1]['token'].toString()]);
 
       /// rewardsRate = rewardsAmount * rewardsTokenPrice / poolValue;
       final rate = amount *
@@ -50,15 +53,9 @@ class ServiceEarn {
   }
 
   Map<String, double> _calcSavingRates(Map savingRates, int epochOfYear) {
-    final stableCoin = plugin.basic.name == plugin_name_karura
-        ? karura_stable_coin
-        : acala_stable_coin;
     final res = Map<String, double>();
     savingRates.forEach((k, v) {
-      final rate = Fmt.balanceDouble(
-          v.toString(),
-          plugin.networkState.tokenDecimals[
-              plugin.networkState.tokenSymbol.indexOf(stableCoin)]);
+      final rate = Fmt.balanceDouble(v.toString(), acala_price_decimals) / 2;
       if (rate > 0) {
         res[k] = pow(1 + rate, epochOfYear) - 1;
       } else {
@@ -103,6 +100,8 @@ class ServiceEarn {
         _calcIncentives(rewards['incentives'], [pool], epochOfYear);
     res['savingRates'] = _calcSavingRates(rewards['savingRates'], epochOfYear);
     res['deductionRates'] = _calcDeductionRates(rewards['deductionRates']);
+    res['deductionSavingRates'] =
+        _calcDeductionRates(rewards['deductionSavingRates']);
     store.earn.setDexPoolRewards(res);
   }
 

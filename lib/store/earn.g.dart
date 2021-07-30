@@ -56,6 +56,21 @@ mixin _$EarnStore on _EarnStore, Store {
     });
   }
 
+  final _$savingLoyaltyBonusAtom = Atom(name: '_EarnStore.savingLoyaltyBonus');
+
+  @override
+  ObservableMap<String, double> get savingLoyaltyBonus {
+    _$savingLoyaltyBonusAtom.reportRead();
+    return super.savingLoyaltyBonus;
+  }
+
+  @override
+  set savingLoyaltyBonus(ObservableMap<String, double> value) {
+    _$savingLoyaltyBonusAtom.reportWrite(value, super.savingLoyaltyBonus, () {
+      super.savingLoyaltyBonus = value;
+    });
+  }
+
   final _$dexPoolsAtom = Atom(name: '_EarnStore.dexPools');
 
   @override
@@ -164,6 +179,7 @@ mixin _$EarnStore on _EarnStore, Store {
 swapPoolRewards: ${swapPoolRewards},
 swapPoolSavingRewards: ${swapPoolSavingRewards},
 loyaltyBonus: ${loyaltyBonus},
+savingLoyaltyBonus: ${savingLoyaltyBonus},
 dexPools: ${dexPools},
 bootstraps: ${bootstraps},
 dexPoolInfoMap: ${dexPoolInfoMap}

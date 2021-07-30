@@ -35,17 +35,17 @@ class AcalaServiceSwap {
     final pools = dexPools
         .map((pool) => jsonEncode(isTC6
             ? {'DEXShare': pool.map((e) => e['token']).toList()}
-            : {
-                'DexIncentive': {'DEXShare': pool}
-              }))
+            : {'DEXShare': pool}))
         .toList();
     final incentiveQuery = pools
-        .map((i) =>
-            'api.query.incentives.${isTC6 ? 'dEXIncentiveRewards' : 'incentiveRewardAmount'}($i)')
+        .map((i) => isTC6
+            ? 'api.query.incentives.dEXIncentiveRewards($i)'
+            : 'api.query.incentives.incentiveRewardAmount({ DexIncentive: $i})')
         .join(',');
     final savingRateQuery = pools
-        .map((i) =>
-            'api.query.incentives.${isTC6 ? 'dEXSavingRates' : 'dexSavingRewardRate'}($i)')
+        .map((i) => isTC6
+            ? 'api.query.incentives.dEXSavingRates($i)'
+            : 'api.query.incentives.dexSavingRewardRate({ DexSaving: $i})')
         .join(',');
     final res = await Future.wait([
       plugin.sdk.webView.evalJavascript('Promise.all([$incentiveQuery])'),
@@ -53,28 +53,41 @@ class AcalaServiceSwap {
     ]);
     List deductions;
     if (!isTC6) {
-      final deductionQuery = pools
-          .map((i) => 'api.query.incentives.payoutDeductionRates($i)')
+      final deductionQuery = dexPools
+          .map((i) => 'api.query.incentives.payoutDeductionRates(${jsonEncode({
+                    'DexIncentive': {'DEXShare': i}
+                  })})')
           .join(',');
-      deductions = await plugin.sdk.webView
-          .evalJavascript('Promise.all([$deductionQuery])');
+      final deductionSavingQuery = dexPools
+          .map((i) => 'api.query.incentives.payoutDeductionRates(${jsonEncode({
+                    'DexSaving': {'DEXShare': i}
+                  })})')
+          .join(',');
+      deductions = await Future.wait([
+        plugin.sdk.webView.evalJavascript('Promise.all([$deductionQuery])'),
+        plugin.sdk.webView
+            .evalJavascript('Promise.all([$deductionSavingQuery])')
+      ]);
     }
     final incentives = Map<String, dynamic>();
     final savingRates = Map<String, dynamic>();
     final deductionRates = Map<String, dynamic>();
+    final deductionSavingRates = Map<String, dynamic>();
     final tokenPairs =
         dexPools.map((e) => e.map((i) => i['token']).join('-')).toList();
     tokenPairs.asMap().forEach((k, v) {
       incentives[v] = res[0][k];
       savingRates[v] = res[1][k];
       if (deductions.length > 0) {
-        deductionRates[v] = deductions[k];
+        deductionRates[v] = deductions[0][k];
+        deductionSavingRates[v] = deductions[1][k];
       }
     });
     return {
       'incentives': incentives,
       'savingRates': savingRates,
       'deductionRates': deductionRates,
+      'deductionSavingRates': deductionSavingRates,
     };
   }
 

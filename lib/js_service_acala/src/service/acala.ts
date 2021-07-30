@@ -141,7 +141,7 @@ async function getAllTokenSymbols(chain: string) {
  * @param {String} poolId
  * @param {String} address
  */
-async function fetchCollateralRewards(api: ApiPromise, pool: any, address: string) {
+async function fetchCollateralRewards(api: ApiPromise, pool: any, address: string, decimals: number) {
   const res = (await Promise.all([
     api.query.rewards.pools({ LoansIncentive: pool }),
     api.query.rewards.shareAndWithdrawnReward({ LoansIncentive: pool }, address),
@@ -150,15 +150,14 @@ async function fetchCollateralRewards(api: ApiPromise, pool: any, address: strin
   if (res[0] && res[1]) {
     proportion = FPNum(res[1][0]).div(FPNum(res[0].totalShares));
   }
-  const decimalsACA = 13;
   return {
     token: pool.Token,
     sharesTotal: res[0].totalShares,
     shares: res[1][0],
     proportion: proportion.toNumber() || 0,
-    reward: FPNum(res[0].totalRewards, decimalsACA)
+    reward: FPNum(res[0].totalRewards, decimals)
       .times(proportion)
-      .minus(FPNum(res[1][1], decimalsACA))
+      .minus(FPNum(res[1][1], decimals))
       .toString(),
   };
 }

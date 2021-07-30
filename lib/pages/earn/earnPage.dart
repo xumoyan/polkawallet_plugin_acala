@@ -72,12 +72,15 @@ class _EarnPageState extends State<EarnPage> {
     );
   }
 
-  void _onWithdrawReward(LPRewardData reward, double loyaltyBonus) {
+  void _onWithdrawReward(
+      LPRewardData reward, double loyaltyBonus, double savingLoyaltyBonus) {
     final symbol = widget.plugin.networkState.tokenSymbol[0];
-    final incentiveReward =
-        Fmt.priceFloor(reward.incentive * (1 - loyaltyBonus), lengthMax: 4);
-    final savingReward =
-        Fmt.priceFloor(reward.saving * (1 - loyaltyBonus), lengthMax: 2);
+    final incentiveReward = Fmt.priceFloor(
+        reward.incentive * (1 - (loyaltyBonus ?? 0)),
+        lengthMax: 4);
+    final savingReward = Fmt.priceFloor(
+        reward.saving * (1 - (savingLoyaltyBonus ?? 0)),
+        lengthMax: 2);
 
     // todo: fix this after new acala online
     final isTC6 = widget.plugin.basic.name == plugin_name_acala;
@@ -211,10 +214,12 @@ class _EarnPageState extends State<EarnPage> {
                     poolInfo.amountRight, balancePair[1].decimals) *
                 poolShare;
             lpAmountString =
-                '${Fmt.priceFloor(lpAmount)} ${PluginFmt.tokenView(pair[0])} + ${Fmt.priceFloor(lpAmount2, lengthFixed: 4)} ${PluginFmt.tokenView(pair[1])}';
+                '${Fmt.priceFloor(lpAmount)} ${PluginFmt.tokenView(pair[0])} + ${Fmt.priceFloor(lpAmount2)} ${PluginFmt.tokenView(pair[1])}';
           }
 
           final loyaltyBonus = widget.plugin.store.earn.loyaltyBonus[tabNow];
+          final savingLoyaltyBonus =
+              widget.plugin.store.earn.savingLoyaltyBonus[tabNow];
 
           final balance = Fmt.balanceInt(widget.plugin.store.assets
                   .tokenBalanceMap[tabNow.toUpperCase()]?.amount ??
@@ -285,9 +290,10 @@ class _EarnPageState extends State<EarnPage> {
                                 .swapPoolSavingRewards[tabNow] ??
                             0,
                         loyaltyBonus: loyaltyBonus,
+                        savingLoyaltyBonus: savingLoyaltyBonus,
                         fee: widget.plugin.service.earn.getSwapFee(),
-                        onWithdrawReward: () =>
-                            _onWithdrawReward(poolInfo.reward, loyaltyBonus),
+                        onWithdrawReward: () => _onWithdrawReward(
+                            poolInfo.reward, loyaltyBonus, savingLoyaltyBonus),
                         incentiveCoinSymbol: symbols[0],
                         stableCoinSymbol: stableCoinSymbol,
                         stableCoinDecimal: widget.plugin.networkState
@@ -428,6 +434,7 @@ class _UserCard extends StatelessWidget {
     this.rewardAPY,
     this.rewardSavingAPY,
     this.loyaltyBonus,
+    this.savingLoyaltyBonus,
     this.fee,
     this.onWithdrawReward,
     this.incentiveCoinSymbol,
@@ -440,6 +447,7 @@ class _UserCard extends StatelessWidget {
   final double rewardAPY;
   final double rewardSavingAPY;
   final double loyaltyBonus;
+  final double savingLoyaltyBonus;
   final double fee;
   final Function onWithdrawReward;
   final String incentiveCoinSymbol;
@@ -479,8 +487,9 @@ class _UserCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
-    var reward = (poolInfo?.reward?.incentive ?? 0) * (1 - loyaltyBonus);
-    var rewardSaving = (poolInfo?.reward?.saving ?? 0) * (1 - loyaltyBonus);
+    var reward = (poolInfo?.reward?.incentive ?? 0) * (1 - (loyaltyBonus ?? 0));
+    var rewardSaving =
+        (poolInfo?.reward?.saving ?? 0) * (1 - (savingLoyaltyBonus ?? 0));
     if (reward < 0) {
       reward = 0;
     }
@@ -490,7 +499,7 @@ class _UserCard extends StatelessWidget {
 
     final Color primary = Theme.of(context).primaryColor;
     final TextStyle primaryText = TextStyle(
-      fontSize: 22,
+      fontSize: 20,
       fontWeight: FontWeight.bold,
       color: primary,
       letterSpacing: -0.8,

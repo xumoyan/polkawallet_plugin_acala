@@ -25,6 +25,10 @@ abstract class _EarnStore with Store {
   ObservableMap<String, double> loyaltyBonus = ObservableMap<String, double>();
 
   @observable
+  ObservableMap<String, double> savingLoyaltyBonus =
+      ObservableMap<String, double>();
+
+  @observable
   List<DexPoolData> dexPools = [];
 
   @observable
@@ -54,6 +58,7 @@ abstract class _EarnStore with Store {
     swapPoolRewards.addAll(data['incentives']);
     swapPoolSavingRewards.addAll(data['savingRates']);
     loyaltyBonus.addAll(data['deductionRates']);
+    savingLoyaltyBonus.addAll(data['deductionSavingRates']);
   }
 
   @action

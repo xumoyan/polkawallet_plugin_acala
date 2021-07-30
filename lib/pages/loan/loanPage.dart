@@ -412,7 +412,7 @@ class CollateralIncentiveList extends StatelessWidget {
               Fmt.priceCeilBigInt(loans[token].debits, stableCoinDecimals);
           final reward = rewards[token];
           final rewardView =
-              reward != null ? Fmt.priceFloor(reward.reward, lengthMax: 6) : '';
+              reward != null ? Fmt.priceFloor(reward.reward, lengthMax: 4) : '';
           final numStyle = const TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
@@ -471,7 +471,7 @@ class CollateralIncentiveList extends StatelessWidget {
                 ),
                 Container(
                   margin: EdgeInsets.only(top: 24),
-                  child: reward != null && reward.reward > 0.00001
+                  child: reward != null && reward.reward > 0.0001
                       ? TxButton(
                           text:
                               '${dic['earn.claim']} $rewardView $incentiveTokenSymbol',
