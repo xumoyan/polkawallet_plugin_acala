@@ -31,7 +31,7 @@ class SwapTokenInput extends StatelessWidget {
   final TokenBalanceData balance;
   final List<String> tokenOptions;
   final Map<String, Widget> tokenIconsMap;
-  final String marketPrice;
+  final double marketPrice;
   final Function(String) onInputChange;
   final Function(String) onTokenChange;
   final Function(BigInt) onSetMax;
@@ -53,9 +53,8 @@ class SwapTokenInput extends StatelessWidget {
     final max = Fmt.balanceInt(balance?.amount);
 
     final priceVisible = marketPrice != null && inputCtrl.text.isNotEmpty;
-    final price = priceVisible
-        ? double.parse(marketPrice) * double.parse(inputCtrl.text.trim())
-        : null;
+    final price =
+        priceVisible ? marketPrice * double.parse(inputCtrl.text.trim()) : null;
 
     final colorGray = Theme.of(context).unselectedWidgetColor;
     final colorLightGray = Theme.of(context).disabledColor;

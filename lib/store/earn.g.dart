@@ -12,13 +12,13 @@ mixin _$EarnStore on _EarnStore, Store {
   final _$swapPoolRewardsAtom = Atom(name: '_EarnStore.swapPoolRewards');
 
   @override
-  Map<String, double> get swapPoolRewards {
+  ObservableMap<String, double> get swapPoolRewards {
     _$swapPoolRewardsAtom.reportRead();
     return super.swapPoolRewards;
   }
 
   @override
-  set swapPoolRewards(Map<String, double> value) {
+  set swapPoolRewards(ObservableMap<String, double> value) {
     _$swapPoolRewardsAtom.reportWrite(value, super.swapPoolRewards, () {
       super.swapPoolRewards = value;
     });
@@ -28,16 +28,31 @@ mixin _$EarnStore on _EarnStore, Store {
       Atom(name: '_EarnStore.swapPoolSavingRewards');
 
   @override
-  Map<String, double> get swapPoolSavingRewards {
+  ObservableMap<String, double> get swapPoolSavingRewards {
     _$swapPoolSavingRewardsAtom.reportRead();
     return super.swapPoolSavingRewards;
   }
 
   @override
-  set swapPoolSavingRewards(Map<String, double> value) {
+  set swapPoolSavingRewards(ObservableMap<String, double> value) {
     _$swapPoolSavingRewardsAtom.reportWrite(value, super.swapPoolSavingRewards,
         () {
       super.swapPoolSavingRewards = value;
+    });
+  }
+
+  final _$loyaltyBonusAtom = Atom(name: '_EarnStore.loyaltyBonus');
+
+  @override
+  ObservableMap<String, double> get loyaltyBonus {
+    _$loyaltyBonusAtom.reportRead();
+    return super.loyaltyBonus;
+  }
+
+  @override
+  set loyaltyBonus(ObservableMap<String, double> value) {
+    _$loyaltyBonusAtom.reportWrite(value, super.loyaltyBonus, () {
+      super.loyaltyBonus = value;
     });
   }
 
@@ -148,6 +163,7 @@ mixin _$EarnStore on _EarnStore, Store {
     return '''
 swapPoolRewards: ${swapPoolRewards},
 swapPoolSavingRewards: ${swapPoolSavingRewards},
+loyaltyBonus: ${loyaltyBonus},
 dexPools: ${dexPools},
 bootstraps: ${bootstraps},
 dexPoolInfoMap: ${dexPoolInfoMap}

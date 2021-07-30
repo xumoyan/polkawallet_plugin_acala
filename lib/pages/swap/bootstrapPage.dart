@@ -51,11 +51,11 @@ class _BootstrapPageState extends State<BootstrapPage> {
     widget.plugin.service.earn.getBootstraps();
 
     final DexPoolData pool = ModalRoute.of(context).settings.arguments;
-    final res = await Future.wait([
+    final List res = await Future.wait([
       widget.plugin.sdk.webView.evalJavascript(
           'api.query.dex.provisioningPool(${jsonEncode(pool.tokens)}, "${widget.keyring.current.address}")'),
-      widget.plugin.service.assets
-          .queryMarketPrice(relay_chain_token_symbol[widget.plugin.basic.name]),
+      widget.plugin.service.assets.queryMarketPrices(
+          [relay_chain_token_symbol[widget.plugin.basic.name]]),
     ]);
 
     if (mounted) {
@@ -223,7 +223,7 @@ class _BootstrapPageState extends State<BootstrapPage> {
             widget.plugin.store.assets.marketPrices[relayChainToken];
         final priceView = relayChainTokenPrice == null
             ? '--.--'
-            : Fmt.priceFloor(double.parse(relayChainTokenPrice) * ratio);
+            : Fmt.priceFloor(relayChainTokenPrice * ratio);
         ratioView2 += '1 ${pairView[0]} ≈ \$$priceView';
       }
 

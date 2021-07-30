@@ -72,17 +72,6 @@ class _SwapFormState extends State<SwapForm> {
     }
   }
 
-  Future<void> _updateMarketPrices() async {
-    if (_swapPair[0] != acala_stable_coin &&
-        _swapPair[0] != karura_stable_coin) {
-      widget.plugin.service.assets.queryMarketPrice(_swapPair[0]);
-    }
-    if (_swapPair[1] != acala_stable_coin &&
-        _swapPair[1] != karura_stable_coin) {
-      widget.plugin.service.assets.queryMarketPrice(_swapPair[1]);
-    }
-  }
-
   Future<void> _switchPair() async {
     final pay = _amountPayCtrl.text;
     setState(() {
@@ -99,20 +88,6 @@ class _SwapFormState extends State<SwapForm> {
       _payFocusNode.requestFocus();
     }
     await _updateSwapAmount();
-  }
-
-  List<String> _getSwapTokens() {
-    final List<String> tokens = widget.plugin.basic.name == plugin_name_karura
-        ? ['KAR', karura_stable_coin]
-        : ['ACA', acala_stable_coin];
-    widget.plugin.store.earn.dexPools.forEach((e) {
-      e.tokens.forEach((token) {
-        if (tokens.indexOf(token['token']) < 0) {
-          tokens.add(token['token']);
-        }
-      });
-    });
-    return tokens;
   }
 
   bool _onCheckBalance() {
@@ -216,7 +191,7 @@ class _SwapFormState extends State<SwapForm> {
     String target, {
     bool init = false,
   }) async {
-    _updateMarketPrices();
+    widget.plugin.service.assets.queryMarketPrices(_swapPair);
 
     if (supply == null) {
       final output = await widget.plugin.api.swap.queryTokenSwapAmount(
@@ -407,30 +382,12 @@ class _SwapFormState extends State<SwapForm> {
     return Observer(
       builder: (BuildContext context) {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
-        final symbols = widget.plugin.networkState.tokenSymbol;
-        final decimals = widget.plugin.networkState.tokenDecimals;
-        final stableCoinSymbol = widget.plugin.basic.name == plugin_name_karura
-            ? karura_stable_coin
-            : acala_stable_coin;
 
-        final pairDecimals = [8, 8];
-        final currencyOptions = _getSwapTokens();
-        final List<String> pairMarketPrice = [null, null];
+        final currencyOptionsLeft = PluginFmt.getAllDexTokens(widget.plugin);
+        final currencyOptionsRight = currencyOptionsLeft.toList();
         if (_swapPair.length > 0) {
-          pairDecimals
-              .replaceRange(0, 1, [decimals[symbols.indexOf(_swapPair[0])]]);
-          pairDecimals
-              .replaceRange(1, 2, [decimals[symbols.indexOf(_swapPair[1])]]);
-
-          currencyOptions
-              .retainWhere((i) => i != _swapPair[0] && i != _swapPair[1]);
-
-          pairMarketPrice[0] = _swapPair[0] == stableCoinSymbol
-              ? '1'
-              : widget.plugin.store.assets.marketPrices[_swapPair[0]];
-          pairMarketPrice[1] = _swapPair[1] == stableCoinSymbol
-              ? '1'
-              : widget.plugin.store.assets.marketPrices[_swapPair[1]];
+          currencyOptionsLeft.retainWhere((i) => i != _swapPair[0]);
+          currencyOptionsRight.retainWhere((i) => i != _swapPair[1]);
         }
 
         final balancePair = PluginFmt.getBalancePair(widget.plugin, _swapPair);
@@ -463,19 +420,23 @@ class _SwapFormState extends State<SwapForm> {
                           inputCtrl: _amountPayCtrl,
                           focusNode: _payFocusNode,
                           balance: balancePair[0],
-                          tokenOptions: currencyOptions,
+                          tokenOptions: currencyOptionsLeft,
                           tokenIconsMap: widget.plugin.tokenIcons,
-                          marketPrice: pairMarketPrice[0],
+                          marketPrice: widget
+                              .plugin.store.assets.marketPrices[_swapPair[0]],
                           onInputChange: _onSupplyAmountChange,
                           onTokenChange: (String token) {
                             if (token != null) {
                               setState(() {
-                                _swapPair = [token, _swapPair[1]];
+                                _swapPair = token == _swapPair[1]
+                                    ? [token, _swapPair[0]]
+                                    : [token, _swapPair[1]];
                               });
                               _updateSwapAmount();
                             }
                           },
-                          onSetMax: (v) => _onSetMax(v, pairDecimals[0]),
+                          onSetMax: (v) =>
+                              _onSetMax(v, balancePair[0].decimals),
                           onClear: () {
                             setState(() {
                               _maxInput = null;
@@ -502,14 +463,17 @@ class _SwapFormState extends State<SwapForm> {
                             inputCtrl: _amountReceiveCtrl,
                             focusNode: _receiveFocusNode,
                             balance: balancePair[1],
-                            tokenOptions: currencyOptions,
+                            tokenOptions: currencyOptionsRight,
                             tokenIconsMap: widget.plugin.tokenIcons,
-                            marketPrice: pairMarketPrice[1],
+                            marketPrice: widget
+                                .plugin.store.assets.marketPrices[_swapPair[1]],
                             onInputChange: _onTargetAmountChange,
                             onTokenChange: (String token) {
                               if (token != null) {
                                 setState(() {
-                                  _swapPair = [_swapPair[0], token];
+                                  _swapPair = token == _swapPair[0]
+                                      ? [_swapPair[1], token]
+                                      : [_swapPair[0], token];
                                 });
                                 _updateSwapAmount();
                               }
@@ -728,7 +692,8 @@ class _SwapFormState extends State<SwapForm> {
                 text: dic['dex.title'],
                 onPressed: !widget.enabled || _swapRatio == 0
                     ? null
-                    : () => _onSubmit(pairDecimals, minMax),
+                    : () => _onSubmit(
+                        balancePair.map((e) => e.decimals).toList(), minMax),
               ),
             )
           ],

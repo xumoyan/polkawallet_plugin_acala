@@ -6,6 +6,7 @@ import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
 import 'package:polkawallet_ui/components/outlinedButtonSmall.dart';
 import 'package:polkawallet_ui/components/roundedCard.dart';
+import 'package:polkawallet_ui/components/tapTooltip.dart';
 import 'package:polkawallet_ui/components/tokenIcon.dart';
 import 'package:polkawallet_ui/utils/format.dart';
 
@@ -32,49 +33,57 @@ class LoanDebtCard extends StatelessWidget {
       padding: EdgeInsets.all(16),
       child: Column(
         children: <Widget>[
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Expanded(
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      margin: EdgeInsets.only(bottom: 8),
-                      child: Text(
-                          '${dic['loan.borrowed']}(${PluginFmt.tokenView(stableCoinSymbol)})'),
-                    ),
-                    Row(children: [
+          Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Container(
-                          margin: EdgeInsets.only(right: 8),
-                          child: TokenIcon(stableCoinSymbol, tokenIcons)),
-                      Text(Fmt.priceCeilBigInt(loan.debits, stableCoinDecimals),
-                          style: TextStyle(
-                            fontSize: 30,
-                            letterSpacing: -0.8,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          )),
-                    ]),
-                    Container(
+                        margin: EdgeInsets.only(bottom: 8),
+                        child: Text(
+                            '${dic['loan.borrowed']}(${PluginFmt.tokenView(stableCoinSymbol)})'),
+                      ),
+                      Row(children: [
+                        Container(
+                            margin: EdgeInsets.only(right: 8),
+                            child: TokenIcon(stableCoinSymbol, tokenIcons)),
+                        Text(
+                            Fmt.priceCeilBigInt(
+                                loan.debits, stableCoinDecimals),
+                            style: TextStyle(
+                              fontSize: 30,
+                              letterSpacing: -0.8,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            )),
+                      ]),
+                      Container(
                         margin: EdgeInsets.only(top: 4),
                         child: Text(
-                            '${I18n.of(context).getDic(i18n_full_dic_acala, 'common')['balance']}: $balance',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context).unselectedWidgetColor,
-                            )))
-                  ]),
-            ),
-            Column(
-              children: [
-                Text(dic['collateral.ratio.year']),
-                Container(
-                  margin: EdgeInsets.only(top: 12, bottom: 24),
-                  child: Text(Fmt.ratio(loan.stableFeeYear),
-                      style: Theme.of(context).textTheme.headline4),
+                          '${I18n.of(context).getDic(i18n_full_dic_acala, 'common')['balance']}: $balance',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).unselectedWidgetColor,
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
                 ),
-              ],
-            ),
-          ]),
+                Column(
+                  children: [
+                    Text(dic['collateral.interest']),
+                    Container(
+                      margin: EdgeInsets.only(top: 16, bottom: 24),
+                      child: Text(Fmt.ratio(loan.stableFeeYear),
+                          style: Theme.of(context).textTheme.headline4),
+                    ),
+                  ],
+                ),
+              ]),
           Divider(height: 32),
           Row(
             children: [
@@ -119,12 +128,14 @@ class LoanCollateralCard extends StatelessWidget {
     this.stableCoinDecimals,
     this.collateralDecimals,
     this.tokenIcons,
+    this.isKar,
   );
   final LoanData loan;
   final String balance;
   final int stableCoinDecimals;
   final int collateralDecimals;
   final Map<String, Widget> tokenIcons;
+  final bool isKar;
   @override
   Widget build(BuildContext context) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
@@ -133,51 +144,69 @@ class LoanCollateralCard extends StatelessWidget {
       padding: EdgeInsets.all(16),
       child: Column(
         children: <Widget>[
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Expanded(
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      margin: EdgeInsets.only(bottom: 8),
-                      child: Text(
-                          '${dic['loan.collateral']}(${PluginFmt.tokenView(loan.token)})'),
-                    ),
-                    Row(children: [
+          Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Container(
-                          margin: EdgeInsets.only(right: 8),
-                          child: TokenIcon(loan.token, tokenIcons)),
-                      Text(
-                          Fmt.priceFloorBigInt(
-                              loan.collaterals, collateralDecimals),
-                          style: TextStyle(
-                            fontSize: 30,
-                            letterSpacing: -0.8,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          )),
-                    ]),
-                    Container(
+                        margin: EdgeInsets.only(bottom: 8),
+                        child: Text(
+                            '${dic['loan.collateral']}(${PluginFmt.tokenView(loan.token)})'),
+                      ),
+                      Row(children: [
+                        Container(
+                            margin: EdgeInsets.only(right: 8),
+                            child: TokenIcon(loan.token, tokenIcons)),
+                        Text(
+                            Fmt.priceFloorBigInt(
+                                loan.collaterals, collateralDecimals),
+                            style: TextStyle(
+                              fontSize: 30,
+                              letterSpacing: -0.8,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            )),
+                      ]),
+                      Container(
                         margin: EdgeInsets.only(top: 4),
                         child: Text(
-                            '${I18n.of(context).getDic(i18n_full_dic_acala, 'common')['balance']}: $balance',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context).unselectedWidgetColor,
-                            )))
-                  ]),
-            ),
-            Column(
-              children: [
-                Text(dic['loan.ratio']),
-                Container(
-                  margin: EdgeInsets.only(top: 12, bottom: 24),
-                  child: Text(Fmt.ratio(loan.collateralRatio),
-                      style: Theme.of(context).textTheme.headline4),
+                          '${I18n.of(context).getDic(i18n_full_dic_acala, 'common')['balance']}: $balance',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).unselectedWidgetColor,
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
                 ),
-              ],
-            ),
-          ]),
+                Column(
+                  children: [
+                    TapTooltip(
+                      message: dic['loan.ratio.info' + (isKar ? '.KSM' : '')],
+                      child: Row(
+                        children: [
+                          Icon(Icons.info,
+                              color: Theme.of(context).disabledColor, size: 14),
+                          Container(
+                            padding: EdgeInsets.only(left: 4),
+                            child: Text(dic['loan.ratio']),
+                          )
+                        ],
+                      ),
+                    ),
+                    Container(
+                      margin: EdgeInsets.only(top: 16, bottom: 24),
+                      child: Text(Fmt.ratio(loan.collateralRatio),
+                          style: Theme.of(context).textTheme.headline4),
+                    ),
+                  ],
+                ),
+              ]),
           Divider(height: 32),
           Row(
             children: [

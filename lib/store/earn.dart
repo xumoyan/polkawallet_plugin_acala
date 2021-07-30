@@ -14,10 +14,15 @@ abstract class _EarnStore with Store {
   final StoreCache cache;
 
   @observable
-  Map<String, double> swapPoolRewards = Map<String, double>();
+  ObservableMap<String, double> swapPoolRewards =
+      ObservableMap<String, double>();
 
   @observable
-  Map<String, double> swapPoolSavingRewards = Map<String, double>();
+  ObservableMap<String, double> swapPoolSavingRewards =
+      ObservableMap<String, double>();
+
+  @observable
+  ObservableMap<String, double> loyaltyBonus = ObservableMap<String, double>();
 
   @observable
   List<DexPoolData> dexPools = [];
@@ -46,8 +51,9 @@ abstract class _EarnStore with Store {
 
   @action
   void setDexPoolRewards(Map<String, Map<String, double>> data) {
-    swapPoolRewards = data['incentives'];
-    swapPoolSavingRewards = data['savingRates'];
+    swapPoolRewards.addAll(data['incentives']);
+    swapPoolSavingRewards.addAll(data['savingRates']);
+    loyaltyBonus.addAll(data['deductionRates']);
   }
 
   @action

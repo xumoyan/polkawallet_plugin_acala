@@ -51,17 +51,30 @@ class AcalaServiceSwap {
       plugin.sdk.webView.evalJavascript('Promise.all([$incentiveQuery])'),
       plugin.sdk.webView.evalJavascript('Promise.all([$savingRateQuery])')
     ]);
+    List deductions;
+    if (!isTC6) {
+      final deductionQuery = pools
+          .map((i) => 'api.query.incentives.payoutDeductionRates($i)')
+          .join(',');
+      deductions = await plugin.sdk.webView
+          .evalJavascript('Promise.all([$deductionQuery])');
+    }
     final incentives = Map<String, dynamic>();
     final savingRates = Map<String, dynamic>();
+    final deductionRates = Map<String, dynamic>();
     final tokenPairs =
         dexPools.map((e) => e.map((i) => i['token']).join('-')).toList();
     tokenPairs.asMap().forEach((k, v) {
       incentives[v] = res[0][k];
       savingRates[v] = res[1][k];
+      if (deductions.length > 0) {
+        deductionRates[v] = deductions[k];
+      }
     });
     return {
       'incentives': incentives,
       'savingRates': savingRates,
+      'deductionRates': deductionRates,
     };
   }
 

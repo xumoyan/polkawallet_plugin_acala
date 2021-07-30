@@ -23,7 +23,7 @@ abstract class _AssetsStore with Store {
   Map<String, BigInt> prices = {};
 
   @observable
-  ObservableMap<String, String> marketPrices = ObservableMap();
+  ObservableMap<String, double> marketPrices = ObservableMap();
 
   @observable
   ObservableList<TransferData> txs = ObservableList<TransferData>();
@@ -62,7 +62,7 @@ abstract class _AssetsStore with Store {
   }
 
   @action
-  void setMarketPrices(Map<String, String> data) {
+  void setMarketPrices(Map<String, double> data) {
     marketPrices.addAll(data);
   }
 

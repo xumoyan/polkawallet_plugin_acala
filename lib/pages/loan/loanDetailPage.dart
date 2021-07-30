@@ -139,7 +139,8 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                                           ),
                                           Text(Fmt.priceFloorBigInt(price, 18),
                                               style: titleStyle),
-                                          Text('${dic['collateral.price']}(\$)',
+                                          Text(
+                                              '${PluginFmt.tokenView(token)} ${dic['collateral.price']}(\$)',
                                               style: subtitleStyle)
                                         ],
                                       ))),
@@ -150,7 +151,8 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                                 tokenBalance, collateralDecimals),
                             stableCoinDecimals,
                             collateralDecimals,
-                            widget.plugin.tokenIcons),
+                            widget.plugin.tokenIcons,
+                            isKar),
                         LoanDebtCard(
                             loan,
                             Fmt.priceFloorBigInt(

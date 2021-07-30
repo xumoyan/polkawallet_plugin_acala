@@ -37,7 +37,7 @@ class TxLoanData extends _TxLoanData {
     }
 
     data.time = (json['extrinsic']['timestamp'] as String).replaceAll(' ', '');
-    data.isSuccess = json['isSuccess'];
+    data.isSuccess = json['extrinsic']['isSuccess'];
     return data;
   }
 }

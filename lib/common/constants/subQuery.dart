@@ -26,18 +26,17 @@ const transferQuery = r'''
 ''';
 const loanQuery = r'''
   query ($account: String) {
-    loanActions(condition: {accountId: $account }, orderBy: TIMESTAMP_DESC, first: 20) {
+    loanActions(filter: {accountId: {equalTo: $account}},
+      orderBy: TIMESTAMP_DESC, first: 20) {
       nodes {
         id
-        token {id}
-        collateral
-        debit
-        exchangeRate
-        isSuccess
+        data
         extrinsic {
           id
+          method
           block {number}
           timestamp
+          isSuccess
         }
       }
     }

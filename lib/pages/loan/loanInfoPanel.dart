@@ -45,7 +45,7 @@ class LoanInfoPanel extends StatelessWidget {
               )
             : Container(),
         InfoItemRow(
-          dic['collateral.price'],
+          dic['collateral.price.current'],
           '\$$priceString',
         ),
         InfoItemRow(

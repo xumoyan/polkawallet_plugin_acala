@@ -42,13 +42,13 @@ mixin _$AssetsStore on _AssetsStore, Store {
   final _$marketPricesAtom = Atom(name: '_AssetsStore.marketPrices');
 
   @override
-  ObservableMap<String, String> get marketPrices {
+  ObservableMap<String, double> get marketPrices {
     _$marketPricesAtom.reportRead();
     return super.marketPrices;
   }
 
   @override
-  set marketPrices(ObservableMap<String, String> value) {
+  set marketPrices(ObservableMap<String, double> value) {
     _$marketPricesAtom.reportWrite(value, super.marketPrices, () {
       super.marketPrices = value;
     });
@@ -110,7 +110,7 @@ mixin _$AssetsStore on _AssetsStore, Store {
   }
 
   @override
-  void setMarketPrices(Map<String, String> data) {
+  void setMarketPrices(Map<String, double> data) {
     final _$actionInfo = _$_AssetsStoreActionController.startAction(
         name: '_AssetsStore.setMarketPrices');
     try {

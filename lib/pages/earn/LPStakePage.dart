@@ -56,11 +56,10 @@ class _LPStakePage extends State<LPStakePage> {
       return dic['amount.low'];
     }
     final LPStakePageParams args = ModalRoute.of(context).settings.arguments;
-    final balance = Fmt.balanceInt(widget.plugin.store.assets
-            .tokenBalanceMap[args.poolId.toUpperCase()]?.amount ??
-        '0');
+    final balance = Fmt.balanceInt(
+        widget.plugin.store.assets.tokenBalanceMap[args.poolId]?.amount ?? '0');
     if (balance == BigInt.zero) {
-      final pair = args.poolId.toUpperCase().split('-').toList();
+      final pair = args.poolId.split('-').toList();
       final min = pair[0] == widget.plugin.networkState.tokenSymbol[0]
           ? Fmt.balanceInt(
               widget.plugin.networkConst['balances']['existentialDeposit'])
@@ -89,7 +88,7 @@ class _LPStakePage extends State<LPStakePage> {
     final isTC6 = widget.plugin.basic.name == plugin_name_acala;
     final pool = params.poolId
         .split('-')
-        .map((e) => isTC6 ? e.toUpperCase() : ({'Token': e.toUpperCase()}))
+        .map((e) => isTC6 ? e : ({'Token': e}))
         .toList();
     String input = _amountCtrl.text.trim();
     BigInt amount = Fmt.tokenInt(input, decimals);
@@ -130,10 +129,8 @@ class _LPStakePage extends State<LPStakePage> {
 
     final LPStakePageParams args = ModalRoute.of(context).settings.arguments;
 
-    final token = args.poolId
-        .toUpperCase()
-        .split('-')
-        .firstWhere((e) => e != stableCoinSymbol);
+    final token =
+        args.poolId.split('-').firstWhere((e) => e != stableCoinSymbol);
     final tokenDecimals = decimals[symbols.indexOf(token)];
     final shareDecimals = stableCoinDecimals >= tokenDecimals
         ? stableCoinDecimals
@@ -157,7 +154,7 @@ class _LPStakePage extends State<LPStakePage> {
               balance = poolInfo.shares;
             } else {
               balance = Fmt.balanceInt(widget.plugin.store.assets
-                      .tokenBalanceMap[args.poolId.toUpperCase()]?.amount ??
+                      .tokenBalanceMap[args.poolId]?.amount ??
                   '0');
             }
 

@@ -41,7 +41,7 @@ class _LoanPageState extends State<LoanPage> {
     await Future.wait([
       widget.plugin.service.loan.queryLoanTypes(widget.keyring.current.address),
       widget.plugin.service.assets
-          .queryMarketPrice(widget.plugin.networkState.tokenSymbol[0])
+          .queryMarketPrices([widget.plugin.networkState.tokenSymbol[0]])
     ]);
     if (mounted) {
       widget.plugin.service.loan
@@ -147,6 +147,7 @@ class _LoanPageState extends State<LoanPage> {
                                             stableCoinDecimals,
                                             tokenDecimals,
                                             widget.plugin.tokenIcons,
+                                            widget.plugin.store.assets.prices,
                                           );
                                         }).toList(),
                                       )
@@ -202,13 +203,20 @@ class _LoanPageState extends State<LoanPage> {
 }
 
 class LoanOverviewCard extends StatelessWidget {
-  LoanOverviewCard(this.loan, this.stableCoinSymbol, this.stableCoinDecimals,
-      this.collateralDecimals, this.tokenIcons);
+  LoanOverviewCard(
+    this.loan,
+    this.stableCoinSymbol,
+    this.stableCoinDecimals,
+    this.collateralDecimals,
+    this.tokenIcons,
+    this.prices,
+  );
   final LoanData loan;
   final String stableCoinSymbol;
   final int stableCoinDecimals;
   final int collateralDecimals;
   final Map<String, Widget> tokenIcons;
+  final Map<String, BigInt> prices;
 
   final colorSafe = Color(0xFFB9F6CA);
   final colorWarn = Color(0xFFFFD180);
@@ -221,6 +229,10 @@ class LoanOverviewCard extends StatelessWidget {
     final requiredCollateralRatio =
         double.parse(Fmt.token(loan.type.requiredCollateralRatio, 18));
     final borrowedRatio = 1 / loan.collateralRatio;
+
+    final collateralValue =
+        Fmt.bigIntToDouble(prices[loan.token], acala_price_decimals) *
+            Fmt.bigIntToDouble(loan.collaterals, collateralDecimals);
 
     return GestureDetector(
       child: Stack(children: [
@@ -254,17 +266,28 @@ class LoanOverviewCard extends StatelessWidget {
                 child: Text(
                     '${dic['loan.collateral']}(${PluginFmt.tokenView(loan.token)})'),
               ),
-              Row(children: [
+              Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
                 Container(
                     margin: EdgeInsets.only(right: 8),
                     child: TokenIcon(loan.token, tokenIcons)),
-                Text(Fmt.priceFloorBigInt(loan.collaterals, collateralDecimals),
+                Text(
+                    Fmt.priceFloorBigInt(loan.collaterals, collateralDecimals,
+                        lengthMax: 4),
                     style: TextStyle(
                       fontSize: 30,
                       letterSpacing: -0.8,
                       fontWeight: FontWeight.bold,
                       color: Colors.black87,
                     )),
+                Container(
+                  margin: EdgeInsets.only(left: 8, bottom: 4),
+                  child: Text(
+                    '≈ \$${Fmt.priceFloor(collateralValue)}',
+                    style: TextStyle(
+                        letterSpacing: -0.8,
+                        color: Theme.of(context).disabledColor),
+                  ),
+                ),
               ]),
               Row(children: [
                 Expanded(
@@ -369,7 +392,7 @@ class CollateralIncentiveList extends StatelessWidget {
   final Map<String, CollateralRewardData> rewards;
   final Map<String, TotalCDPData> totalCDPs;
   final Map<String, Widget> tokenIcons;
-  final String incentiveTokenMarketPrice;
+  final double incentiveTokenMarketPrice;
   final int stableCoinDecimals;
   final String incentiveTokenSymbol;
   final String stableCoinSymbol;
@@ -382,7 +405,7 @@ class CollateralIncentiveList extends StatelessWidget {
         itemCount: tokens.length,
         itemBuilder: (_, i) {
           final token = tokens[i];
-          final apy = double.parse(incentiveTokenMarketPrice) *
+          final apy = incentiveTokenMarketPrice *
               incentives[token] /
               Fmt.bigIntToDouble(totalCDPs[token].debit, stableCoinDecimals);
           final borrowed =

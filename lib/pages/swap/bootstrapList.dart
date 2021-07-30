@@ -62,8 +62,8 @@ class _BootstrapListState extends State<BootstrapList> {
       widget.plugin.service.earn.getDexPools(),
       widget.plugin.service.earn.getBootstraps(),
       _queryUserProvisions(),
-      widget.plugin.service.assets
-          .queryMarketPrice(relay_chain_token_symbol[widget.plugin.basic.name]),
+      widget.plugin.service.assets.queryMarketPrices(
+          [relay_chain_token_symbol[widget.plugin.basic.name]]),
     ]);
   }
 
@@ -196,7 +196,7 @@ class _BootStrapCard extends StatelessWidget {
   final DexPoolData pool;
   final int bestNumber;
   final Map<String, Widget> tokenIcons;
-  final String relayChainTokenPrice;
+  final double relayChainTokenPrice;
 
   @override
   Widget build(BuildContext context) {
@@ -230,7 +230,7 @@ class _BootStrapCard extends StatelessWidget {
     if (poolId == 'KAR-KSM') {
       final priceView = relayChainTokenPrice == null
           ? '--.--'
-          : Fmt.priceFloor(double.parse(relayChainTokenPrice) * ratio);
+          : Fmt.priceFloor(relayChainTokenPrice * ratio);
       ratioView += '\n1 ${tokenPairView[0]} ≈ \$$priceView';
     }
     return RoundedCard(
