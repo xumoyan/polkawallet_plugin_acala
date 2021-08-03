@@ -3,6 +3,7 @@ import 'package:polkawallet_plugin_acala/common/constants/index.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/service/walletApi.dart';
 import 'package:polkawallet_plugin_acala/store/index.dart';
+import 'package:polkawallet_sdk/plugin/store/balances.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 
 class ServiceAssets {
@@ -32,5 +33,32 @@ class ServiceAssets {
       }
     });
     store.assets.setMarketPrices(prices);
+  }
+
+  Future<void> updateTokenBalances(String tokenId) async {
+    String currencyId = '{Token: "$tokenId"}';
+    if (tokenId.contains('-')) {
+      final pair = tokenId.split('-');
+      currencyId = '{DEXShare: [{Token: "${pair[0]}"}, {Token: "${pair[1]}"}]}';
+    }
+    final res = await plugin.sdk.webView.evalJavascript(
+        'api.query.tokens.accounts("${keyring.current.address}", $currencyId)');
+
+    final balances =
+        Map<String, TokenBalanceData>.from(store.assets.tokenBalanceMap);
+    final data = TokenBalanceData(
+        name: balances[tokenId].name,
+        symbol: balances[tokenId].symbol,
+        decimals: balances[tokenId].decimals,
+        amount: res['free'].toString(),
+        locked: res['frozen'].toString(),
+        reserved: res['reserved'].toString(),
+        detailPageRoute: balances[tokenId].detailPageRoute,
+        price: balances[tokenId].price);
+    balances[tokenId] = data;
+
+    store.assets
+        .setTokenBalanceMap(balances.values.toList(), keyring.current.pubKey);
+    plugin.balances.setTokens([data]);
   }
 }

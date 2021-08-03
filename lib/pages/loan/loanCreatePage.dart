@@ -138,14 +138,21 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
     return null;
   }
 
-  String _validateAmount2(String value, max, int stableCoinDecimals) {
+  String _validateAmount2(
+      String value, LoanType loanType, String max, int stableCoinDecimals) {
     final assetDic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
 
     String v = value.trim();
     try {
-      if (v.isEmpty || double.parse(v) < 1) {
+      if (v.isEmpty) {
         return assetDic['amount.error'];
+      }
+      final input = double.parse(v);
+      final min =
+          Fmt.bigIntToDouble(loanType.minimumDebitValue, stableCoinDecimals);
+      if (input < min) {
+        return '${assetDic['min']} ${min.toStringAsFixed(2)}';
       }
     } catch (err) {
       return assetDic['amount.error'];
@@ -160,8 +167,8 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
   Map _getTxParams(LoanType loanType,
       {int stableCoinDecimals, int collateralDecimals}) {
     final debitShare = loanType.debitToDebitShare(
-        _amountDebit <= Fmt.tokenInt('1', stableCoinDecimals)
-            ? Fmt.tokenInt('1.00000001', stableCoinDecimals)
+        _amountDebit <= loanType.minimumDebitValue
+            ? (loanType.minimumDebitValue + BigInt.from(10000))
             : _amountDebit);
     return {
       'detail': {
@@ -334,7 +341,7 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
                           keyboardType:
                               TextInputType.numberWithOptions(decimal: true),
                           validator: (v) => _validateAmount2(
-                              v, maxToBorrow, stableCoinDecimals),
+                              v, loanType, maxToBorrow, stableCoinDecimals),
                           onChanged: (v) => _onAmount2Change(v, loanType,
                               stableCoinDecimals, collateralDecimals),
                         ),

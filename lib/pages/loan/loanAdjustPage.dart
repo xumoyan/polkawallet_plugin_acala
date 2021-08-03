@@ -200,9 +200,16 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
     }
     final LoanAdjustPageParams params =
         ModalRoute.of(context).settings.arguments;
-    if (params.actionType == LoanAdjustPage.actionTypeBorrow &&
-        _amountDebit > max) {
-      return '${dic['loan.max']} $maxToBorrowView';
+    if (params.actionType == LoanAdjustPage.actionTypeBorrow) {
+      if (_amountDebit > max) {
+        return '${dic['loan.max']} $maxToBorrowView';
+      }
+      if (loan.debits + _amountDebit < loan.type.minimumDebitValue) {
+        return assetDic['min'] +
+            ' ' +
+            Fmt.bigIntToDouble(loan.type.minimumDebitValue, stableCoinDecimals)
+                .toStringAsFixed(2);
+      }
     }
     if (params.actionType == LoanAdjustPage.actionTypePayback) {
       if (_amountDebit > balanceAUSD) {
@@ -211,7 +218,10 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
       }
       BigInt debitLeft = loan.debits - _amountDebit;
       if (debitLeft > BigInt.zero && debitLeft < loan.type.minimumDebitValue) {
-        return dic['payback.small'];
+        return dic['payback.small'] +
+            ', ${assetDic['min']} ' +
+            Fmt.bigIntToDouble(loan.type.minimumDebitValue, stableCoinDecimals)
+                .toStringAsFixed(2);
       }
     }
     return null;
@@ -246,11 +256,11 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
         ModalRoute.of(context).settings.arguments;
     switch (params.actionType) {
       case LoanAdjustPage.actionTypeBorrow:
-        // borrow min 1 debit if user's debit is empty
+        // borrow min debit value if user's debit is empty
         final debitAdd = loan.type.debitToDebitShare(
             loan.debits == BigInt.zero &&
-                    _amountDebit <= Fmt.tokenInt('1', stableCoinDecimals)
-                ? Fmt.tokenInt('1.00000001', stableCoinDecimals)
+                    _amountDebit <= loan.type.minimumDebitValue
+                ? (loan.type.minimumDebitValue + BigInt.from(10000))
                 : _amountDebit);
         return {
           'detail': {

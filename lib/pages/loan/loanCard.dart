@@ -93,11 +93,13 @@ class LoanDebtCard extends StatelessWidget {
                   active: false,
                   padding: EdgeInsets.only(top: 8, bottom: 8),
                   margin: EdgeInsets.only(right: 8),
-                  onPressed: () => Navigator.of(context).pushNamed(
-                    LoanAdjustPage.route,
-                    arguments: LoanAdjustPageParams(
-                        LoanAdjustPage.actionTypePayback, loan.token),
-                  ),
+                  onPressed: loan.debits <= BigInt.zero
+                      ? null
+                      : () => Navigator.of(context).pushNamed(
+                            LoanAdjustPage.route,
+                            arguments: LoanAdjustPageParams(
+                                LoanAdjustPage.actionTypePayback, loan.token),
+                          ),
                 ),
               ),
               Expanded(
