@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:polkawallet_plugin_acala/api/types/txSwapData.dart';
 import 'package:polkawallet_plugin_acala/common/constants/subQuery.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/swapDetailPage.dart';
@@ -71,8 +72,10 @@ class SwapHistoryPage extends StatelessWidget {
                         bottom: BorderSide(width: 0.5, color: Colors.black12)),
                   ),
                   child: ListTile(
-                    title: Text(detail.action),
-                    subtitle: Text(Fmt.dateTime(DateTime.parse(list[i].time))),
+                    title: Text(detail.action, style: TextStyle(fontSize: 14)),
+                    subtitle: Text(Fmt.dateTime(
+                        DateFormat("yyyy-MM-ddTHH:mm:ss")
+                            .parse(detail.time, true))),
                     leading: SvgPicture.asset(
                         'packages/polkawallet_plugin_acala/assets/images/${detail.isSuccess ? 'assets_down' : 'tx_failed'}.svg',
                         width: 32),

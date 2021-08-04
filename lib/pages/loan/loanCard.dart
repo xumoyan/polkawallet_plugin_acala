@@ -104,7 +104,7 @@ class LoanDebtCard extends StatelessWidget {
               ),
               Expanded(
                 child: OutlinedButtonSmall(
-                  content: dic['loan.borrow'],
+                  content: dic['loan.mint'],
                   active: true,
                   padding: EdgeInsets.only(top: 8, bottom: 8),
                   margin: EdgeInsets.only(left: 8),

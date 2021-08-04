@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:polkawallet_plugin_acala/api/types/txIncentiveData.dart';
 import 'package:polkawallet_plugin_acala/common/constants/base.dart';
 import 'package:polkawallet_plugin_acala/common/constants/index.dart';
@@ -53,7 +56,14 @@ class EarnHistoryPage extends StatelessWidget {
                 ),
               );
             }
-            final list = List.of(result.data['incentiveActions']['nodes'])
+
+            final nodes =
+                List.of(result.data['incentiveActions']['nodes']).toList();
+            nodes.removeWhere((e) =>
+                jsonDecode(
+                    jsonDecode(e['data'])[1]['value'])['loansIncentive'] !=
+                null);
+            final list = nodes
                 .map((i) => TxDexIncentiveData.fromJson(
                     i as Map,
                     stableCoinSymbol,
@@ -71,11 +81,12 @@ class EarnHistoryPage extends StatelessWidget {
                 final detail = list[i];
                 String amount = '';
                 bool isReceive = true;
-                switch (detail.action) {
+                switch (detail.event) {
                   case TxDexIncentiveData.actionStake:
                     amount = detail.amountShare;
                     isReceive = false;
                     break;
+                  case TxDexIncentiveData.actionClaimRewards:
                   case TxDexIncentiveData.actionUnStake:
                     amount = detail.amountShare;
                     break;
@@ -86,13 +97,15 @@ class EarnHistoryPage extends StatelessWidget {
                         bottom: BorderSide(width: 0.5, color: Colors.black12)),
                   ),
                   child: ListTile(
-                    title: Text(amount),
-                    subtitle: Text(Fmt.dateTime(DateTime.parse(detail.time))),
+                    title: Text(amount, style: TextStyle(fontSize: 14)),
+                    subtitle: Text(Fmt.dateTime(
+                        DateFormat("yyyy-MM-ddTHH:mm:ss")
+                            .parse(detail.time, true))),
                     leading: SvgPicture.asset(
                         'packages/polkawallet_plugin_acala/assets/images/${detail.isSuccess ? isReceive ? 'assets_down' : 'assets_up' : 'tx_failed'}.svg',
                         width: 32),
                     trailing: Text(
-                      dic[_actionsMap[detail.action]],
+                      detail.event,
                       style: Theme.of(context).textTheme.headline4,
                       textAlign: TextAlign.end,
                     ),
@@ -114,11 +127,10 @@ class EarnHistoryPage extends StatelessWidget {
   }
 }
 
-const _actionsMap = {
+const earn_actions_map = {
   'addLiquidity': 'earn.add',
   'removeLiquidity': 'earn.remove',
   'depositDexShare': 'earn.stake',
   'withdrawDexShare': 'earn.unStake',
-  'dexIncentive': 'earn.incentive',
-  'dexSaving': 'earn.saving',
+  'claimRewards': 'earn.claim',
 };

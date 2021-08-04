@@ -30,6 +30,7 @@ const loanQuery = r'''
       orderBy: TIMESTAMP_DESC, first: 20) {
       nodes {
         id
+        type
         data
         extrinsic {
           id
@@ -48,6 +49,7 @@ const swapQuery = r'''
       orderBy: TIMESTAMP_DESC, first: 20) {
       nodes {
         id
+        type
         data
         extrinsic {
           id
@@ -66,6 +68,7 @@ const dexStakeQuery = r'''
       orderBy: TIMESTAMP_DESC, first: 20) {
       nodes {
         id
+        type
         data
         extrinsic {
           id
@@ -73,36 +76,6 @@ const dexStakeQuery = r'''
           block {number}
           timestamp
           isSuccess
-        }
-      }
-    }
-  }
-''';
-const earnQuery = r'''
-  query ($account: String) {
-    calls(filter: {
-      and: [
-        {
-          or: [
-            { args: {includes: "dexIncentive"} },
-            { args: {includes: "dexSaving"} }
-          ]
-        },
-        { section: {equalTo: "incentives"} },
-        { method: {equalTo: "claimRewards"} }
-        { signerId: {equalTo: $account} }
-      ]
-    }, orderBy: TIMESTAMP_DESC, first: 20) {
-      nodes {
-        id
-        method
-        section
-        args
-        isSuccess
-        extrinsic {
-          id
-          block {number}
-          timestamp
         }
       }
     }

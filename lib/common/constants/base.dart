@@ -10,4 +10,5 @@ const ss58_prefix_karura = 8;
 const GraphQLConfig = {
   plugin_name_acala: {'httpUri': 'https://api.polkawallet.io/acala-subql'},
   plugin_name_karura: {'httpUri': 'https://api.polkawallet.io/karura-subql'},
+  // plugin_name_karura: {'httpUri': 'http://47.92.117.129/'},
 };

@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:polkawallet_plugin_acala/api/types/txLoanData.dart';
 import 'package:polkawallet_plugin_acala/common/constants/index.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
@@ -27,6 +28,10 @@ class LoanTxDetailPage extends StatelessWidget {
 
     final List<TxDetailInfoItem> items = [
       TxDetailInfoItem(
+        label: 'Event',
+        content: Text(tx.event, style: amountStyle),
+      ),
+      TxDetailInfoItem(
         label: dic['txs.action'],
         content: Text(dic['loan.${tx.actionType}'], style: amountStyle),
       )
@@ -42,8 +47,7 @@ class LoanTxDetailPage extends StatelessWidget {
     }
     if (tx.debit != BigInt.zero) {
       items.add(TxDetailInfoItem(
-        label:
-            tx.debit < BigInt.zero ? dic['loan.payback'] : dic['loan.borrow'],
+        label: tx.debit < BigInt.zero ? dic['loan.payback'] : dic['loan.mint'],
         content: Text('${tx.amountDebit} $acala_stable_coin_view',
             style: amountStyle),
       ));
@@ -58,7 +62,8 @@ class LoanTxDetailPage extends StatelessWidget {
       action: dic['loan.${tx.actionType}'],
       blockNum: int.parse(tx.block),
       hash: tx.hash,
-      blockTime: Fmt.dateTime(DateTime.parse(tx.time)),
+      blockTime:
+          Fmt.dateTime(DateFormat("yyyy-MM-ddTHH:mm:ss").parse(tx.time, true)),
       networkName: networkName,
       infoItems: items,
     );

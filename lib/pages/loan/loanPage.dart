@@ -54,9 +54,10 @@ class _LoanPageState extends State<LoanPage> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final isKar = widget.plugin.basic.name == plugin_name_karura;
-      // final bool enabled = !isKar || ModalRoute.of(context).settings.arguments;
-      final enabled = true;
+      // todo: fix this after new acala online
+      final bool enabled = widget.plugin.basic.name == 'acala'
+          ? ModalRoute.of(context).settings.arguments
+          : true;
       if (enabled) {
         _fetchData();
       } else {
@@ -75,8 +76,10 @@ class _LoanPageState extends State<LoanPage> {
   Widget build(BuildContext context) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
     final isKar = widget.plugin.basic.name == plugin_name_karura;
-    // final bool enabled = !isKar || ModalRoute.of(context).settings.arguments;
-    final enabled = true;
+    // todo: fix this after new acala online
+    final bool enabled = widget.plugin.basic.name == 'acala'
+        ? ModalRoute.of(context).settings.arguments
+        : true;
 
     final stableCoinSymbol = isKar ? karura_stable_coin : acala_stable_coin;
     final stableCoinDecimals = widget.plugin.networkState.tokenDecimals[
@@ -184,7 +187,7 @@ class _LoanPageState extends State<LoanPage> {
                         ? Container(
                             padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
                             child: RoundedButton(
-                                text: '+ ${dic['loan.borrow']}',
+                                text: '+ ${dic['loan.mint']}',
                                 onPressed: enabled
                                     ? () {
                                         Navigator.of(context)

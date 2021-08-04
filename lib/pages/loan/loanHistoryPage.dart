@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:polkawallet_plugin_acala/api/types/txLoanData.dart';
 import 'package:polkawallet_plugin_acala/common/constants/base.dart';
 import 'package:polkawallet_plugin_acala/common/constants/index.dart';
@@ -59,13 +62,15 @@ class LoanHistoryPage extends StatelessWidget {
                   ),
                 );
               }
-              final list = List.of(result.data['loanActions']['nodes'])
-                  .map((i) => TxLoanData.fromJson(
-                      i as Map,
-                      stableCoinSymbol,
-                      stableCoinDecimals,
-                      decimals[symbols.indexOf(i['token']['id'])]))
-                  .toList();
+              final list =
+                  List.of(result.data['loanActions']['nodes']).map((i) {
+                final token = jsonDecode(jsonDecode(i['data'])[1]['value']);
+                return TxLoanData.fromJson(
+                    i as Map,
+                    stableCoinSymbol,
+                    stableCoinDecimals,
+                    decimals[symbols.indexOf(token['token'])]);
+              }).toList();
               return ListView.builder(
                 itemCount: list.length + 1,
                 itemBuilder: (BuildContext context, int i) {
@@ -77,15 +82,12 @@ class LoanHistoryPage extends StatelessWidget {
                   final TxLoanData detail = list[i];
                   bool isOut = false;
                   if (detail.actionType == TxLoanData.actionTypePayback ||
-                      detail.actionType == TxLoanData.actionTypeDeposit) {
+                      detail.actionType == TxLoanData.actionTypeDeposit ||
+                      detail.actionType == TxLoanData.actionLiquidate) {
                     isOut = true;
                   }
                   String amount = detail.amountDebit;
                   String token = acala_stable_coin_view;
-                  if (detail.actionType == TxLoanData.actionTypePayback ||
-                      detail.actionType == TxLoanData.actionTypeDeposit) {
-                    isOut = true;
-                  }
                   if (detail.actionType == TxLoanData.actionTypeDeposit ||
                       detail.actionType == TxLoanData.actionTypeWithdraw) {
                     amount = detail.amountCollateral;
@@ -98,9 +100,11 @@ class LoanHistoryPage extends StatelessWidget {
                               BorderSide(width: 0.5, color: Colors.black12)),
                     ),
                     child: ListTile(
-                      title: Text(list[i].actionType),
-                      subtitle:
-                          Text(Fmt.dateTime(DateTime.parse(list[i].time))),
+                      title: Text(detail.actionType,
+                          style: TextStyle(fontSize: 14)),
+                      subtitle: Text(Fmt.dateTime(
+                          DateFormat("yyyy-MM-ddTHH:mm:ss")
+                              .parse(detail.time, true))),
                       leading: SvgPicture.asset(
                           'packages/polkawallet_plugin_acala/assets/images/${detail.isSuccess ? isOut ? 'assets_up' : 'assets_down' : 'tx_failed'}.svg',
                           width: 32),
