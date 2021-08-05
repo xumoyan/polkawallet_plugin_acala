@@ -8,6 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:polkawallet_plugin_acala/common/constants/base.dart';
 import 'package:polkawallet_plugin_acala/common/constants/index.dart';
 import 'package:polkawallet_plugin_acala/pages/earn/earnPage.dart';
+import 'package:polkawallet_plugin_acala/pages/gov/democracyPage.dart';
 import 'package:polkawallet_plugin_acala/pages/homa/homaPage.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanPage.dart';
 import 'package:polkawallet_plugin_acala/pages/nft/nftPage.dart';
@@ -77,11 +78,13 @@ class _AcalaEntryState extends State<AcalaEntry> {
     'earn': EarnPage.route,
     'homa': HomaPage.route,
     'nft': NFTPage.route,
+    'gov': NFTPage.route,
   };
 
   @override
   Widget build(BuildContext context) {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
+    final dicGov = I18n.of(context).getDic(i18n_full_dic_acala, 'gov');
     final isKar = widget.plugin.basic.name == plugin_name_karura;
 
     return Scaffold(
@@ -156,76 +159,25 @@ class _AcalaEntryState extends State<AcalaEntry> {
                           ),
                         );
                       }).toList(),
-                      // Padding(
-                      //   padding: EdgeInsets.only(bottom: 16),
-                      //   child: GestureDetector(
-                      //     child: EntryPageCard(
-                      //       dic['loan.title'],
-                      //       dic['loan.brief'],
-                      //       SvgPicture.asset(
-                      //         'packages/polkawallet_plugin_acala/assets/images/loan.svg',
-                      //         height: 88,
-                      //       ),
-                      //       color: Colors.transparent,
-                      //     ),
-                      //     onTap: () =>
-                      //         Navigator.of(context).pushNamed(LoanPage.route),
-                      //   ),
-                      // ),
-                      // Padding(
-                      //   padding: EdgeInsets.only(bottom: 16),
-                      //   child: GestureDetector(
-                      //     child: EntryPageCard(
-                      //       dic['earn.title'],
-                      //       dic['earn.brief'],
-                      //       SvgPicture.asset(
-                      //         'packages/polkawallet_plugin_acala/assets/images/deposit.svg',
-                      //         height: 88,
-                      //       ),
-                      //       color: Colors.transparent,
-                      //     ),
-                      //     onTap: () =>
-                      //         Navigator.of(context).pushNamed(EarnPage.route),
-                      //   ),
-                      // ),
-                      // Padding(
-                      //   padding: EdgeInsets.only(bottom: 16),
-                      //   child: GestureDetector(
-                      //     child: EntryPageCard(
-                      //       dic['homa.title'],
-                      //       dic['homa.brief'],
-                      //       Image.asset(
-                      //         'packages/polkawallet_plugin_acala/assets/images/liquid_dot.png',
-                      //         height: 88,
-                      //       ),
-                      //       color: Colors.transparent,
-                      //     ),
-                      //     onTap: () =>
-                      //         Navigator.of(context).pushNamed(HomaPage.route),
-                      //   ),
-                      // ),
-                      // liveModules != null
-                      //     ? Column(
-                      //         children: liveModules.map((e) {
-                      //           return Padding(
-                      //             padding: EdgeInsets.only(bottom: 16),
-                      //             child: GestureDetector(
-                      //               child: EntryPageCard(
-                      //                 dic['$e.title'],
-                      //                 dic['$e.brief'],
-                      //                 SvgPicture.asset(
-                      //                   'packages/polkawallet_plugin_acala/assets/images/$e.svg',
-                      //                   height: 88,
-                      //                 ),
-                      //                 color: Colors.transparent,
-                      //               ),
-                      //               onTap: () => Navigator.of(context)
-                      //                   .pushNamed(_liveModuleRoutes[e]),
-                      //             ),
-                      //           );
-                      //         }).toList(),
-                      //       )
-                      //     : Container(),
+                      isKar
+                          ? Padding(
+                              padding: EdgeInsets.only(bottom: 16),
+                              child: GestureDetector(
+                                child: EntryPageCard(
+                                  dicGov['democracy'],
+                                  dicGov['democracy.brief'],
+                                  SvgPicture.asset(
+                                    'packages/polkawallet_plugin_acala/assets/images/democracy.svg',
+                                    height: 88,
+                                    color: Theme.of(context).primaryColor,
+                                  ),
+                                  color: Colors.transparent,
+                                ),
+                                onTap: () => Navigator.of(context)
+                                    .pushNamed(DemocracyPage.route),
+                              ),
+                            )
+                          : Container(),
                       widget.plugin.basic.isTestNet
                           ? Row(
                               children: [

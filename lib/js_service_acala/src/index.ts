@@ -5,6 +5,7 @@ import { options } from "@acala-network/api";
 // import { WalletPromise } from "@acala-network/sdk-wallet";
 import account from "./service/account";
 import acala from "./service/acala";
+import gov from "./service/gov";
 import { genLinks } from "./utils/config/config";
 
 // console.log will send message to MsgChannel to App
@@ -47,3 +48,4 @@ async function connect(nodes: string[]) {
 (<any>window).keyring = keyring;
 (<any>window).account = account;
 (<any>window).acala = acala;
+(<any>window).gov = gov;

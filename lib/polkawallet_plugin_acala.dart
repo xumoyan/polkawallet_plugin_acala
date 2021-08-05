@@ -24,6 +24,9 @@ import 'package:polkawallet_plugin_acala/pages/earn/earnHistoryPage.dart';
 import 'package:polkawallet_plugin_acala/pages/earn/earnPage.dart';
 import 'package:polkawallet_plugin_acala/pages/earn/liquidityDetailPage.dart';
 import 'package:polkawallet_plugin_acala/pages/earn/withdrawLiquidityPage.dart';
+import 'package:polkawallet_plugin_acala/pages/gov/democracy/proposalDetailPage.dart';
+import 'package:polkawallet_plugin_acala/pages/gov/democracy/referendumVotePage.dart';
+import 'package:polkawallet_plugin_acala/pages/gov/democracyPage.dart';
 import 'package:polkawallet_plugin_acala/pages/homa/homaHistoryPage.dart';
 import 'package:polkawallet_plugin_acala/pages/homa/homaPage.dart';
 import 'package:polkawallet_plugin_acala/pages/homa/mintPage.dart';
@@ -194,6 +197,10 @@ class PluginAcala extends PolkawalletPlugin {
       HomaHistoryPage.route: (_) => HomaHistoryPage(this, keyring),
       // NFT pages
       NFTPage.route: (_) => NFTPage(this, keyring),
+      // Gov pages
+      DemocracyPage.route: (_) => DemocracyPage(this, keyring),
+      ReferendumVotePage.route: (_) => ReferendumVotePage(this, keyring),
+      ProposalDetailPage.route: (_) => ProposalDetailPage(this, keyring),
     };
   }
 

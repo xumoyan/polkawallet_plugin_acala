@@ -83,6 +83,7 @@ flutter:
     - assets/images/bg_kar.png
     - assets/images/logo_kar_gray.png
     - assets/images/logo_kar_empty.svg
+    - assets/images/democracy.svg
 
   # For details regarding assets in packages, see
   # https://flutter.dev/assets-and-images/#from-packages

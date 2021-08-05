@@ -1,4 +1,3 @@
-import 'package:polkawallet_plugin_acala/common/constants/base.dart';
 import 'package:polkawallet_plugin_acala/common/constants/index.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_sdk/plugin/store/balances.dart';
@@ -74,9 +73,7 @@ class PluginFmt {
   }
 
   static List<String> getAllDexTokens(PluginAcala plugin) {
-    final List<String> tokens = plugin.basic.name == plugin_name_karura
-        ? ['KAR', karura_stable_coin]
-        : ['ACA', acala_stable_coin];
+    final List<String> tokens = [];
     plugin.store.earn.dexPools.forEach((e) {
       e.tokens.forEach((token) {
         if (tokens.indexOf(token['token']) < 0) {

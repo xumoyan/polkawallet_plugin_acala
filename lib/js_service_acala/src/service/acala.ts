@@ -48,24 +48,24 @@ async function calcTokenSwapAmount(api: ApiPromise, input: number, output: numbe
   return new Promise((resolve, reject) => {
     const exchangeFee = api.consts.dex.getExchangeFee as any;
 
-    swapper.swap([inputToken, outputToken], output === null ? i : o, mode, (error: any, res: any) => {
-      const feeRate = new FixedPointNumber(exchangeFee[0].toString()).div(new FixedPointNumber(exchangeFee[1].toString()));
-      if (res.input) {
-        resolve({
-          amount: output === null ? res.output.balance.toNumber(6) : res.input.balance.toNumber(6),
-          priceImpact: res.priceImpact.toNumber(6),
-          fee: res.input.balance.times(_computeExchangeFee(res.path, feeRate)).toNumber(6),
-          path: res.path,
-          input: res.input.token.toString(),
-          output: res.output.token.toString(),
-        });
-      }
-      if (!!error) {
-        reject({
-          error,
-        });
-      }
-    });
+    swapper
+      .swap([inputToken, outputToken], output === null ? i : o, mode)
+      .then((res: any) => {
+        const feeRate = new FixedPointNumber(exchangeFee[0].toString()).div(new FixedPointNumber(exchangeFee[1].toString()));
+        if (res.input) {
+          resolve({
+            amount: output === null ? res.output.balance.toNumber(6) : res.input.balance.toNumber(6),
+            priceImpact: res.priceImpact.toNumber(6),
+            fee: res.input.balance.times(_computeExchangeFee(res.path, feeRate)).toNumber(6),
+            path: res.path,
+            input: res.input.token.toString(),
+            output: res.output.token.toString(),
+          });
+        }
+      })
+      .catch((err) => {
+        resolve({ error: err });
+      });
   });
 }
 

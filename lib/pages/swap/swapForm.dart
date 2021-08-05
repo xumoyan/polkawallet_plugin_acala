@@ -4,7 +4,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:polkawallet_plugin_acala/api/types/swapOutputData.dart';
-import 'package:polkawallet_plugin_acala/common/constants/base.dart';
 import 'package:polkawallet_plugin_acala/common/constants/index.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/bootstrapPage.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/swapTokenInput.dart';
@@ -138,6 +137,9 @@ class _SwapFormState extends State<SwapForm> {
     setState(() {
       _swapMode = 0;
       _maxInput = null;
+      if (_swapPair.length == 0) {
+        _swapPair = PluginFmt.getAllDexTokens(widget.plugin).sublist(0, 2);
+      }
     });
 
     _onInputChange(supply);
@@ -148,6 +150,9 @@ class _SwapFormState extends State<SwapForm> {
     setState(() {
       _swapMode = 1;
       _maxInput = null;
+      if (_swapPair.length == 0) {
+        _swapPair = PluginFmt.getAllDexTokens(widget.plugin).sublist(0, 2);
+      }
     });
 
     _onInputChange(target);
@@ -191,6 +196,8 @@ class _SwapFormState extends State<SwapForm> {
     String target, {
     bool init = false,
   }) async {
+    if (_swapPair.length < 2) return;
+
     widget.plugin.service.assets.queryMarketPrices(_swapPair);
 
     if (supply == null) {
@@ -352,11 +359,6 @@ class _SwapFormState extends State<SwapForm> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       _getTxFee();
 
-      setState(() {
-        _swapPair = widget.plugin.basic.name == plugin_name_karura
-            ? ['KAR', karura_stable_coin]
-            : ['ACA', acala_stable_coin];
-      });
       _setUpdateTimer(init: true);
     });
   }
@@ -385,12 +387,16 @@ class _SwapFormState extends State<SwapForm> {
 
         final currencyOptionsLeft = PluginFmt.getAllDexTokens(widget.plugin);
         final currencyOptionsRight = currencyOptionsLeft.toList();
-        if (_swapPair.length > 0) {
-          currencyOptionsLeft.retainWhere((i) => i != _swapPair[0]);
-          currencyOptionsRight.retainWhere((i) => i != _swapPair[1]);
+        final swapPair = _swapPair.length > 1
+            ? _swapPair
+            : currencyOptionsLeft.sublist(0, 2);
+
+        if (swapPair.length > 1) {
+          currencyOptionsLeft.retainWhere((i) => i != swapPair[0]);
+          currencyOptionsRight.retainWhere((i) => i != swapPair[1]);
         }
 
-        final balancePair = PluginFmt.getBalancePair(widget.plugin, _swapPair);
+        final balancePair = PluginFmt.getBalancePair(widget.plugin, swapPair);
 
         double minMax = 0;
         if (_swapOutput.output != null) {
@@ -399,7 +405,8 @@ class _SwapFormState extends State<SwapForm> {
               : _swapOutput.amount * (1 + _slippage);
         }
 
-        final showExchangeRate = _amountPayCtrl.text.isNotEmpty &&
+        final showExchangeRate = swapPair.length > 1 &&
+            _amountPayCtrl.text.isNotEmpty &&
             _amountReceiveCtrl.text.isNotEmpty;
 
         final primary = Theme.of(context).primaryColor;
@@ -411,7 +418,7 @@ class _SwapFormState extends State<SwapForm> {
           children: <Widget>[
             RoundedCard(
               padding: EdgeInsets.all(16),
-              child: _swapPair.length == 2
+              child: swapPair.length == 2
                   ? Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: <Widget>[
@@ -423,14 +430,14 @@ class _SwapFormState extends State<SwapForm> {
                           tokenOptions: currencyOptionsLeft,
                           tokenIconsMap: widget.plugin.tokenIcons,
                           marketPrice: widget
-                              .plugin.store.assets.marketPrices[_swapPair[0]],
+                              .plugin.store.assets.marketPrices[swapPair[0]],
                           onInputChange: _onSupplyAmountChange,
                           onTokenChange: (String token) {
                             if (token != null) {
                               setState(() {
-                                _swapPair = token == _swapPair[1]
-                                    ? [token, _swapPair[0]]
-                                    : [token, _swapPair[1]];
+                                _swapPair = token == swapPair[1]
+                                    ? [token, swapPair[0]]
+                                    : [token, swapPair[1]];
                                 _maxInput = null;
                               });
                               _updateSwapAmount();
@@ -455,7 +462,8 @@ class _SwapFormState extends State<SwapForm> {
                               size: 18,
                             ),
                           ),
-                          onTap: () => _switchPair(),
+                          onTap:
+                              _swapPair.length > 1 ? () => _switchPair() : null,
                         ),
                         Container(
                           margin: EdgeInsets.only(top: 12),
@@ -467,14 +475,14 @@ class _SwapFormState extends State<SwapForm> {
                             tokenOptions: currencyOptionsRight,
                             tokenIconsMap: widget.plugin.tokenIcons,
                             marketPrice: widget
-                                .plugin.store.assets.marketPrices[_swapPair[1]],
+                                .plugin.store.assets.marketPrices[swapPair[1]],
                             onInputChange: _onTargetAmountChange,
                             onTokenChange: (String token) {
                               if (token != null) {
                                 setState(() {
-                                  _swapPair = token == _swapPair[0]
-                                      ? [_swapPair[1], token]
-                                      : [_swapPair[0], token];
+                                  _swapPair = token == swapPair[0]
+                                      ? [swapPair[1], token]
+                                      : [swapPair[0], token];
                                   _maxInput = null;
                                 });
                                 _updateSwapAmount();
@@ -499,7 +507,7 @@ class _SwapFormState extends State<SwapForm> {
                                   children: <Widget>[
                                     Text(dic['dex.rate'], style: labelStyle),
                                     Text(
-                                        '1 ${PluginFmt.tokenView(_swapPair[0])} = ${_swapRatio.toStringAsFixed(6)} ${PluginFmt.tokenView(_swapPair[1])}'),
+                                        '1 ${PluginFmt.tokenView(swapPair[0])} = ${_swapRatio.toStringAsFixed(6)} ${PluginFmt.tokenView(swapPair[1])}'),
                                   ],
                                 ),
                               )
@@ -654,19 +662,23 @@ class _SwapFormState extends State<SwapForm> {
                             ],
                           ),
                         ),
-                        Container(
-                          margin: EdgeInsets.only(bottom: 8),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: <Widget>[
-                              Expanded(
-                                child: Text(dic['dex.fee'], style: labelStyle),
-                              ),
-                              Text(
-                                  '${_swapOutput.fee} ${PluginFmt.tokenView(_swapPair[0])}'),
-                            ],
-                          ),
-                        ),
+                        _swapOutput?.fee != null
+                            ? Container(
+                                margin: EdgeInsets.only(bottom: 8),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: <Widget>[
+                                    Expanded(
+                                      child: Text(dic['dex.fee'],
+                                          style: labelStyle),
+                                    ),
+                                    Text(
+                                        '${_swapOutput.fee} ${PluginFmt.tokenView(swapPair[0])}'),
+                                  ],
+                                ),
+                              )
+                            : Container(),
                         (_swapOutput.path?.length ?? 0) > 2
                             ? Row(
                                 mainAxisAlignment:
