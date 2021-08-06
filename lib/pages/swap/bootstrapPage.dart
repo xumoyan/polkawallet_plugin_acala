@@ -205,8 +205,8 @@ class _BootstrapPageState extends State<BootstrapPage> {
       final poolInfoAfter = PluginFmt.calcLiquidityShare(
           [nowLeft + addLeft, nowRight + addRight], [addLeft, addRight]);
 
-      final estShareLabel = '${dic['boot.my.est']}${dic['boot.my.share']}';
-      final estTokenLabel = '${dic['boot.my.est']}${dic['boot.my.token']}';
+      final estShareLabel = '${dic['boot.my.est']} ${dic['boot.my.share']}';
+      final estTokenLabel = '${dic['boot.my.est']} LP Tokens';
 
       final balancePair = PluginFmt.getBalancePair(widget.plugin, pair);
 

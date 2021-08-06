@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:polkawallet_plugin_acala/api/types/dexPoolInfoData.dart';
 import 'package:polkawallet_plugin_acala/common/constants/base.dart';
 import 'package:polkawallet_plugin_acala/common/constants/index.dart';
+import 'package:polkawallet_plugin_acala/pages/earn/addLiquidityPage.dart';
 import 'package:polkawallet_plugin_acala/pages/swap/bootstrapPage.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
@@ -42,6 +43,7 @@ class _BootstrapListState extends State<BootstrapList> {
   Map<String, List> _userProvisions = {};
   Map<String, List> _initialShareRates = {};
 
+  bool _withStake = true;
   bool _claimSubmitting = false;
 
   Future<void> _updateBestNumber() async {
@@ -65,6 +67,11 @@ class _BootstrapListState extends State<BootstrapList> {
       widget.plugin.service.assets.queryMarketPrices(
           [relay_chain_token_symbol[widget.plugin.basic.name]]),
     ]);
+
+    if (_userProvisions.keys.length > 0) {
+      await Future.wait(_userProvisions.keys
+          .map((e) => widget.plugin.service.earn.updateDexPoolInfo(poolId: e)));
+    }
   }
 
   Future<void> _queryUserProvisions() async {
@@ -96,16 +103,39 @@ class _BootstrapListState extends State<BootstrapList> {
     }
   }
 
-  TxConfirmParams _claimLPToken(List pair, String amount) {
+  TxConfirmParams _claimLPToken(List pair, double amount, int decimals) {
     setState(() {
       _claimSubmitting = true;
     });
+    final params = [widget.keyring.current.address, pair[0], pair[1]];
+    if (_withStake) {
+      final batchTxs = [
+        'api.tx.dex.claimDexShare(...${jsonEncode(params)})',
+        'api.tx.incentives.depositDexShare(...${jsonEncode([
+              {'DEXShare': pair},
+              Fmt.tokenInt(amount.toString(), decimals).toString()
+            ])})',
+      ];
+      return TxConfirmParams(
+        txTitle: 'Claim LP Token',
+        module: 'utility',
+        call: 'batch',
+        txDisplay: {
+          'pool': pair.map((e) => e['token']).join('-'),
+          'amount': Fmt.priceFloor(amount, lengthMax: 4),
+          'withStake': true,
+        },
+        params: [],
+        rawParams: '[[${batchTxs.join(',')}]]',
+      );
+    }
     return TxConfirmParams(
         txTitle: 'Claim LP Token',
         module: 'dex',
         call: 'claimDexShare',
         txDisplay: {
-          'amount': amount,
+          'pool': pair.map((e) => e['token']).join('-'),
+          'amount': Fmt.priceFloor(amount, lengthMax: 4),
         },
         params: [
           widget.keyring.current.address,
@@ -163,6 +193,7 @@ class _BootstrapListState extends State<BootstrapList> {
                             ['existentialDeposit']
                         : existential_deposit[e.tokens[0]['token']]);
                     return _BootStrapCardEnabled(
+                      widget.plugin,
                       pool: e,
                       userProvision: _userProvisions[poolId],
                       shareRate: _initialShareRates[poolId],
@@ -170,6 +201,12 @@ class _BootstrapListState extends State<BootstrapList> {
                       existentialDeposit: Fmt.priceCeilBigInt(
                           existDeposit, e.pairDecimals[0],
                           lengthMax: 6),
+                      withStake: _withStake,
+                      onWithStakeChange: (v) {
+                        setState(() {
+                          _withStake = v;
+                        });
+                      },
                       onClaimLP: _claimLPToken,
                       onFinish: (res) async {
                         if (res != null) {
@@ -357,22 +394,27 @@ class _BootStrapCard extends StatelessWidget {
 }
 
 class _BootStrapCardEnabled extends StatelessWidget {
-  _BootStrapCardEnabled(
+  _BootStrapCardEnabled(this.plugin,
       {this.pool,
       this.userProvision,
       this.shareRate,
       this.tokenIcons,
       this.existentialDeposit,
+      this.withStake,
+      this.onWithStakeChange,
       this.onClaimLP,
       this.onFinish,
       this.submitting});
 
+  final PluginAcala plugin;
   final DexPoolData pool;
   final List userProvision;
   final List shareRate;
   final Map<String, Widget> tokenIcons;
   final String existentialDeposit;
-  final TxConfirmParams Function(List, String) onClaimLP;
+  final bool withStake;
+  final Function(bool) onWithStakeChange;
+  final TxConfirmParams Function(List, double, int) onClaimLP;
   final Function(Map) onFinish;
   final bool submitting;
 
@@ -384,13 +426,14 @@ class _BootStrapCardEnabled extends StatelessWidget {
 
     final tokenPair = pool.tokens.map((e) => e['token']).toList();
     final poolId = tokenPair.join('-');
+    final tokenPairView = tokenPair.map((e) => PluginFmt.tokenView(e)).toList();
 
     final userLeft =
         Fmt.balanceDouble(userProvision[0].toString(), pool.pairDecimals[0]);
     final userRight =
         Fmt.balanceDouble(userProvision[1].toString(), pool.pairDecimals[1]);
     final ratio = Fmt.balanceDouble(shareRate[1].toString(), 18);
-    final amount = Fmt.priceFloor(userLeft + userRight * ratio, lengthMax: 4);
+    final amount = userLeft + userRight * ratio;
 
     return RoundedCard(
       margin: EdgeInsets.only(bottom: 16),
@@ -405,7 +448,7 @@ class _BootStrapCardEnabled extends StatelessWidget {
               ),
               Expanded(
                   child: Text(
-                poolId,
+                tokenPairView.join('-'),
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -430,12 +473,12 @@ class _BootStrapCardEnabled extends StatelessWidget {
             children: [
               InfoItem(
                 crossAxisAlignment: CrossAxisAlignment.center,
-                title: tokenPair[0],
+                title: tokenPairView[0],
                 content: Fmt.priceFloor(userLeft),
               ),
               InfoItem(
                 crossAxisAlignment: CrossAxisAlignment.center,
-                title: tokenPair[1],
+                title: tokenPairView[1],
                 content: Fmt.priceFloor(userRight),
               ),
             ],
@@ -446,16 +489,20 @@ class _BootStrapCardEnabled extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Padding(
-                  padding: EdgeInsets.only(right: 4),
-                  child: Text(dic['transfer.exist']),
-                ),
                 TapTooltip(
                   message: dic['cross.exist.msg'],
-                  child: Icon(
-                    Icons.info,
-                    size: 16,
-                    color: Theme.of(context).unselectedWidgetColor,
+                  child: Row(
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.only(right: 4),
+                        child: Text(dic['transfer.exist']),
+                      ),
+                      Icon(
+                        Icons.info,
+                        size: 16,
+                        color: Theme.of(context).unselectedWidgetColor,
+                      ),
+                    ],
                   ),
                 ),
                 Expanded(child: Container(width: 2)),
@@ -465,21 +512,33 @@ class _BootStrapCardEnabled extends StatelessWidget {
             ),
           ),
           Container(
-            margin: EdgeInsets.only(bottom: 16),
-            child: InfoItemRow(
-              dic['boot.my.token'],
-              amount,
+            margin: EdgeInsets.only(bottom: 8),
+            child:
+                InfoItemRow('LP tokens', Fmt.priceFloor(amount, lengthMax: 4)),
+          ),
+          Container(
+            margin: EdgeInsets.only(top: 8, bottom: 16),
+            padding: EdgeInsets.fromLTRB(8, 8, 8, 16),
+            decoration: BoxDecoration(
+                color: Theme.of(context).canvasColor,
+                border: Border.all(color: Colors.black12, width: 0.5),
+                borderRadius: BorderRadius.all(Radius.circular(8))),
+            child: StakeLPTips(
+              plugin,
+              poolId: poolId,
+              switchActive: withStake,
+              onSwitch: onWithStakeChange,
             ),
           ),
           submitting
               ? RoundedButton(
-                  text: 'Claim LP Token',
+                  text: 'Claim LP Tokens',
                   icon: CupertinoActivityIndicator(),
                 )
               : TxButton(
-                  text: 'Claim LP Token',
+                  text: 'Claim LP Tokens',
                   getTxParams: () async =>
-                      onClaimLP(pool.tokens, '$amount $poolId LP'),
+                      onClaimLP(pool.tokens, amount, pool.pairDecimals[0]),
                   onFinish: onFinish,
                 )
         ],

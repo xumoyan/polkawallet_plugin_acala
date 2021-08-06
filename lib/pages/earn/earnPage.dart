@@ -41,22 +41,7 @@ class _EarnPageState extends State<EarnPage> {
   Timer _timer;
 
   Future<void> _fetchData() async {
-    if (widget.plugin.store.earn.dexPools.length == 0) {
-      await widget.plugin.service.earn.getDexPools();
-    }
-    final tabNow = _poolId ??
-        (widget.plugin.basic.name == plugin_name_karura
-            ? 'KAR-KUSD'
-            : 'ACA-AUSD');
-    await Future.wait([
-      widget.plugin.service.earn.queryDexPoolInfo(tabNow),
-      widget.plugin.service.assets
-          .queryMarketPrices(PluginFmt.getAllDexTokens(widget.plugin))
-    ]);
-
-    widget.plugin.service.earn.queryDexPoolRewards(
-        widget.plugin.store.earn.dexPools.firstWhere(
-            (e) => e.tokens.map((t) => t['token']).join('-') == tabNow));
+    await widget.plugin.service.earn.updateDexPoolInfo(poolId: _poolId);
 
     if (mounted) {
       _timer = Timer(Duration(seconds: 10), () {
@@ -65,10 +50,10 @@ class _EarnPageState extends State<EarnPage> {
     }
   }
 
-  Future<void> _onStake(String action) async {
+  Future<void> _onStake(String action, String poolId) async {
     Navigator.of(context).pushNamed(
       LPStakePage.route,
-      arguments: LPStakePageParams(_poolId, action),
+      arguments: LPStakePageParams(poolId, action),
     );
   }
 
@@ -144,11 +129,6 @@ class _EarnPageState extends State<EarnPage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchData();
-
-      final isKar = widget.plugin.basic.name == plugin_name_karura;
-      setState(() {
-        _poolId = isKar ? 'KAR-KUSD' : 'ACA-AUSD';
-      });
     });
   }
 
@@ -169,7 +149,12 @@ class _EarnPageState extends State<EarnPage> {
 
     final bool enabled = !isKar || ModalRoute.of(context).settings.arguments;
     final stableCoinSymbol = isKar ? karura_stable_coin : acala_stable_coin;
-    final tabNow = _poolId ?? (isKar ? 'KAR-KUSD' : 'ACA-AUSD');
+    final tabNow = _poolId ??
+        (widget.plugin.store.earn.dexPools.length > 0
+            ? widget.plugin.store.earn.dexPools[0].tokens
+                .map((e) => e['token'])
+                .join('-')
+            : (isKar ? 'KAR-KUSD' : 'ACA-AUSD'));
     final pair = tabNow.split('-');
     return Scaffold(
       appBar: AppBar(
@@ -260,7 +245,8 @@ class _EarnPageState extends State<EarnPage> {
                                 color: isKar ? Colors.redAccent : Colors.blue,
                                 text: dic['earn.stake'],
                                 onPressed: enabled && balance > BigInt.zero
-                                    ? () => _onStake(LPStakePage.actionStake)
+                                    ? () => _onStake(
+                                        LPStakePage.actionStake, tabNow)
                                     : null,
                               ),
                             ),
@@ -271,8 +257,8 @@ class _EarnPageState extends State<EarnPage> {
                                 ? Expanded(
                                     child: RoundedButton(
                                       text: dic['earn.unStake'],
-                                      onPressed: () =>
-                                          _onStake(LPStakePage.actionUnStake),
+                                      onPressed: () => _onStake(
+                                          LPStakePage.actionUnStake, tabNow),
                                     ),
                                   )
                                 : Container()

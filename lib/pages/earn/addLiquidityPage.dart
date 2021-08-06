@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -40,6 +41,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
   Timer _timer;
   double _price = 0;
   bool _withStake = false;
+  bool _withStakeAll = false;
 
   int _inputIndex = 0;
   BigInt _maxInputLeft;
@@ -50,7 +52,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
   Future<void> _refreshData() async {
     final String poolId = ModalRoute.of(context).settings.arguments;
 
-    await widget.plugin.service.earn.queryDexPoolInfo(poolId);
+    await widget.plugin.service.earn.updateDexPoolInfo(poolId: poolId);
 
     final poolInfo = widget.plugin.store.earn.dexPoolInfoMap[poolId];
     if (mounted) {
@@ -69,7 +71,10 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
 
   Future<void> _onSupplyAmountChange(String supply) async {
     final value = supply.trim();
-    final v = value.isEmpty ? 0 : double.parse(value);
+    double v = 0;
+    try {
+      v = value.isEmpty ? 0 : double.parse(value);
+    } catch (e) {}
     setState(() {
       _inputIndex = 0;
       _amountRightCtrl.text = v == 0 ? '' : (v * _price).toStringAsFixed(8);
@@ -79,7 +84,10 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
 
   Future<void> _onTargetAmountChange(String target) async {
     final value = target.trim();
-    final v = value.isEmpty ? 0 : double.parse(value);
+    double v = 0;
+    try {
+      v = value.isEmpty ? 0 : double.parse(value);
+    } catch (e) {}
     setState(() {
       _inputIndex = 1;
       _amountLeftCtrl.text = v == 0 ? '' : (v / _price).toStringAsFixed(8);
@@ -211,21 +219,54 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
               '0',
               _withStake,
             ];
-      final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
-          arguments: TxConfirmParams(
-            module: 'dex',
-            call: 'addLiquidity',
-            txTitle: I18n.of(context)
-                .getDic(i18n_full_dic_acala, 'acala')['earn.add'],
-            txDisplay: {
-              "poolId": poolId,
-              "amount": [amountLeft, amountRight],
-              "withStake": _withStake,
-            },
-            params: params,
-          ))) as Map;
-      if (res != null) {
-        Navigator.of(context).pop(res);
+
+      if (_withStakeAll) {
+        final pool =
+            poolId.split('-').map((e) => isTC6 ? e : ({'Token': e})).toList();
+        final balance = widget.plugin.store.assets.tokenBalanceMap[poolId];
+        final balanceInt = Fmt.balanceInt(balance.amount);
+        final batchTxs = [
+          'api.tx.dex.addLiquidity(...${jsonEncode(params)})',
+          'api.tx.incentives.depositDexShare({DEXShare: ${jsonEncode(pool)}}, "$balanceInt")',
+        ];
+        final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
+            arguments: TxConfirmParams(
+              module: 'utility',
+              call: 'batch',
+              txTitle: I18n.of(context)
+                  .getDic(i18n_full_dic_acala, 'acala')['earn.add'],
+              txDisplay: {
+                "poolId": poolId,
+                "amount": [amountLeft, amountRight],
+                "withStake": _withStake,
+                "stakeAll": '+ ' +
+                    Fmt.priceFloorBigInt(balanceInt, balance.decimals,
+                        lengthMax: 4) +
+                    ' LP',
+              },
+              params: [],
+              rawParams: '[[${batchTxs.join(',')}]]',
+            ))) as Map;
+        if (res != null) {
+          Navigator.of(context).pop(res);
+        }
+      } else {
+        final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
+            arguments: TxConfirmParams(
+              module: 'dex',
+              call: 'addLiquidity',
+              txTitle: I18n.of(context)
+                  .getDic(i18n_full_dic_acala, 'acala')['earn.add'],
+              txDisplay: {
+                "poolId": poolId,
+                "amount": [amountLeft, amountRight],
+                "withStake": _withStake,
+              },
+              params: params,
+            ))) as Map;
+        if (res != null) {
+          Navigator.of(context).pop(res);
+        }
       }
     }
   }
@@ -422,28 +463,27 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
                     ],
                   ),
                 ),
-                Padding(
-                  padding: EdgeInsets.only(top: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TapTooltip(
-                        message: dic['earn.withStake.txt'],
-                        child: Icon(Icons.info, color: colorGray, size: 16),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(left: 8),
-                        child: Text(dic['earn.withStake']),
-                      ),
-                      CupertinoSwitch(
-                        value: _withStake,
-                        onChanged: (res) {
-                          setState(() {
-                            _withStake = res;
-                          });
-                        },
-                      ),
-                    ],
+                RoundedCard(
+                  margin: EdgeInsets.only(top: 16, bottom: 16),
+                  padding: EdgeInsets.fromLTRB(8, 8, 8, 16),
+                  child: StakeLPTips(
+                    widget.plugin,
+                    poolId: poolId,
+                    switchActive: _withStake,
+                    switch1Active: _withStakeAll,
+                    onSwitch: (v) {
+                      setState(() {
+                        _withStake = v;
+                      });
+                    },
+                    onSwitch1: (v) {
+                      setState(() {
+                        _withStakeAll = v;
+                        if (v && !_withStake) {
+                          _withStake = v;
+                        }
+                      });
+                    },
                   ),
                 ),
                 Padding(
@@ -460,5 +500,103 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
         );
       },
     );
+  }
+}
+
+class StakeLPTips extends StatelessWidget {
+  StakeLPTips(this.plugin,
+      {this.poolId,
+      this.switchActive,
+      this.switch1Active,
+      this.onSwitch,
+      this.onSwitch1});
+  final PluginAcala plugin;
+  final String poolId;
+  final bool switchActive;
+  final bool switch1Active;
+  final Function(bool) onSwitch;
+  final Function(bool) onSwitch1;
+
+  @override
+  Widget build(BuildContext context) {
+    final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
+    final dicCommon = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
+    return Observer(builder: (_) {
+      final rewardAPY = plugin.store.earn.swapPoolRewards[poolId] ?? 0;
+      final rewardSavingAPY =
+          plugin.store.earn.swapPoolSavingRewards[poolId] ?? 0;
+      final balanceInt =
+          Fmt.balanceInt(plugin.store.assets.tokenBalanceMap[poolId].amount);
+      final balance = Fmt.priceFloorBigInt(
+          balanceInt, plugin.store.assets.tokenBalanceMap[poolId].decimals,
+          lengthMax: 4);
+      final colorGray = Theme.of(context).unselectedWidgetColor;
+      return Column(
+        children: [
+          Row(
+            mainAxisAlignment: balanceInt > BigInt.zero
+                ? MainAxisAlignment.spaceAround
+                : MainAxisAlignment.end,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TapTooltip(
+                    message: dic['earn.withStake.txt'],
+                    child: Row(
+                      children: [
+                        Icon(Icons.info, color: colorGray, size: 16),
+                        Padding(
+                          padding: EdgeInsets.only(left: 4),
+                          child: Text(dic['earn.withStake']),
+                        ),
+                      ],
+                    ),
+                  ),
+                  CupertinoSwitch(
+                    value: switchActive,
+                    onChanged: onSwitch,
+                  ),
+                ],
+              ),
+              balanceInt > BigInt.zero
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TapTooltip(
+                          message:
+                              '\n${dic['earn.withStake.all.txt']}\n(${dicCommon['balance']}: $balance ${PluginFmt.tokenView(poolId)})\n',
+                          child: Row(
+                            children: [
+                              Icon(Icons.info, color: colorGray, size: 16),
+                              Padding(
+                                padding: EdgeInsets.only(left: 4),
+                                child: Text(dic['earn.withStake.all']),
+                              ),
+                            ],
+                          ),
+                        ),
+                        CupertinoSwitch(
+                          value: switch1Active,
+                          onChanged: onSwitch1,
+                        ),
+                      ],
+                    )
+                  : Container(),
+            ],
+          ),
+          Padding(
+            padding: EdgeInsets.only(top: 16, bottom: 8),
+            child: Text(
+                '${dic['earn.withStake.info']} (${plugin.networkState.tokenSymbol[0]})',
+                style: TextStyle(fontSize: 12)),
+          ),
+          Text(
+            'APY: ${Fmt.ratio(rewardAPY + rewardSavingAPY)}',
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
+          ),
+        ],
+      );
+    });
   }
 }

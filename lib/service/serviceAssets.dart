@@ -32,6 +32,19 @@ class ServiceAssets {
         prices[e['token']] = double.parse(e['price']);
       }
     });
+
+    // todo: remove this after homaToken enabled
+    final relayChainToken = relay_chain_token_symbol[plugin.basic.name];
+    final homaToken = 'L$relayChainToken';
+    if (store.assets.marketPrices[homaToken] == null &&
+        prices[homaToken] == null) {
+      if (store.assets.marketPrices[relayChainToken] != null ||
+          prices[relayChainToken] != null) {
+        prices[homaToken] = store.assets.marketPrices[relayChainToken] ??
+            prices[relayChainToken];
+      }
+    }
+
     store.assets.setMarketPrices(prices);
   }
 

@@ -199,6 +199,20 @@ class _LPStakePage extends State<LPStakePage> {
                             }
                           },
                         ),
+                        !isStake
+                            ? Container(
+                                margin: EdgeInsets.only(top: 16, bottom: 32),
+                                padding: EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                    color: Colors.black12,
+                                    border: Border.all(
+                                        color: Colors.black26, width: 0.5),
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(8))),
+                                child: Text(dic['earn.unStake.info'],
+                                    style: TextStyle(fontSize: 12)),
+                              )
+                            : Container(),
                       ],
                     ),
                   ),

@@ -6,6 +6,7 @@ import 'package:polkawallet_plugin_acala/common/constants/base.dart';
 import 'package:polkawallet_plugin_acala/common/constants/index.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/store/index.dart';
+import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_ui/utils/format.dart';
 
@@ -114,5 +115,28 @@ class ServiceEarn {
   double getSwapFee() {
     return plugin.networkConst['dex']['getExchangeFee'][0] /
         plugin.networkConst['dex']['getExchangeFee'][1];
+  }
+
+  Future<void> updateDexPoolInfo({String poolId}) async {
+    // 1. query all dexPools
+    if (store.earn.dexPools.length == 0) {
+      await getDexPools();
+    }
+    // 2. default poolId is the first pool or KAR-kUSD
+    final tabNow = poolId ??
+        (store.earn.dexPools.length > 0
+            ? store.earn.dexPools[0].tokens.map((e) => e['token']).join('-')
+            : (plugin.basic.name == plugin_name_karura
+                ? 'KAR-KUSD'
+                : 'ACA-AUSD'));
+    // 3. query mining pool info
+    await Future.wait([
+      queryDexPoolInfo(tabNow),
+      plugin.service.assets.queryMarketPrices(PluginFmt.getAllDexTokens(plugin))
+    ]);
+
+    // 4. query mining pool rewards & calculate APY
+    queryDexPoolRewards(plugin.store.earn.dexPools.firstWhere(
+        (e) => e.tokens.map((t) => t['token']).join('-') == tabNow));
   }
 }

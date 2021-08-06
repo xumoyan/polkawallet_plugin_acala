@@ -628,7 +628,7 @@ class _SwapFormState extends State<SwapForm> {
                       ),
                     ),
             ),
-            showExchangeRate && _amountPayCtrl.text.isNotEmpty
+            showExchangeRate && _swapOutput?.amount != null
                 ? RoundedCard(
                     margin: EdgeInsets.only(top: 16),
                     padding: EdgeInsets.all(16),

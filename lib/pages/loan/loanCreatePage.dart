@@ -5,6 +5,7 @@ import 'package:polkawallet_plugin_acala/api/types/loanType.dart';
 import 'package:polkawallet_plugin_acala/common/constants/base.dart';
 import 'package:polkawallet_plugin_acala/common/constants/index.dart';
 import 'package:polkawallet_plugin_acala/pages/currencySelectPage.dart';
+import 'package:polkawallet_plugin_acala/pages/loan/loanDetailPage.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanInfoPanel.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/format.dart';
@@ -183,12 +184,15 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
     };
   }
 
-  List<String> _getTokenOptions() {
+  List<String> _getTokenOptions({bool all = false}) {
+    final tokenOptions =
+        widget.plugin.store.loan.loanTypes.map((e) => e.token).toList();
+    if (all) return tokenOptions;
+
     final loans = widget.plugin.store.loan.loans.values.toList();
     loans.retainWhere(
         (loan) => loan.debits > BigInt.zero || loan.collaterals > BigInt.zero);
-    final tokenOptions =
-        widget.plugin.store.loan.loanTypes.map((e) => e.token).toList();
+
     tokenOptions
         .retainWhere((e) => loans.map((i) => i.token).toList().indexOf(e) < 0);
     return tokenOptions;
@@ -218,8 +222,6 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final tokenOptions = _getTokenOptions();
-      print('tokenOptions: ');
-      print(tokenOptions);
       setState(() {
         _token = tokenOptions[0];
       });
@@ -274,12 +276,21 @@ class _LoanCreatePageState extends State<LoanCreatePage> {
             child: Column(
               children: <Widget>[
                 CurrencySelector(
-                  tokenOptions: _getTokenOptions(),
+                  tokenOptions: _getTokenOptions(all: true),
                   tokenIcons: widget.plugin.tokenIcons,
                   token: token,
                   price: widget.plugin.store.assets.prices[token],
                   onSelect: (res) {
                     if (res != null) {
+                      final loan = widget.plugin.store.loan.loans[res];
+                      if ((loan?.debits ?? BigInt.zero) > BigInt.zero ||
+                          ((loan?.collaterals ?? BigInt.zero) > BigInt.zero)) {
+                        Navigator.of(context).popAndPushNamed(
+                          LoanDetailPage.route,
+                          arguments: loan.token,
+                        );
+                        return;
+                      }
                       setState(() {
                         _token = res;
                       });

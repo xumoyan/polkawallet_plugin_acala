@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
+import 'package:polkawallet_ui/components/infoItem.dart';
 import 'package:polkawallet_ui/components/outlinedButtonSmall.dart';
 import 'package:polkawallet_ui/components/roundedButton.dart';
 import 'package:polkawallet_ui/components/roundedCard.dart';
@@ -63,7 +65,11 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
     final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
 
     final v = value.trim();
-    if (v.isEmpty || double.parse(v.trim()) == 0) {
+    try {
+      if (v.isEmpty || double.parse(v.trim()) == 0) {
+        return dic['amount.error'];
+      }
+    } catch (e) {
       return dic['amount.error'];
     }
 
@@ -75,10 +81,9 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
     final poolInfo = widget.plugin.store.earn.dexPoolInfoMap[poolId];
 
     final shareInputInt = Fmt.tokenInt(v, balancePair[0].decimals);
-    final shareBalance = _fromPool
-        ? poolInfo.shares
-        : Fmt.balanceInt(widget
-            .plugin.store.assets.tokenBalanceMap[poolId.toUpperCase()].amount);
+    final shareFree = Fmt.balanceInt(widget
+        .plugin.store.assets.tokenBalanceMap[poolId.toUpperCase()].amount);
+    final shareBalance = _fromPool ? shareFree + poolInfo.shares : shareFree;
     if (shareInputInt > shareBalance) {
       return dic['amount.low'];
     }
@@ -104,31 +109,52 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
     return null;
   }
 
+  List _getTxParams(BigInt amount, bool fromPool) {
+    final String poolId = ModalRoute.of(context).settings.arguments;
+    final pair = poolId.toUpperCase().split('-');
+
+    // todo: fix this after new acala online
+    final isTC6 = widget.plugin.basic.name == plugin_name_acala;
+    return isTC6
+        ? [
+            {'Token': pair[0]},
+            {'Token': pair[1]},
+            amount.toString(),
+            fromPool,
+          ]
+        : [
+            {'Token': pair[0]},
+            {'Token': pair[1]},
+            amount.toString(),
+            '0',
+            '0',
+            fromPool,
+          ];
+  }
+
   Future<void> _onSubmit(int shareDecimals) async {
     if (_formKey.currentState.validate()) {
       final String poolId = ModalRoute.of(context).settings.arguments;
-      final pair = poolId.toUpperCase().split('-');
       final amount = _amountCtrl.text.trim();
+      final amountInt = Fmt.tokenInt(amount, shareDecimals);
+      final free = Fmt.balanceInt(widget
+          .plugin.store.assets.tokenBalanceMap[poolId.toUpperCase()].amount);
 
-      // todo: fix this after new acala online
-      final isTC6 = widget.plugin.basic.name == plugin_name_acala;
-      final params = isTC6
-          ? [
-              {'Token': pair[0]},
-              {'Token': pair[1]},
-              Fmt.tokenInt(amount, shareDecimals).toString(),
-              _fromPool,
-            ]
-          : [
-              {'Token': pair[0]},
-              {'Token': pair[1]},
-              Fmt.tokenInt(amount, shareDecimals).toString(),
-              '0',
-              '0',
-              _fromPool,
-            ];
-      final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
-          arguments: TxConfirmParams(
+      TxConfirmParams txParams = TxConfirmParams(
+        module: 'dex',
+        call: 'removeLiquidity',
+        txTitle: I18n.of(context)
+            .getDic(i18n_full_dic_acala, 'acala')['earn.remove'],
+        txDisplay: {
+          "poolId": poolId,
+          "amount": amount,
+          "fromPool": false,
+        },
+        params: _getTxParams(amountInt, false),
+      );
+      if (_fromPool && amountInt > free) {
+        if (free == BigInt.zero) {
+          txParams = TxConfirmParams(
             module: 'dex',
             call: 'removeLiquidity',
             txTitle: I18n.of(context)
@@ -136,10 +162,33 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
             txDisplay: {
               "poolId": poolId,
               "amount": amount,
+              "fromPool": true,
+            },
+            params: _getTxParams(amountInt, true),
+          );
+        } else {
+          final batchTxs = [
+            'api.tx.dex.removeLiquidity(...${jsonEncode(_getTxParams(free, false))})',
+            'api.tx.dex.removeLiquidity(...${jsonEncode(_getTxParams(amountInt - free, true))})',
+          ];
+          txParams = TxConfirmParams(
+            module: 'utility',
+            call: 'batch',
+            txTitle: I18n.of(context)
+                .getDic(i18n_full_dic_acala, 'acala')['earn.remove'],
+            txDisplay: {
+              "poolId": poolId,
+              "amount": amount,
               "fromPool": _fromPool,
             },
-            params: params,
-          ))) as Map;
+            params: [],
+            rawParams: '[[${batchTxs.join(',')}]]',
+          );
+        }
+      }
+
+      final res = (await Navigator.of(context)
+          .pushNamed(TxConfirmPage.route, arguments: txParams)) as Map;
       if (res != null) {
         Navigator.of(context).pop(res);
       }
@@ -180,19 +229,21 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
 
         final balancePair = PluginFmt.getBalancePair(widget.plugin, pair);
 
-        final shareInput = _amountCtrl.text.isEmpty
-            ? 0
-            : double.parse(_amountCtrl.text.trim());
-        final shareInputInt = _amountCtrl.text.isEmpty
-            ? BigInt.zero
-            : Fmt.tokenInt(_amountCtrl.text.trim(), balancePair[0].decimals);
-        double shareTotal = 0;
-        BigInt shareInt = BigInt.zero;
+        double shareInput = 0;
+        BigInt shareInputInt = BigInt.zero;
+        try {
+          shareInput = double.parse(_amountCtrl.text.trim());
+          shareInputInt =
+              Fmt.tokenInt(_amountCtrl.text.trim(), balancePair[0].decimals);
+        } catch (_) {}
+
+        double shareIssuance = 0;
+        BigInt shareFreeInt = BigInt.zero;
+        BigInt shareStakedInt = BigInt.zero;
+        BigInt shareFromInt = BigInt.zero;
         BigInt shareInt10 = BigInt.zero;
         BigInt shareInt25 = BigInt.zero;
         BigInt shareInt50 = BigInt.zero;
-        double share = 0;
-        double shareRatioNew = 0;
 
         double poolLeft = 0;
         double poolRight = 0;
@@ -204,45 +255,28 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
         if (poolInfo != null) {
           exchangeRate = poolInfo.amountLeft / poolInfo.amountRight;
 
-          if (_fromPool) {
-            shareInt = poolInfo.shares;
-            shareTotal = Fmt.bigIntToDouble(
-                poolInfo.sharesTotal, balancePair[0].decimals);
+          shareFreeInt = Fmt.balanceInt(widget.plugin.store.assets
+              .tokenBalanceMap[poolId.toUpperCase()].amount);
+          shareStakedInt = poolInfo.shares;
+          shareFromInt =
+              _fromPool ? shareFreeInt + shareStakedInt : shareFreeInt;
+          shareIssuance =
+              Fmt.bigIntToDouble(poolInfo.issuance, balancePair[0].decimals);
 
-            poolLeft = Fmt.bigIntToDouble(
-                poolInfo.amountLeft * poolInfo.sharesTotal ~/ poolInfo.issuance,
-                balancePair[0].decimals);
-            poolRight = Fmt.bigIntToDouble(
-                poolInfo.amountRight *
-                    poolInfo.sharesTotal ~/
-                    poolInfo.issuance,
-                balancePair[1].decimals);
-          } else {
-            shareInt = Fmt.balanceInt(widget.plugin.store.assets
-                .tokenBalanceMap[poolId.toUpperCase()].amount);
-            shareTotal =
-                Fmt.bigIntToDouble(poolInfo.issuance, balancePair[0].decimals);
+          poolLeft =
+              Fmt.bigIntToDouble(poolInfo.amountLeft, balancePair[0].decimals);
+          poolRight =
+              Fmt.bigIntToDouble(poolInfo.amountRight, balancePair[1].decimals);
 
-            poolLeft = Fmt.bigIntToDouble(
-                poolInfo.amountLeft, balancePair[0].decimals);
-            poolRight = Fmt.bigIntToDouble(
-                poolInfo.amountRight, balancePair[1].decimals);
-          }
-          shareInt10 = BigInt.from(shareInt / BigInt.from(10));
-          shareInt25 = BigInt.from(shareInt / BigInt.from(4));
-          shareInt50 = BigInt.from(shareInt / BigInt.from(2));
+          shareInt10 = BigInt.from(shareFromInt / BigInt.from(10));
+          shareInt25 = BigInt.from(shareFromInt / BigInt.from(4));
+          shareInt50 = BigInt.from(shareFromInt / BigInt.from(2));
 
-          share = Fmt.bigIntToDouble(shareInt, balancePair[0].decimals);
-
-          amountLeft = poolLeft * shareInput / shareTotal;
-          amountRight = poolRight * shareInput / shareTotal;
-
-          shareRatioNew = shareTotal - shareInput == 0.0
-              ? 0.0
-              : (share - shareInput) / (shareTotal - shareInput);
+          amountLeft = poolLeft * shareInput / shareIssuance;
+          amountRight = poolRight * shareInput / shareIssuance;
         }
 
-        final shareEmpty = shareInt == BigInt.zero;
+        final shareEmpty = shareFromInt == BigInt.zero;
 
         return Scaffold(
           appBar: AppBar(title: Text(dic['earn.remove']), centerTitle: true),
@@ -251,35 +285,81 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
               padding: EdgeInsets.all(16),
               children: <Widget>[
                 (poolInfo?.shares ?? BigInt.zero) > BigInt.zero
-                    ? Padding(
-                        padding: EdgeInsets.only(bottom: 16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
+                    ? RoundedCard(
+                        padding: EdgeInsets.fromLTRB(8, 16, 8, 8),
+                        child: Column(
                           children: [
-                            TapTooltip(
-                              message: dic['earn.fromPool.txt'],
-                              child: Icon(Icons.info,
-                                  color:
-                                      Theme.of(context).unselectedWidgetColor,
-                                  size: 16),
+                            Container(
+                              margin: EdgeInsets.only(bottom: 8),
+                              child: Text(
+                                  '${PluginFmt.tokenView(poolId)} ${dicAssets['balance']}'),
                             ),
-                            Padding(
-                              padding: EdgeInsets.only(left: 8),
-                              child: Text(dic['earn.fromPool']),
+                            Container(
+                              margin: EdgeInsets.only(bottom: 4),
+                              child: Row(
+                                children: [
+                                  InfoItem(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    title: dicAssets['amount.all'],
+                                    content: Fmt.priceFloorBigInt(
+                                        shareFreeInt + shareStakedInt,
+                                        balancePair[0].decimals),
+                                  ),
+                                  InfoItem(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    title: dicAssets['amount.staked'],
+                                    content: Fmt.priceFloorBigInt(
+                                        shareStakedInt,
+                                        balancePair[0].decimals),
+                                  ),
+                                  InfoItem(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    title: dicAssets['amount.free'],
+                                    content: Fmt.priceFloorBigInt(
+                                        shareFreeInt, balancePair[0].decimals),
+                                  )
+                                ],
+                              ),
                             ),
-                            CupertinoSwitch(
-                              value: _fromPool,
-                              onChanged: (res) {
-                                setState(() {
-                                  _fromPool = res;
-                                });
-                              },
-                            ),
+                            Divider(),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                TapTooltip(
+                                  message:
+                                      '${dic['earn.fromPool.txt']}${dic['earn.unStake.info']}\n',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.info,
+                                          color: Theme.of(context)
+                                              .unselectedWidgetColor,
+                                          size: 16),
+                                      Padding(
+                                        padding: EdgeInsets.only(left: 8),
+                                        child: Text(dic['earn.fromPool']),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                CupertinoSwitch(
+                                  value: _fromPool,
+                                  onChanged: (res) {
+                                    setState(() {
+                                      _fromPool = res;
+                                    });
+                                  },
+                                ),
+                              ],
+                            )
                           ],
                         ),
                       )
                     : Container(),
                 RoundedCard(
+                  margin: EdgeInsets.only(top: 16),
                   padding: EdgeInsets.fromLTRB(16, 8, 16, 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,7 +371,7 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
                           decoration: InputDecoration(
                             hintText: dicAssets['amount'],
                             labelText:
-                                '${dicAssets['amount']} (${dic['earn.available']}: ${Fmt.priceFloorBigInt(shareInt, balancePair[0].decimals, lengthMax: 4)} Shares)',
+                                '${dicAssets['amount']} (${dic['earn.available']}: ${Fmt.priceFloorBigInt(shareFromInt, balancePair[0].decimals, lengthMax: 4)} Shares)',
                             suffix: GestureDetector(
                               child: Icon(
                                 CupertinoIcons.clear_thick_circled,
@@ -348,11 +428,12 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
                             OutlinedButtonSmall(
                               margin: EdgeInsets.only(right: 0),
                               content: '100%',
-                              active: !shareEmpty && shareInputInt == shareInt,
+                              active:
+                                  !shareEmpty && shareInputInt == shareFromInt,
                               onPressed: shareEmpty
                                   ? null
                                   : () => _onAmountSelect(
-                                      shareInt, balancePair[0].decimals),
+                                      shareFromInt, balancePair[0].decimals),
                             )
                           ],
                         ),
@@ -394,38 +475,6 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
                           ])
                         ],
                       ),
-                      Divider(),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: <Widget>[
-                          Expanded(
-                            child: Text(
-                              dic['earn${_fromPool ? '.stake' : ''}.pool'],
-                              style: TextStyle(
-                                color: Theme.of(context).unselectedWidgetColor,
-                              ),
-                            ),
-                          ),
-                          Text(
-                            '${Fmt.doubleFormat(poolLeft)} ${pairView[0]}\n+ ${Fmt.doubleFormat(poolRight)} ${pairView[1]}',
-                            textAlign: TextAlign.right,
-                          ),
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: <Widget>[
-                          Expanded(
-                            child: Text(
-                              dic['earn.share'],
-                              style: TextStyle(
-                                color: Theme.of(context).unselectedWidgetColor,
-                              ),
-                            ),
-                          ),
-                          Text(Fmt.ratio(shareRatioNew)),
-                        ],
-                      )
                     ],
                   ),
                 ),
