@@ -111,7 +111,7 @@ class LoanDebtCard extends StatelessWidget {
                   onPressed: () => Navigator.of(context).pushNamed(
                     LoanAdjustPage.route,
                     arguments: LoanAdjustPageParams(
-                        LoanAdjustPage.actionTypeBorrow, loan.token),
+                        LoanAdjustPage.actionTypeMint, loan.token),
                   ),
                 ),
               ),

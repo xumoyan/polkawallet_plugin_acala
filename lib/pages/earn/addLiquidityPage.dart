@@ -523,7 +523,7 @@ class StakeLPTips extends StatelessWidget {
     final dicCommon = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
     return Observer(builder: (_) {
       final rewardAPY = plugin.store.earn.swapPoolRewards[poolId] ?? 0;
-      final rewardSavingAPY =
+      final savingRewardAPY =
           plugin.store.earn.swapPoolSavingRewards[poolId] ?? 0;
       final balanceInt =
           Fmt.balanceInt(plugin.store.assets.tokenBalanceMap[poolId].amount);
@@ -587,12 +587,11 @@ class StakeLPTips extends StatelessWidget {
           ),
           Padding(
             padding: EdgeInsets.only(top: 16, bottom: 8),
-            child: Text(
-                '${dic['earn.withStake.info']} (${plugin.networkState.tokenSymbol[0]})',
+            child: Text(dic['earn.withStake.info'],
                 style: TextStyle(fontSize: 12)),
           ),
           Text(
-            'APY: ${Fmt.ratio(rewardAPY + rewardSavingAPY)}',
+            '${dic['earn.apy']}: ${Fmt.ratio(rewardAPY + savingRewardAPY)}',
             style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
           ),
         ],

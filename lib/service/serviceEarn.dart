@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:polkawallet_plugin_acala/api/acalaApi.dart';
 import 'package:polkawallet_plugin_acala/api/types/dexPoolInfoData.dart';
 import 'package:polkawallet_plugin_acala/common/constants/base.dart';
@@ -45,7 +43,7 @@ class ServiceEarn {
           store.assets.marketPrices[plugin.networkState.tokenSymbol[0]] /
           stakingPoolValue;
       if (amount > 0) {
-        res[k] = pow(1 + rate, epochOfYear) - 1;
+        res[k] = rate * epochOfYear;
       } else {
         res[k] = 0;
       }
@@ -58,7 +56,7 @@ class ServiceEarn {
     savingRates.forEach((k, v) {
       final rate = Fmt.balanceDouble(v.toString(), acala_price_decimals) / 2;
       if (rate > 0) {
-        res[k] = pow(1 + rate, epochOfYear) - 1;
+        res[k] = rate * epochOfYear;
       } else {
         res[k] = 0;
       }
@@ -138,5 +136,18 @@ class ServiceEarn {
     // 4. query mining pool rewards & calculate APY
     queryDexPoolRewards(plugin.store.earn.dexPools.firstWhere(
         (e) => e.tokens.map((t) => t['token']).join('-') == tabNow));
+  }
+
+  Future<void> updateAllDexPoolInfo() async {
+    if (store.earn.dexPools.length == 0) {
+      await getDexPools();
+    }
+
+    plugin.service.assets.queryMarketPrices(PluginFmt.getAllDexTokens(plugin));
+
+    await Future.wait(store.earn.dexPools.map(
+        (e) => queryDexPoolInfo(e.tokens.map((e) => e['token']).join('-'))));
+
+    store.earn.dexPools.forEach((e) => queryDexPoolRewards(e));
   }
 }

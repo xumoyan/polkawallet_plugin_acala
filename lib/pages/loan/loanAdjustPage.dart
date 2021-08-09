@@ -23,7 +23,7 @@ class LoanAdjustPage extends StatefulWidget {
   final Keyring keyring;
 
   static const String route = '/acala/loan/adjust';
-  static const String actionTypeBorrow = 'borrow';
+  static const String actionTypeMint = 'mint';
   static const String actionTypePayback = 'payback';
   static const String actionTypeDeposit = 'deposit';
   static const String actionTypeWithdraw = 'withdraw';
@@ -84,7 +84,7 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
       case LoanAdjustPage.actionTypeWithdraw:
         collateralTotal = loan.collaterals - collateral;
         break;
-      case LoanAdjustPage.actionTypeBorrow:
+      case LoanAdjustPage.actionTypeMint:
         debitTotal = loan.debits + debit;
         break;
       case LoanAdjustPage.actionTypePayback:
@@ -200,7 +200,7 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
     }
     final LoanAdjustPageParams params =
         ModalRoute.of(context).settings.arguments;
-    if (params.actionType == LoanAdjustPage.actionTypeBorrow) {
+    if (params.actionType == LoanAdjustPage.actionTypeMint) {
       if (_amountDebit > max) {
         return '${dic['loan.max']} $maxToBorrowView';
       }
@@ -255,7 +255,7 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
     final LoanAdjustPageParams params =
         ModalRoute.of(context).settings.arguments;
     switch (params.actionType) {
-      case LoanAdjustPage.actionTypeBorrow:
+      case LoanAdjustPage.actionTypeMint:
         // borrow min debit value if user's debit is empty
         final debitAdd = loan.type.debitToDebitShare(
             loan.debits == BigInt.zero &&
@@ -418,7 +418,7 @@ class _LoanAdjustPageState extends State<LoanAdjustPage> {
         Fmt.priceFloorBigInt(maxToBorrow, stableCoinDecimals);
 
     switch (params.actionType) {
-      case LoanAdjustPage.actionTypeBorrow:
+      case LoanAdjustPage.actionTypeMint:
         maxToBorrow = maxToBorrow > BigInt.zero ? maxToBorrow : BigInt.zero;
         maxToBorrowView = Fmt.priceFloorBigInt(maxToBorrow, stableCoinDecimals);
         showCollateral = false;

@@ -453,7 +453,7 @@ class CollateralIncentiveList extends StatelessWidget {
                         Container(
                           margin: EdgeInsets.only(bottom: 8),
                           child: Text(
-                              '${dic['loan.apy']} ($incentiveTokenSymbol)'),
+                              '${dic['earn.apy']} ($incentiveTokenSymbol)'),
                         ),
                         Text(Fmt.ratio(apy), style: numStyle),
                       ],

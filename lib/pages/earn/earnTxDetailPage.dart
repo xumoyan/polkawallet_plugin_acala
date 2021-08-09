@@ -10,8 +10,8 @@ import 'package:polkawallet_sdk/utils/i18n.dart';
 import 'package:polkawallet_ui/components/txDetail.dart';
 import 'package:polkawallet_ui/utils/format.dart';
 
-class EarnIncentiveDetailPage extends StatelessWidget {
-  EarnIncentiveDetailPage(this.plugin, this.keyring);
+class EarnTxDetailPage extends StatelessWidget {
+  EarnTxDetailPage(this.plugin, this.keyring);
   final PluginAcala plugin;
   final Keyring keyring;
 
