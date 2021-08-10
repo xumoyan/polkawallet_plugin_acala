@@ -112,6 +112,11 @@ class PluginAcala extends PolkawalletPlugin {
   Map<String, Widget> get tokenIcons => _getTokenIcons();
 
   @override
+  List<TokenBalanceData> get noneNativeTokensAll {
+    return store.assets.tokenBalanceMap.values.toList();
+  }
+
+  @override
   List<HomeNavItem> getNavItems(BuildContext context, Keyring keyring) {
     return [
       basic.name == plugin_name_karura

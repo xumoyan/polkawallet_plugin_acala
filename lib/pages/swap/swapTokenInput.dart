@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:polkawallet_plugin_acala/pages/currencySelectPage.dart';
-import 'package:polkawallet_plugin_acala/utils/format.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/plugin/store/balances.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
@@ -137,8 +136,8 @@ class SwapTokenInput extends StatelessWidget {
                   ),
                   GestureDetector(
                     child: CurrencyWithIcon(
-                      PluginFmt.tokenView(balance.symbol),
-                      TokenIcon(balance.symbol, tokenIconsMap, small: true),
+                      balance.symbol,
+                      TokenIcon(balance.id, tokenIconsMap, small: true),
                       textStyle: Theme.of(context).textTheme.headline4,
                       trailing: onTokenChange != null
                           ? Icon(Icons.keyboard_arrow_down)

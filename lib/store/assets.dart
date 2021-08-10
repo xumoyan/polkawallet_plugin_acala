@@ -37,9 +37,10 @@ abstract class _AssetsStore with Store {
     final data = Map<String, TokenBalanceData>();
     final dataForCache = {};
     list.forEach((e) {
-      data[e.symbol] = e;
+      data[e.id] = e;
 
-      dataForCache[e.symbol] = {
+      dataForCache[e.id] = {
+        'id': e.id,
         'name': e.name,
         'symbol': e.symbol,
         'decimals': e.decimals,

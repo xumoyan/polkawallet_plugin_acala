@@ -2,11 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:polkawallet_ui/components/borderedTitle.dart';
-import 'package:polkawallet_ui/components/roundedCard.dart';
 import 'package:polkawallet_sdk/plugin/index.dart';
 import 'package:polkawallet_sdk/plugin/store/balances.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
+import 'package:polkawallet_ui/components/borderedTitle.dart';
+import 'package:polkawallet_ui/components/roundedCard.dart';
 import 'package:polkawallet_ui/components/textTag.dart';
 import 'package:polkawallet_ui/utils/format.dart';
 
@@ -107,7 +107,7 @@ class _AssetsContentState extends State<AssetsContent> {
                               i,
                               decimals,
                               detailPageRoute: i.detailPageRoute,
-                              icon: widget.network.tokenIcons[i.symbol],
+                              icon: widget.network.tokenIcons[i.id],
                             ))
                         .toList(),
               ),
@@ -130,8 +130,7 @@ class _AssetsContentState extends State<AssetsContent> {
                                         e,
                                         decimals,
                                         detailPageRoute: e.detailPageRoute,
-                                        icon:
-                                            widget.network.tokenIcons[e.symbol],
+                                        icon: widget.network.tokenIcons[e.id],
                                       ))
                                   .toList(),
                             )

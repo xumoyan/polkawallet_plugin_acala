@@ -60,6 +60,7 @@ class ServiceAssets {
     final balances =
         Map<String, TokenBalanceData>.from(store.assets.tokenBalanceMap);
     final data = TokenBalanceData(
+        id: balances[tokenId].id,
         name: balances[tokenId].name,
         symbol: balances[tokenId].symbol,
         decimals: balances[tokenId].decimals,

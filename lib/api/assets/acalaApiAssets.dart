@@ -51,8 +51,9 @@ class AcalaApiAssets {
 
       callback(_tokenBalances.values
           .map((e) => TokenBalanceData(
-                name: PluginFmt.tokenView(e['symbol']),
-                symbol: e['symbol'],
+                id: e['symbol'],
+                symbol: PluginFmt.tokenView(e['symbol']),
+                name: e['name'],
                 decimals: e['decimals'],
                 amount: e['balance']['free'].toString(),
                 locked: e['balance']['frozen'].toString(),

@@ -43,7 +43,7 @@ class _TokenDetailPageSate extends State<TokenDetailPage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final TokenBalanceData token = ModalRoute.of(context).settings.arguments;
-      widget.plugin.service.assets.updateTokenBalances(token.symbol);
+      widget.plugin.service.assets.updateTokenBalances(token.id);
     });
   }
 
@@ -60,7 +60,7 @@ class _TokenDetailPageSate extends State<TokenDetailPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(token.name),
+        title: Text(token.symbol),
         centerTitle: true,
         elevation: 0.0,
       ),
@@ -68,15 +68,15 @@ class _TokenDetailPageSate extends State<TokenDetailPage> {
         child: Observer(
           builder: (_) {
             final balance =
-                widget.plugin.store.assets.tokenBalanceMap[token.symbol];
+                widget.plugin.store.assets.tokenBalanceMap[token.id];
             final free = Fmt.balanceInt(balance?.amount ?? '0');
             final locked = Fmt.balanceInt(balance?.locked ?? '0');
             final reserved = Fmt.balanceInt(balance?.reserved ?? '0');
             final transferable = free - locked - reserved;
             return RefreshIndicator(
               key: _refreshKey,
-              onRefresh: () => widget.plugin.service.assets
-                  .updateTokenBalances(token.symbol),
+              onRefresh: () =>
+                  widget.plugin.service.assets.updateTokenBalances(token.id),
               child: Column(
                 children: <Widget>[
                   Stack(
@@ -165,7 +165,7 @@ class _TokenDetailPageSate extends State<TokenDetailPage> {
                                   document: gql(transferQuery),
                                   variables: <String, String>{
                                     'account': widget.keyring.current.address,
-                                    'token': token.symbol,
+                                    'token': token.id,
                                   },
                                 ),
                                 builder: (
@@ -199,7 +199,7 @@ class _TokenDetailPageSate extends State<TokenDetailPage> {
                                       }
                                       return TransferListItem(
                                         data: txs[i],
-                                        token: token.symbol,
+                                        token: token.id,
                                         isOut: txs[i].from ==
                                             widget.keyring.current.address,
                                       );
@@ -242,7 +242,7 @@ class _TokenDetailPageSate extends State<TokenDetailPage> {
                                 Navigator.pushNamed(
                                   context,
                                   TransferPage.route,
-                                  arguments: token.symbol,
+                                  arguments: token.id,
                                 );
                               },
                             ),

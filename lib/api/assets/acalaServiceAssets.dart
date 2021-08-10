@@ -44,6 +44,7 @@ class AcalaServiceAssets {
         (Map data) {
           callback({
             'symbol': e['token'],
+            'name': e['name'],
             'decimals': e['decimals'],
             'balance': data
           });
@@ -53,6 +54,7 @@ class AcalaServiceAssets {
     final dexPairs = await plugin.api.swap.getTokenPairs();
     dexPairs.forEach((e) {
       final lpToken = e.tokens.map((i) => i['token']).toList();
+      final tokenId = lpToken.join('-');
       final channel = '$tokenBalanceChannel${lpToken.join('')}';
       plugin.sdk.api.subscribeMessage(
         'api.query.tokens.accounts',
@@ -65,11 +67,8 @@ class AcalaServiceAssets {
         ],
         channel,
         (Map data) {
-          callback({
-            'symbol': lpToken.join('-'),
-            'decimals': e.decimals,
-            'balance': data
-          });
+          callback(
+              {'symbol': tokenId, 'decimals': e.decimals, 'balance': data});
         },
       );
     });

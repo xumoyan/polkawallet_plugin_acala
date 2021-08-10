@@ -135,7 +135,7 @@ class _AddLiquidityPageState extends State<AddLiquidityPage> {
       final min = Fmt.balanceInt(
               tokenPair[0] == widget.plugin.networkState.tokenSymbol[0]
                   ? widget.plugin.networkConst['balances']['existentialDeposit']
-                  : existential_deposit[balance.symbol]) /
+                  : existential_deposit[balance.id]) /
           poolInfo.issuance *
           Fmt.bigIntToDouble(poolInfo.amountLeft, balancePair[0].decimals);
       final inputLeft = _inputIndex == 0
