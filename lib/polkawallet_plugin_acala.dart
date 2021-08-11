@@ -113,7 +113,7 @@ class PluginAcala extends PolkawalletPlugin {
 
   @override
   List<TokenBalanceData> get noneNativeTokensAll {
-    return store.assets.tokenBalanceMap.values.toList();
+    return store?.assets?.tokenBalanceMap?.values?.toList();
   }
 
   @override
@@ -183,7 +183,7 @@ class PluginAcala extends PolkawalletPlugin {
       BootstrapPage.route: (_) => BootstrapPage(this, keyring),
       // earn pages
       EarnPage.route: (_) => EarnPage(this, keyring),
-      EarnDetailPage.route: ( _ ) => EarnDetailPage(this, keyring),
+      EarnDetailPage.route: (_) => EarnDetailPage(this, keyring),
       EarnHistoryPage.route: (_) => ClientProvider(
             child: Builder(
               builder: (_) => EarnHistoryPage(this, keyring),

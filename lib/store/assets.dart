@@ -86,6 +86,7 @@ abstract class _AssetsStore with Store {
       final tokens = cachedTokens[pubKey].values.toList();
       setTokenBalanceMap(
           List<TokenBalanceData>.from(tokens.map((e) => TokenBalanceData(
+              id: e['id'],
               name: e['name'],
               symbol: e['symbol'],
               decimals: e['decimals'],

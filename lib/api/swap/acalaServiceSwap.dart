@@ -51,7 +51,7 @@ class AcalaServiceSwap {
       plugin.sdk.webView.evalJavascript('Promise.all([$incentiveQuery])'),
       plugin.sdk.webView.evalJavascript('Promise.all([$savingRateQuery])')
     ]);
-    List deductions;
+    List deductions = [];
     if (!isTC6) {
       final deductionQuery = dexPools
           .map((i) => 'api.query.incentives.payoutDeductionRates(${jsonEncode({

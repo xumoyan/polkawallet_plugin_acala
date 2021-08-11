@@ -81,6 +81,7 @@ async function getTokenPairs(api: ApiPromise) {
         );
         return {
           decimals: pair.decimal,
+          pairDecimals: [pair.token1.decimal, pair.token2.decimal],
           tokens: [{ token: pair.token1.symbol }, { token: pair.token2.symbol }],
         };
       }
