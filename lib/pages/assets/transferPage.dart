@@ -51,6 +51,11 @@ class _TransferPageState extends State<TransferPage> {
   TxFeeEstimateResult _fee;
 
   Future<String> _checkAccountTo(KeyPairData acc) async {
+    if (widget.keyring.allAccounts.indexWhere((e) => e.pubKey == acc.pubKey) >=
+        0) {
+      return null;
+    }
+
     final addressCheckValid = await widget.plugin.sdk.webView.evalJavascript(
         '(account.checkAddressFormat != undefined ? {}:null)',
         wrapPromise: false);
@@ -270,16 +275,19 @@ class _TransferPageState extends State<TransferPage> {
     return null;
   }
 
-  Future<void> _initAccountTo(String address) async {
-    final acc = KeyPairData();
-    acc.address = address;
+  Future<void> _initAccountTo(KeyPairData acc) async {
+    final to = KeyPairData();
+    to.address = acc.address;
+    to.pubKey = acc.pubKey;
     setState(() {
-      _accountTo = acc;
+      _accountTo = to;
     });
-    final icon = await widget.plugin.sdk.api.account.getAddressIcons([address]);
+    final icon =
+        await widget.plugin.sdk.api.account.getAddressIcons([acc.address]);
     if (icon != null) {
       final accWithIcon = KeyPairData();
-      accWithIcon.address = address;
+      accWithIcon.address = acc.address;
+      accWithIcon.pubKey = acc.pubKey;
       accWithIcon.icon = icon[0][1];
       setState(() {
         _accountTo = accWithIcon;
@@ -300,7 +308,7 @@ class _TransferPageState extends State<TransferPage> {
       _getTxFee();
 
       if (widget.keyring.allWithContacts.length > 0) {
-        _initAccountTo(widget.keyring.allWithContacts[0].address);
+        _initAccountTo(widget.keyring.allWithContacts[0]);
       }
     });
   }
