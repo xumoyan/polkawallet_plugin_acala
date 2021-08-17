@@ -176,6 +176,12 @@ async function fetchDexPoolInfo(api: ApiPromise, pool: any, address: string) {
     api.query.rewards.shareAndWithdrawnReward({ DexSaving: pool }, address),
     api.query.tokens.totalIssuance(pool),
   ])) as any;
+  const pendingRewards = (!!api.query.incentives.pendingRewards
+    ? await Promise.all([
+        api.query.incentives?.pendingRewards({ DexIncentive: pool }, address),
+        api.query.incentives?.pendingRewards({ DexSaving: pool }, address),
+      ])
+    : [null, null]) as any;
   let proportion = new FixedPointNumber(0);
   if (res[1] && res[3]) {
     proportion = FPNum(res[3][0]).div(FPNum(res[1].totalShares));
@@ -193,12 +199,14 @@ async function fetchDexPoolInfo(api: ApiPromise, pool: any, address: string) {
         FPNum(res[1].totalRewards, decimalsACA)
           .times(proportion)
           .minus(FPNum(res[3][1], decimalsACA))
+          .plus(FPNum(pendingRewards[0] || 0, decimalsACA))
           .toNumber() || 0
       ).toString(),
       saving: (
         FPNum(res[2].totalRewards, decimalsAUSD)
           .times(proportion)
           .minus(FPNum(res[4][1], decimalsAUSD))
+          .plus(FPNum(pendingRewards[1] || 0, decimalsAUSD))
           .toNumber() || 0
       ).toString(),
     },

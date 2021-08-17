@@ -136,6 +136,9 @@ class _LPStakePage extends State<LPStakePage> {
         ? stableCoinDecimals
         : tokenDecimals;
 
+    final runtimeVersion =
+        widget.plugin.networkConst['system']['version']['specVersion'];
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -199,7 +202,7 @@ class _LPStakePage extends State<LPStakePage> {
                             }
                           },
                         ),
-                        !isStake
+                        runtimeVersion < 1007 && !isStake
                             ? Container(
                                 margin: EdgeInsets.only(top: 16, bottom: 32),
                                 padding: EdgeInsets.all(8),

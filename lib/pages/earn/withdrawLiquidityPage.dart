@@ -278,6 +278,9 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
 
         final shareEmpty = shareFromInt == BigInt.zero;
 
+        final runtimeVersion =
+            widget.plugin.networkConst['system']['version']['specVersion'];
+
         return Scaffold(
           appBar: AppBar(title: Text(dic['earn.remove']), centerTitle: true),
           body: SafeArea(
@@ -330,7 +333,7 @@ class _WithdrawLiquidityPageState extends State<WithdrawLiquidityPage> {
                               children: [
                                 TapTooltip(
                                   message:
-                                      '${dic['earn.fromPool.txt']}${dic['earn.unStake.info']}\n',
+                                      '${dic['earn.fromPool.txt']}${runtimeVersion < 1007 ? dic['earn.unStake.info'] : ''}\n',
                                   child: Row(
                                     children: [
                                       Icon(Icons.info,

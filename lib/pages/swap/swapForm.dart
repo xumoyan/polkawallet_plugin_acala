@@ -137,9 +137,6 @@ class _SwapFormState extends State<SwapForm> {
     setState(() {
       _swapMode = 0;
       _maxInput = null;
-      if (_swapPair.length == 0) {
-        _swapPair = PluginFmt.getAllDexTokens(widget.plugin).sublist(0, 2);
-      }
     });
 
     _onInputChange(supply);
@@ -150,9 +147,6 @@ class _SwapFormState extends State<SwapForm> {
     setState(() {
       _swapMode = 1;
       _maxInput = null;
-      if (_swapPair.length == 0) {
-        _swapPair = PluginFmt.getAllDexTokens(widget.plugin).sublist(0, 2);
-      }
     });
 
     _onInputChange(target);
@@ -358,6 +352,10 @@ class _SwapFormState extends State<SwapForm> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       _getTxFee();
+
+      setState(() {
+        _swapPair = PluginFmt.getAllDexTokens(widget.plugin).sublist(0, 2);
+      });
 
       _setUpdateTimer(init: true);
     });

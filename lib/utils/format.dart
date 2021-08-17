@@ -50,6 +50,7 @@ class PluginFmt {
     if (tokenPair.length > 0) {
       if (tokenPair[0] == symbols[0]) {
         balanceLeft = TokenBalanceData(
+            id: tokenPair[0],
             symbol: tokenPair[0],
             decimals: plugin.networkState.tokenDecimals[0],
             amount: (plugin.balances.native?.availableBalance ?? 0).toString());
@@ -57,6 +58,7 @@ class PluginFmt {
             plugin.store.assets.tokenBalanceMap[tokenPair[1].toUpperCase()];
       } else if (tokenPair[1] == symbols[0]) {
         balanceRight = TokenBalanceData(
+            id: tokenPair[1],
             symbol: tokenPair[1],
             decimals: plugin.networkState.tokenDecimals[0],
             amount: (plugin.balances.native?.availableBalance ?? 0).toString());
