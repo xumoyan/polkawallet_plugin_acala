@@ -14,30 +14,28 @@ class TxDexIncentiveData extends _TxDexIncentiveData {
     data.hash = json['extrinsic']['id'];
     data.event = json['type'];
 
-    final jsonData = jsonDecode(json['data']);
-
     switch (data.event) {
       case actionClaimRewards:
-        final pair = (jsonDecode(jsonData[1]['value'])['dexIncentive']
+        final pair = (jsonDecode(json['data'][1]['value'])['dexIncentive']
                 ['dexShare'] as List)
             .map((e) => e['token'])
             .toList();
         final poolId = pair.join('-');
-        final rewardToken = jsonDecode(jsonData[2]['value'])['token'];
+        final rewardToken = jsonDecode(json['data'][2]['value'])['token'];
         data.poolId = poolId;
         data.amountShare =
-            '${Fmt.balance(jsonData[3]['value'], decimals[symbols.indexOf(rewardToken)])} ${PluginFmt.tokenView(rewardToken)}';
+            '${Fmt.balance(json['data'][3]['value'], decimals[symbols.indexOf(rewardToken)])} ${PluginFmt.tokenView(rewardToken)}';
         break;
       case actionStake:
       case actionUnStake:
-        final pair = (jsonDecode(jsonData[1]['value'])['dexShare'] as List)
+        final pair = (jsonDecode(json['data'][1]['value'])['dexShare'] as List)
             .map((e) => e['token'])
             .toList();
         final poolId = pair.join('-');
         final shareTokenView = PluginFmt.tokenView(poolId);
         data.poolId = poolId;
         data.amountShare =
-            '${Fmt.balance(jsonData[2]['value'], decimals[symbols.indexOf(pair[0])])} $shareTokenView';
+            '${Fmt.balance(json['data'][2]['value'], decimals[symbols.indexOf(pair[0])])} $shareTokenView';
         break;
     }
     data.time = json['extrinsic']['timestamp'] as String;

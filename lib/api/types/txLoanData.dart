@@ -18,7 +18,7 @@ class TxLoanData extends _TxLoanData {
     data.block = json['extrinsic']['block']['number'];
     data.hash = json['extrinsic']['id'];
 
-    final jsonData = jsonDecode(json['data']) as List;
+    final jsonData = json['data'] as List;
     data.token = jsonDecode(jsonData[1]['value'])['token'];
 
     data.collateral = Fmt.balanceInt(jsonData[2]['value'].toString());

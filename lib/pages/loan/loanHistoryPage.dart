@@ -64,7 +64,7 @@ class LoanHistoryPage extends StatelessWidget {
               }
               final list =
                   List.of(result.data['loanActions']['nodes']).map((i) {
-                final token = jsonDecode(jsonDecode(i['data'])[1]['value']);
+                final token = jsonDecode(i['data'][1]['value']);
                 return TxLoanData.fromJson(
                     i as Map,
                     stableCoinSymbol,
