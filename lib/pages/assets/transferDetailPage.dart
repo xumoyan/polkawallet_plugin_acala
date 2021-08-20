@@ -1,13 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:polkawallet_ui/components/txDetail.dart';
-import 'package:polkawallet_ui/utils/format.dart';
+import 'package:polkawallet_plugin_acala/api/types/transferData.dart';
+import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
+import 'package:polkawallet_plugin_acala/utils/format.dart';
+import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
-import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
-import 'package:polkawallet_plugin_acala/api/types/transferData.dart';
-import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
-import 'package:polkawallet_plugin_acala/utils/format.dart';
+import 'package:polkawallet_ui/components/txDetail.dart';
+import 'package:polkawallet_ui/utils/format.dart';
 
 class TransferDetailPage extends StatelessWidget {
   TransferDetailPage(this.plugin, this.keyring);
@@ -33,7 +33,7 @@ class TransferDetailPage extends StatelessWidget {
     return TxDetail(
       success: tx.isSuccess,
       action: txType,
-      blockNum: int.parse(tx.block),
+      // blockNum: int.parse(tx.block),
       hash: tx.hash,
       blockTime: Fmt.dateTime(DateTime.parse(tx.timestamp)),
       networkName: networkName,

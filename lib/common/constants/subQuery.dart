@@ -17,7 +17,6 @@ const transferQuery = r'''
         isSuccess
         extrinsic {
           id
-          block {number}
           timestamp
         }
       }
@@ -35,7 +34,6 @@ const loanQuery = r'''
         extrinsic {
           id
           method
-          block {number}
           timestamp
           isSuccess
         }
@@ -54,7 +52,6 @@ const swapQuery = r'''
         extrinsic {
           id
           method
-          block {number}
           timestamp
           isSuccess
         }
@@ -73,7 +70,6 @@ const dexStakeQuery = r'''
         extrinsic {
           id
           method
-          block {number}
           timestamp
           isSuccess
         }

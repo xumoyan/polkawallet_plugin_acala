@@ -10,7 +10,6 @@ class TxDexIncentiveData extends _TxDexIncentiveData {
   static TxDexIncentiveData fromJson(Map<String, dynamic> json,
       String stableCoinSymbol, List<String> symbols, List<int> decimals) {
     final data = TxDexIncentiveData();
-    data.block = json['extrinsic']['block']['number'];
     data.hash = json['extrinsic']['id'];
     data.event = json['type'];
 

@@ -15,7 +15,6 @@ class TxLoanData extends _TxLoanData {
       int stableCoinDecimals, int tokenDecimals) {
     TxLoanData data = TxLoanData();
     data.event = json['type'];
-    data.block = json['extrinsic']['block']['number'];
     data.hash = json['extrinsic']['id'];
 
     final jsonData = json['data'] as List;

@@ -11,7 +11,6 @@ class TxDexLiquidityData extends _TxDexLiquidityData {
     final args = jsonDecode(json['args']);
 
     final data = TxDexLiquidityData();
-    data.block = json['extrinsic']['block']['number'];
     data.hash = json['extrinsic']['id'];
 
     if (json['method'] == 'claimRewards') {

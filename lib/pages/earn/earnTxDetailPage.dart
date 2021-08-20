@@ -32,7 +32,7 @@ class EarnTxDetailPage extends StatelessWidget {
     return TxDetail(
       success: tx.isSuccess,
       action: tx.event,
-      blockNum: int.parse(tx.block),
+      // blockNum: int.parse(tx.block),
       hash: tx.hash,
       blockTime:
           Fmt.dateTime(DateFormat("yyyy-MM-ddTHH:mm:ss").parse(tx.time, true)),
