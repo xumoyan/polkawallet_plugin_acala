@@ -1,6 +1,7 @@
 import 'package:polkawallet_plugin_acala/api/homa/acalaServiceHoma.dart';
 import 'package:polkawallet_plugin_acala/api/types/homaRedeemAmountData.dart';
 import 'package:polkawallet_plugin_acala/api/types/stakingPoolInfoData.dart';
+import 'package:polkawallet_ui/utils/format.dart';
 
 class AcalaApiHoma {
   AcalaApiHoma(this.service);
@@ -10,6 +11,15 @@ class AcalaApiHoma {
   Future<StakingPoolInfoData> queryHomaStakingPool() async {
     final Map res = await service.queryHomaStakingPool();
     return StakingPoolInfoData.fromJson(Map<String, dynamic>.of(res));
+  }
+
+  Future<HomaLitePoolInfoData> queryHomaLiteStakingPool() async {
+    final List res = await service.queryHomaLiteStakingPool();
+    return HomaLitePoolInfoData(
+      cap: Fmt.balanceInt(res[0]),
+      staked: Fmt.balanceInt(res[1]),
+      liquidTokenIssuance: Fmt.balanceInt(res[2]),
+    );
   }
 
   Future<HomaUserInfoData> queryHomaUserInfo(String address) async {

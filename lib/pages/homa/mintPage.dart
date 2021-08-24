@@ -1,22 +1,20 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:polkawallet_plugin_acala/api/types/txHomaData.dart';
 import 'package:polkawallet_plugin_acala/common/constants/index.dart';
 import 'package:polkawallet_plugin_acala/pages/homa/homaHistoryPage.dart';
+import 'package:polkawallet_plugin_acala/pages/swap/bootstrapPage.dart';
+import 'package:polkawallet_plugin_acala/pages/swap/swapTokenInput.dart';
 import 'package:polkawallet_plugin_acala/polkawallet_plugin_acala.dart';
 import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
-import 'package:polkawallet_ui/components/currencyWithIcon.dart';
+import 'package:polkawallet_ui/components/infoItemRow.dart';
 import 'package:polkawallet_ui/components/roundedButton.dart';
 import 'package:polkawallet_ui/components/roundedCard.dart';
-import 'package:polkawallet_ui/components/tokenIcon.dart';
 import 'package:polkawallet_ui/components/txButton.dart';
 import 'package:polkawallet_ui/pages/txConfirmPage.dart';
 import 'package:polkawallet_ui/utils/format.dart';
-import 'package:polkawallet_ui/utils/index.dart';
 
 class MintPage extends StatefulWidget {
   MintPage(this.plugin, this.keyring);
@@ -30,73 +28,135 @@ class MintPage extends StatefulWidget {
 }
 
 class _MintPageState extends State<MintPage> {
-  final _formKey = GlobalKey<FormState>();
   final TextEditingController _amountPayCtrl = new TextEditingController();
-  final TextEditingController _amountReceiveCtrl = new TextEditingController();
+
+  final _payFocusNode = FocusNode();
+
+  String _error;
+  String _amountReceive = '';
+  BigInt _maxInput;
 
   Future<void> _updateReceiveAmount(double input) async {
     if (mounted) {
-      double exchangeRate =
-          1 / widget.plugin.store.homa.stakingPoolInfo.liquidExchangeRate;
+      final symbols = widget.plugin.networkState.tokenSymbol;
+      final decimals = widget.plugin.networkState.tokenDecimals;
+
+      final stakeToken = relay_chain_token_symbol[widget.plugin.basic.name];
+      final stakeDecimal = decimals[symbols.indexOf(stakeToken)];
+      final poolInfo = widget.plugin.store.homa.poolInfo;
+      final mintFee = Fmt.balanceDouble(
+          widget.plugin.networkConst['homaLite']['mintFee'].toString(),
+          stakeDecimal);
+      final maxRewardPerEra = Fmt.balanceDouble(
+          widget.plugin.networkConst['homaLite']['maxRewardPerEra'].toString(),
+          stakeDecimal);
+      final receive = (input - mintFee) *
+          (poolInfo.liquidTokenIssuance / poolInfo.staked) *
+          (1 - maxRewardPerEra);
+
+      String error;
+      if (Fmt.tokenInt(input.toString(), stakeDecimal) + poolInfo.staked >
+          poolInfo.cap) {
+        error = I18n.of(context)
+            .getDic(i18n_full_dic_acala, 'acala')['homa.pool.cap.error'];
+      }
+
       setState(() {
-        _amountReceiveCtrl.text =
-            Fmt.priceFloor(input * exchangeRate, lengthFixed: 3);
+        _error = error;
+        _amountReceive = Fmt.priceFloor(receive, lengthFixed: 3);
       });
     }
   }
 
-  void _onSupplyAmountChange(String v) {
-    String supply = v.trim();
+  void _onSupplyAmountChange(String v, double balance, double minStake) {
+    final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'common');
+
+    final supply = v.trim();
+    setState(() {
+      _maxInput = null;
+    });
+
+    String error;
     if (supply.isEmpty) {
+      error = dic['amount.error'];
+    }
+    try {
+      final pay = double.parse(supply);
+      if (pay > balance) {
+        error = dic['amount.low'];
+      }
+      if (pay < minStake) {
+        final minLabel = I18n.of(context)
+            .getDic(i18n_full_dic_acala, 'acala')['homa.pool.min'];
+        error = '$minLabel $minStake';
+      }
+    } catch (err) {
+      error = dic['amount.error'];
+    }
+    if (error != null) {
+      setState(() {
+        _error = error;
+        _amountReceive = '';
+      });
       return;
     }
     _updateReceiveAmount(double.parse(supply));
   }
 
-  Future<void> _onSubmit(int stakeDecimal) async {
-    if (_formKey.currentState.validate()) {
-      final pay = _amountPayCtrl.text.trim();
-      final receive = _amountReceiveCtrl.text.trim();
-
-      final params = [
-        Fmt.tokenInt(pay, stakeDecimal).toString(),
-      ];
-      final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
-          arguments: TxConfirmParams(
-            module: 'homa',
-            call: 'mint',
-            txTitle: I18n.of(context)
-                .getDic(i18n_full_dic_acala, 'acala')['homa.mint'],
-            txDisplay: {
-              "amountPay": pay,
-              "amountReceive": receive,
-            },
-            params: params,
-          ))) as Map;
-      if (res != null) {
-        res['time'] = DateTime.now().millisecondsSinceEpoch;
-        res['action'] = TxHomaData.actionMint;
-        res['amountPay'] = pay;
-        res['amountReceive'] = receive;
-        res['params'] = params;
-        widget.plugin.store.homa.addHomaTx(res, widget.keyring.current.pubKey);
-        Navigator.of(context).pushNamed(HomaHistoryPage.route);
-      }
+  void _onSetMax(BigInt max, int decimals, double balance, double minStake) {
+    final poolInfo = widget.plugin.store.homa.poolInfo;
+    if (poolInfo.staked + max > poolInfo.cap) {
+      max = poolInfo.cap - poolInfo.staked;
     }
+
+    final amount = Fmt.bigIntToDouble(max, decimals).toStringAsFixed(6);
+    setState(() {
+      _amountPayCtrl.text = amount;
+      _maxInput = max;
+      _error = null;
+    });
+    _onSupplyAmountChange(amount, balance, minStake);
   }
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _updateReceiveAmount(0);
-    });
+  Future<void> _onSubmit(int stakeDecimal) async {
+    final pay = _amountPayCtrl.text.trim();
+
+    if (_error != null || pay.isEmpty) return;
+
+    final params = [
+      _maxInput != null
+          ? _maxInput.toString()
+          : Fmt.tokenInt(pay, stakeDecimal).toString()
+    ];
+    final res = (await Navigator.of(context).pushNamed(TxConfirmPage.route,
+        arguments: TxConfirmParams(
+          module: 'homaLite',
+          call: 'mint',
+          txTitle: I18n.of(context)
+              .getDic(i18n_full_dic_acala, 'acala')['homa.mint'],
+          txDisplay: {
+            "amountPay": pay,
+            "amountReceive": _amountReceive,
+          },
+          params: params,
+        ))) as Map;
+
+    if (res != null) {
+      // res['time'] = DateTime.now().millisecondsSinceEpoch;
+      // res['action'] = TxHomaData.actionMint;
+      // res['amountPay'] = pay;
+      // res['amountReceive'] = receive;
+      // res['params'] = params;
+      // widget.plugin.store.homa.addHomaTx(res, widget.keyring.current.pubKey);
+      // Navigator.of(context).pushNamed(HomaHistoryPage.route);
+      Navigator.of(context).pop();
+    }
   }
 
   @override
   void dispose() {
     _amountPayCtrl.dispose();
-    _amountReceiveCtrl.dispose();
+    _payFocusNode.dispose();
     super.dispose();
   }
 
@@ -105,25 +165,34 @@ class _MintPageState extends State<MintPage> {
     return Observer(
       builder: (BuildContext context) {
         final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
-        final dicAssets =
-            I18n.of(context).getDic(i18n_full_dic_acala, 'common');
 
         final symbols = widget.plugin.networkState.tokenSymbol;
         final stakeToken = relay_chain_token_symbol[widget.plugin.basic.name];
-        final liquidToken = 'L$stakeToken';
         final decimals = widget.plugin.networkState.tokenDecimals;
 
+        final balanceData =
+            widget.plugin.store.assets.tokenBalanceMap[stakeToken];
+
         final stakeDecimal = decimals[symbols.indexOf(stakeToken)];
+        final balanceDouble =
+            Fmt.balanceDouble(balanceData.amount, stakeDecimal);
 
-        final balance = Fmt.balanceInt(
-            widget.plugin.store.assets.tokenBalanceMap[stakeToken].amount);
-
-        final pool = widget.plugin.store.homa.stakingPoolInfo;
-
-        Color primary = Theme.of(context).primaryColor;
+        final minStake = Fmt.balanceDouble(
+            widget.plugin.networkConst['homaLite']['minimumMintThreshold']
+                .toString(),
+            stakeDecimal);
 
         return Scaffold(
-          appBar: AppBar(title: Text(dic['homa.mint']), centerTitle: true),
+          appBar: AppBar(
+            title: Text('${dic['homa.mint']} L$stakeToken'),
+            centerTitle: true,
+            actions: [
+              IconButton(
+                  onPressed: () =>
+                      Navigator.of(context).pushNamed(HomaHistoryPage.route),
+                  icon: Icon(Icons.history))
+            ],
+          ),
           body: SafeArea(
             child: ListView(
               padding: EdgeInsets.all(16),
@@ -133,145 +202,32 @@ class _MintPageState extends State<MintPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Form(
-                        key: _formKey,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: <Widget>[
-                                  CurrencyWithIcon(
-                                    stakeToken,
-                                    TokenIcon(
-                                        stakeToken, widget.plugin.tokenIcons),
-                                    textStyle:
-                                        Theme.of(context).textTheme.headline4,
-                                  ),
-                                  TextFormField(
-                                    decoration: InputDecoration(
-                                      hintText: dic['dex.pay'],
-                                      labelText: dic['dex.pay'],
-                                      suffix: GestureDetector(
-                                        child: Icon(
-                                          CupertinoIcons.clear_thick_circled,
-                                          color:
-                                              Theme.of(context).disabledColor,
-                                          size: 18,
-                                        ),
-                                        onTap: () {
-                                          WidgetsBinding.instance
-                                              .addPostFrameCallback((_) =>
-                                                  _amountPayCtrl.clear());
-                                        },
-                                      ),
-                                    ),
-                                    inputFormatters: [
-                                      UI.decimalInputFormatter(stakeDecimal)
-                                    ],
-                                    controller: _amountPayCtrl,
-                                    keyboardType:
-                                        TextInputType.numberWithOptions(
-                                            decimal: true),
-                                    validator: (v) {
-                                      try {
-                                        if (v.isEmpty || double.parse(v) == 0) {
-                                          return dicAssets['amount.error'];
-                                        }
-                                      } catch (err) {
-                                        return dicAssets['amount.error'];
-                                      }
-                                      if (double.parse(v.trim()) >=
-                                          Fmt.bigIntToDouble(
-                                              balance, stakeDecimal)) {
-                                        return dicAssets['amount.low'];
-                                      }
-                                      return null;
-                                    },
-                                    onChanged: _onSupplyAmountChange,
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsets.only(top: 8),
-                                    child: Text(
-                                      '${dicAssets['balance']}: ${Fmt.token(balance, stakeDecimal)} $stakeToken',
-                                      style: TextStyle(
-                                          color: Theme.of(context)
-                                              .unselectedWidgetColor),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Padding(
-                              padding: EdgeInsets.fromLTRB(8, 2, 8, 0),
-                              child: Icon(
-                                Icons.repeat,
-                                color: Theme.of(context).primaryColor,
-                              ),
-                            ),
-                            Expanded(
-                              child: Column(
-                                children: <Widget>[
-                                  CurrencyWithIcon(
-                                    liquidToken,
-                                    TokenIcon(
-                                        liquidToken, widget.plugin.tokenIcons),
-                                    textStyle:
-                                        Theme.of(context).textTheme.headline4,
-                                  ),
-                                  TextFormField(
-                                    decoration: InputDecoration(
-                                      labelText: dic['dex.receive'],
-                                      suffix: Container(
-                                        height: 16,
-                                        width: 8,
-                                      ),
-                                    ),
-                                    controller: _amountReceiveCtrl,
-                                    readOnly: true,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                      SwapTokenInput(
+                        title: dic['dex.pay'],
+                        inputCtrl: _amountPayCtrl,
+                        focusNode: _payFocusNode,
+                        balance: widget
+                            .plugin.store.assets.tokenBalanceMap[stakeToken],
+                        tokenIconsMap: widget.plugin.tokenIcons,
+                        onInputChange: (v) =>
+                            _onSupplyAmountChange(v, balanceDouble, minStake),
+                        onSetMax: (v) =>
+                            _onSetMax(v, stakeDecimal, balanceDouble, minStake),
+                        onClear: () {
+                          setState(() {
+                            _amountPayCtrl.text = '';
+                          });
+                          _onSupplyAmountChange('', balanceDouble, minStake);
+                        },
                       ),
-                      Divider(),
-                      Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: <Widget>[
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Text(
-                                  dic['dex.rate'],
-                                  style: TextStyle(
-                                      color: Theme.of(context)
-                                          .unselectedWidgetColor),
-                                ),
-                                Text(
-                                    '1 $stakeToken = ${Fmt.priceFloor(1 / pool.liquidExchangeRate, lengthMax: 4)} L-$stakeToken'),
-                              ],
-                            ),
-                            GestureDetector(
-                              child: Container(
-                                child: Column(
-                                  children: <Widget>[
-                                    Icon(Icons.history, color: primary),
-                                    Text(
-                                      dic['loan.txs'],
-                                      style: TextStyle(
-                                          color: primary, fontSize: 14),
-                                    )
-                                  ],
-                                ),
-                              ),
-                              onTap: () => Navigator.of(context)
-                                  .pushNamed(HomaHistoryPage.route),
-                            ),
-                          ])
+                      ErrorMessage(_error),
+                      _amountReceive.isNotEmpty
+                          ? Container(
+                              margin: EdgeInsets.only(top: 16),
+                              child: InfoItemRow(dic['dex.receive'],
+                                  '$_amountReceive L$stakeToken'),
+                            )
+                          : Container(),
                     ],
                   ),
                 ),

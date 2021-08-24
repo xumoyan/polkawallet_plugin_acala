@@ -18,6 +18,9 @@ abstract class _HomaStore with Store {
   StakingPoolInfoData stakingPoolInfo = StakingPoolInfoData();
 
   @observable
+  HomaLitePoolInfoData poolInfo = HomaLitePoolInfoData();
+
+  @observable
   HomaUserInfoData userInfo = HomaUserInfoData();
 
   @observable
@@ -26,6 +29,11 @@ abstract class _HomaStore with Store {
   @action
   void setStakingPoolInfoData(StakingPoolInfoData data) {
     stakingPoolInfo = data;
+  }
+
+  @action
+  void setHomaLitePoolInfoData(HomaLitePoolInfoData data) {
+    poolInfo = data;
   }
 
   @action

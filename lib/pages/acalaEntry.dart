@@ -128,6 +128,10 @@ class _AcalaEntryState extends State<AcalaEntry> {
                       modulesConfig.keys.toList().sublist(1);
 
                   liveModules?.retainWhere((e) => modulesConfig[e]['visible']);
+
+                  if (widget.plugin.basic.name == plugin_name_acala) {
+                    liveModules?.removeWhere((e) => e == 'homa');
+                  }
                   return ListView(
                     padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
                     children: <Widget>[

@@ -56,3 +56,14 @@ class HomaUserInfoClaimItemData {
   int era;
   BigInt claimed;
 }
+
+class HomaLitePoolInfoData {
+  HomaLitePoolInfoData({
+    this.cap,
+    this.staked,
+    this.liquidTokenIssuance,
+  });
+  BigInt cap;
+  BigInt staked;
+  BigInt liquidTokenIssuance;
+}

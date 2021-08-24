@@ -24,6 +24,21 @@ mixin _$HomaStore on _HomaStore, Store {
     });
   }
 
+  final _$poolInfoAtom = Atom(name: '_HomaStore.poolInfo');
+
+  @override
+  HomaLitePoolInfoData get poolInfo {
+    _$poolInfoAtom.reportRead();
+    return super.poolInfo;
+  }
+
+  @override
+  set poolInfo(HomaLitePoolInfoData value) {
+    _$poolInfoAtom.reportWrite(value, super.poolInfo, () {
+      super.poolInfo = value;
+    });
+  }
+
   final _$userInfoAtom = Atom(name: '_HomaStore.userInfo');
 
   @override
@@ -76,6 +91,17 @@ mixin _$HomaStore on _HomaStore, Store {
   }
 
   @override
+  void setHomaLitePoolInfoData(HomaLitePoolInfoData data) {
+    final _$actionInfo = _$_HomaStoreActionController.startAction(
+        name: '_HomaStore.setHomaLitePoolInfoData');
+    try {
+      return super.setHomaLitePoolInfoData(data);
+    } finally {
+      _$_HomaStoreActionController.endAction(_$actionInfo);
+    }
+  }
+
+  @override
   void addHomaTx(Map<dynamic, dynamic> tx, String pubKey) {
     final _$actionInfo =
         _$_HomaStoreActionController.startAction(name: '_HomaStore.addHomaTx');
@@ -101,6 +127,7 @@ mixin _$HomaStore on _HomaStore, Store {
   String toString() {
     return '''
 stakingPoolInfo: ${stakingPoolInfo},
+poolInfo: ${poolInfo},
 userInfo: ${userInfo},
 txs: ${txs}
     ''';

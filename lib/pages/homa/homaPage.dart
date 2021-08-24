@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:charts_flutter/flutter.dart' as charts;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
@@ -13,8 +14,8 @@ import 'package:polkawallet_plugin_acala/utils/i18n/index.dart';
 import 'package:polkawallet_sdk/storage/keyring.dart';
 import 'package:polkawallet_sdk/utils/i18n.dart';
 import 'package:polkawallet_ui/components/infoItem.dart';
-import 'package:polkawallet_ui/components/outlinedButtonSmall.dart';
 import 'package:polkawallet_ui/components/roundedCard.dart';
+import 'package:polkawallet_ui/components/tokenIcon.dart';
 import 'package:polkawallet_ui/components/txButton.dart';
 import 'package:polkawallet_ui/pages/txConfirmPage.dart';
 import 'package:polkawallet_ui/utils/format.dart';
@@ -34,13 +35,9 @@ class _HomaPageState extends State<HomaPage> {
   Timer _timer;
 
   Future<void> _refreshData() async {
-    await Future.wait([
-      widget.plugin.service.homa.queryHomaStakingPool(),
-      widget.plugin.service.homa
-          .queryHomaUserInfo(widget.keyring.current.address),
-    ]);
+    await widget.plugin.service.homa.queryHomaLiteStakingPool();
 
-    _timer = Timer(Duration(seconds: 10), () {
+    _timer = Timer(Duration(seconds: 20), () {
       _refreshData();
     });
   }
@@ -96,21 +93,37 @@ class _HomaPageState extends State<HomaPage> {
         final symbols = widget.plugin.networkState.tokenSymbol;
         final decimals = widget.plugin.networkState.tokenDecimals;
 
-        final bool enabled =
-            !isKar || ModalRoute.of(context).settings.arguments;
+        // final bool enabled =
+        //     !isKar || ModalRoute.of(context).settings.arguments;
+        final enabled = true;
         final stakeSymbol = relay_chain_token_symbol[widget.plugin.basic.name];
+
+        final poolInfo = widget.plugin.store.homa.poolInfo;
+        final staked = poolInfo.staked ?? BigInt.zero;
+        final cap = poolInfo.cap ?? BigInt.zero;
+        final liquidTokenIssuance = poolInfo.liquidTokenIssuance ?? BigInt.zero;
+
+        final List<charts.Series> seriesList = [
+          new charts.Series<num, int>(
+            id: 'chartData',
+            domainFn: (_, i) => i,
+            colorFn: (_, i) => i == 0
+                ? charts.MaterialPalette.red.shadeDefault
+                : charts.MaterialPalette.gray.shade100,
+            measureFn: (num i, _) => i,
+            data: [
+              staked.toDouble(),
+              cap.toDouble(),
+            ],
+          )
+        ];
 
         final nativeDecimal = decimals[symbols.indexOf(stakeSymbol)];
         final liquidDecimal = decimals[symbols.indexOf('L$stakeSymbol')];
 
-        final pool = widget.plugin.store.homa.stakingPoolInfo;
-        final userInfo = widget.plugin.store.homa.userInfo;
-        bool hasUserInfo = false;
-        if (userInfo != null &&
-            userInfo.unbonded != null &&
-            (userInfo.unbonded > BigInt.zero || userInfo.claims.length > 0)) {
-          hasUserInfo = true;
-        }
+        final minStake = Fmt.balanceInt(widget
+            .plugin.networkConst['homaLite']['minimumMintThreshold']
+            .toString());
 
         final primary = Theme.of(context).primaryColor;
         final white = Theme.of(context).cardColor;
@@ -146,32 +159,57 @@ class _HomaPageState extends State<HomaPage> {
                             child: Column(
                               children: <Widget>[
                                 Text('$stakeSymbol ${dic['homa.pool']}'),
-                                Padding(
-                                  padding: EdgeInsets.only(top: 16),
-                                  child: Text(
-                                    dic['homa.pool.total'],
-                                    style: TextStyle(fontSize: 14),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: EdgeInsets.only(bottom: 8),
-                                  child: Text(
-                                    Fmt.doubleFormat(pool.communalTotal ?? 0),
-                                    style: TextStyle(
-                                      color: primary,
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
                                 Row(
-                                  children: <Widget>[
-                                    InfoItem(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      title: dic['homa.pool.bonded'],
-                                      content: Fmt.doubleFormat(
-                                        pool.communalBonded ?? 0,
+                                  children: [
+                                    Expanded(
+                                      child: Stack(
+                                        alignment: AlignmentDirectional.center,
+                                        children: [
+                                          Container(
+                                            height: MediaQuery.of(context)
+                                                    .size
+                                                    .width /
+                                                3,
+                                            child: charts.PieChart(seriesList,
+                                                animate: false,
+                                                defaultRenderer: new charts
+                                                        .ArcRendererConfig(
+                                                    arcWidth: 10)),
+                                          ),
+                                          TokenIcon(stakeSymbol,
+                                              widget.plugin.tokenIcons),
+                                        ],
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            dic['homa.pool.bonded'],
+                                            style: TextStyle(fontSize: 12),
+                                          ),
+                                          Text(
+                                            Fmt.token(staked, nativeDecimal),
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .headline4,
+                                          ),
+                                          Container(
+                                            margin: EdgeInsets.only(top: 8),
+                                            child: Text(
+                                              dic['homa.pool.cap'],
+                                              style: TextStyle(fontSize: 12),
+                                            ),
+                                          ),
+                                          Text(
+                                            Fmt.token(cap, nativeDecimal),
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .headline4,
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
@@ -182,23 +220,17 @@ class _HomaPageState extends State<HomaPage> {
                                     InfoItem(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.center,
-                                      title: dic['homa.pool.free'],
-                                      content: Fmt.doubleFormat(pool.freePool),
+                                      title: dic['homa.pool.min'],
+                                      content:
+                                          Fmt.token(minStake, nativeDecimal),
                                     ),
                                     InfoItem(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.center,
-                                      title: dic['homa.pool.unbonding'],
-                                      content: Fmt.doubleFormat(
-                                          pool.unbondingToFree),
-                                    ),
-                                    InfoItem(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      title: dic['homa.pool.ratio'],
-                                      content: Fmt.ratio(
-                                        pool.communalBondedRatio ?? 0,
-                                      ),
+                                      title:
+                                          'L$stakeSymbol ${dic['homa.pool.issuance']}',
+                                      content: Fmt.token(
+                                          liquidTokenIssuance, liquidDecimal),
                                     ),
                                   ],
                                 )
@@ -207,110 +239,42 @@ class _HomaPageState extends State<HomaPage> {
                           ),
                         ],
                       ),
-                      hasUserInfo
-                          ? RoundedCard(
-                              margin: EdgeInsets.all(16),
-                              padding: EdgeInsets.all(16),
-                              child: Column(
-                                children: <Widget>[
-                                  Padding(
-                                    padding: EdgeInsets.only(bottom: 16),
-                                    child: Text(dic['homa.user']),
-                                  ),
-                                  userInfo.claims.length > 0
-                                      ? Column(
-                                          children: userInfo.claims.map((i) {
-                                            String unlockTime =
-                                                (i.era - (pool.currentEra ?? 0))
-                                                    .toInt()
-                                                    .toString();
-                                            return Padding(
-                                              padding:
-                                                  EdgeInsets.only(bottom: 8),
-                                              child: Row(
-                                                children: <Widget>[
-                                                  InfoItem(
-                                                    title: I18n.of(context)
-                                                        .getDic(
-                                                            i18n_full_dic_acala,
-                                                            'common')['amount'],
-                                                    content:
-                                                        Fmt.priceFloorBigInt(
-                                                            i.claimed,
-                                                            nativeDecimal),
-                                                  ),
-                                                  InfoItem(
-                                                    title:
-                                                        dic['homa.user.time'],
-                                                    content:
-                                                        '$unlockTime Era ≈ $unlockTime ${dic['homa.redeem.day']}',
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          }).toList(),
-                                        )
-                                      : Container(),
-                                  userInfo.unbonded > BigInt.zero
-                                      ? Divider(height: 24)
-                                      : Container(),
-                                  userInfo.unbonded > BigInt.zero
-                                      ? Row(
-                                          children: <Widget>[
-                                            InfoItem(
-                                              title:
-                                                  dic['homa.user.redeemable'],
-                                              content: Fmt.priceFloorBigInt(
-                                                  userInfo.unbonded,
-                                                  nativeDecimal),
-                                            ),
-                                            OutlinedButtonSmall(
-                                              margin: EdgeInsets.all(0),
-                                              active: true,
-                                              content: dic['homa.now'],
-                                              onPressed: () =>
-                                                  _onSubmitWithdraw(
-                                                      liquidDecimal),
-                                            ),
-                                          ],
-                                        )
-                                      : Container()
-                                ],
-                              ),
-                            )
-                          : Container(),
                     ],
                   ),
                 ),
-                pool.communalTotal != null
+                (poolInfo.liquidTokenIssuance ?? BigInt.zero) >= BigInt.zero
                     ? Row(
                         children: <Widget>[
                           Expanded(
                             child: Container(
-                              color: Colors.blue,
+                              color: false
+                                  ? primary
+                                  : Theme.of(context).disabledColor,
                               child: TextButton(
                                 child: Text(
-                                  '${dic['homa.mint']} L-$stakeSymbol',
+                                  '${dic['homa.redeem']} $stakeSymbol',
                                   style: TextStyle(color: white),
                                 ),
-                                onPressed: enabled && pool.communalTotal != null
+                                onPressed: false
                                     ? () => Navigator.of(context)
-                                        .pushNamed(MintPage.route)
+                                        .pushNamed(HomaRedeemPage.route)
                                     : null,
                               ),
                             ),
                           ),
                           Expanded(
                             child: Container(
-                              color: primary,
+                              color: enabled && staked < cap
+                                  ? Theme.of(context).accentColor
+                                  : Theme.of(context).disabledColor,
                               child: TextButton(
                                 child: Text(
-                                  '${dic['homa.redeem']} $stakeSymbol',
+                                  '${dic['homa.mint']} L$stakeSymbol',
                                   style: TextStyle(color: white),
                                 ),
-                                onPressed: enabled && pool.communalTotal != null
+                                onPressed: enabled && staked < cap
                                     ? () => Navigator.of(context)
-                                        .pushNamed(HomaRedeemPage.route)
+                                        .pushNamed(MintPage.route)
                                     : null,
                               ),
                             ),
