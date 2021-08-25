@@ -129,6 +129,8 @@ const Map<String, String> zhDex = {
   'homa.user.blocks': '区块',
   'homa.user.redeemable': '可取回',
   'homa.mint.profit': '预估收益（每Era）',
+  'homa.mint.warn': 'LKSM 第一阶段使用代理质押的方式。在下个阶段上线之前，取回 KSM 的功能暂不可用。详见',
+  'homa.mint.warn.here': ' 这里',
   'homa.redeem.fee': '手续费',
   'homa.redeem.era': '当前 Era',
   'homa.redeem.period': '解锁周期',

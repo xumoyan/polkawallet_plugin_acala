@@ -47,9 +47,10 @@ class _MintPageState extends State<MintPage> {
       final mintFee = Fmt.balanceDouble(
           widget.plugin.networkConst['homaLite']['mintFee'].toString(),
           stakeDecimal);
-      final maxRewardPerEra = Fmt.balanceDouble(
-          widget.plugin.networkConst['homaLite']['maxRewardPerEra'].toString(),
-          stakeDecimal);
+      final maxRewardPerEra = int.parse(widget
+              .plugin.networkConst['homaLite']['maxRewardPerEra']
+              .toString()) /
+          1000000; // type of maxRewardPerEra is PerMill
       final receive = (input - mintFee) *
           (poolInfo.liquidTokenIssuance / poolInfo.staked) *
           (1 - maxRewardPerEra);

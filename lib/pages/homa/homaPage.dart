@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:charts_flutter/flutter.dart' as charts;
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:polkawallet_plugin_acala/api/types/txHomaData.dart';
@@ -19,6 +20,7 @@ import 'package:polkawallet_ui/components/tokenIcon.dart';
 import 'package:polkawallet_ui/components/txButton.dart';
 import 'package:polkawallet_ui/pages/txConfirmPage.dart';
 import 'package:polkawallet_ui/utils/format.dart';
+import 'package:polkawallet_ui/utils/index.dart';
 
 class HomaPage extends StatefulWidget {
   HomaPage(this.plugin, this.keyring);
@@ -37,6 +39,9 @@ class _HomaPageState extends State<HomaPage> {
   Future<void> _refreshData() async {
     await widget.plugin.service.homa.queryHomaLiteStakingPool();
 
+    if (_timer != null) {
+      _timer.cancel();
+    }
     _timer = Timer(Duration(seconds: 20), () {
       _refreshData();
     });
@@ -65,6 +70,52 @@ class _HomaPageState extends State<HomaPage> {
       res['amountReceive'] = receive;
       widget.plugin.store.homa.addHomaTx(res, widget.keyring.current.pubKey);
     }
+  }
+
+  Future<bool> _confirmMint() async {
+    final dic = I18n.of(context).getDic(i18n_full_dic_acala, 'acala');
+    return showCupertinoDialog(
+        context: context,
+        builder: (_) {
+          return CupertinoAlertDialog(
+            title: Text(dic['cross.warn']),
+            content: RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: dic['homa.mint.warn'],
+                    style: TextStyle(color: Colors.black87),
+                  ),
+                  TextSpan(
+                    text: dic['homa.mint.warn.here'],
+                    style: TextStyle(color: Theme.of(context).primaryColor),
+                    recognizer: new TapGestureRecognizer()
+                      ..onTap = () {
+                        UI.launchURL(
+                            'https://wiki.acala.network/karura/defi-hub/liquid-staking');
+                      },
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              CupertinoButton(
+                child: Text(I18n.of(context)
+                    .getDic(i18n_full_dic_acala, 'common')['cancel']),
+                onPressed: () {
+                  Navigator.of(context).pop(false);
+                },
+              ),
+              CupertinoButton(
+                child: Text(I18n.of(context)
+                    .getDic(i18n_full_dic_acala, 'common')['ok']),
+                onPressed: () {
+                  Navigator.of(context).pop(true);
+                },
+              ),
+            ],
+          );
+        });
   }
 
   @override
@@ -273,8 +324,12 @@ class _HomaPageState extends State<HomaPage> {
                                   style: TextStyle(color: white),
                                 ),
                                 onPressed: enabled && staked < cap
-                                    ? () => Navigator.of(context)
-                                        .pushNamed(MintPage.route)
+                                    ? () async {
+                                        if (!(await _confirmMint())) return;
+
+                                        Navigator.of(context)
+                                            .pushNamed(MintPage.route);
+                                      }
                                     : null,
                               ),
                             ),
