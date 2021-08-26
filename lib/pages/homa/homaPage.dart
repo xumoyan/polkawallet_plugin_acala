@@ -173,8 +173,10 @@ class _HomaPageState extends State<HomaPage> {
         final liquidDecimal = decimals[symbols.indexOf('L$stakeSymbol')];
 
         final minStake = Fmt.balanceInt(widget
-            .plugin.networkConst['homaLite']['minimumMintThreshold']
-            .toString());
+                .plugin.networkConst['homaLite']['minimumMintThreshold']
+                .toString()) +
+            Fmt.balanceInt(
+                widget.plugin.networkConst['homaLite']['mintFee'].toString());
 
         final primary = Theme.of(context).primaryColor;
         final white = Theme.of(context).cardColor;
@@ -273,7 +275,7 @@ class _HomaPageState extends State<HomaPage> {
                                           CrossAxisAlignment.center,
                                       title: dic['homa.pool.min'],
                                       content:
-                                          Fmt.token(minStake, nativeDecimal),
+                                          '> ${Fmt.token(minStake, nativeDecimal)}',
                                     ),
                                     InfoItem(
                                       crossAxisAlignment:

@@ -51,9 +51,11 @@ class _MintPageState extends State<MintPage> {
               .plugin.networkConst['homaLite']['maxRewardPerEra']
               .toString()) /
           1000000; // type of maxRewardPerEra is PerMill
-      final receive = (input - mintFee) *
-          (poolInfo.liquidTokenIssuance / poolInfo.staked) *
-          (1 - maxRewardPerEra);
+      final exchangeRate = poolInfo.staked > BigInt.zero
+          ? (poolInfo.liquidTokenIssuance / poolInfo.staked)
+          : Fmt.balanceInt(
+              widget.plugin.networkConst['homaLite']['defaultExchangeRate']);
+      final receive = (input - mintFee) * exchangeRate * (1 - maxRewardPerEra);
 
       String error;
       if (Fmt.tokenInt(input.toString(), stakeDecimal) + poolInfo.staked >
@@ -86,10 +88,10 @@ class _MintPageState extends State<MintPage> {
       if (pay > balance) {
         error = dic['amount.low'];
       }
-      if (pay < minStake) {
+      if (pay <= minStake) {
         final minLabel = I18n.of(context)
             .getDic(i18n_full_dic_acala, 'acala')['homa.pool.min'];
-        error = '$minLabel $minStake';
+        error = '$minLabel > ${minStake.toStringAsFixed(4)}';
       }
     } catch (err) {
       error = dic['amount.error'];
@@ -179,9 +181,12 @@ class _MintPageState extends State<MintPage> {
             Fmt.balanceDouble(balanceData.amount, stakeDecimal);
 
         final minStake = Fmt.balanceDouble(
-            widget.plugin.networkConst['homaLite']['minimumMintThreshold']
-                .toString(),
-            stakeDecimal);
+                widget.plugin.networkConst['homaLite']['minimumMintThreshold']
+                    .toString(),
+                stakeDecimal) +
+            Fmt.balanceDouble(
+                widget.plugin.networkConst['homaLite']['mintFee'].toString(),
+                stakeDecimal);
 
         return Scaffold(
           appBar: AppBar(

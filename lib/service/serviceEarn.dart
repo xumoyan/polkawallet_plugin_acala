@@ -54,9 +54,11 @@ class ServiceEarn {
   Map<String, double> _calcSavingRates(Map savingRates, int epochOfYear) {
     final res = Map<String, double>();
     savingRates.forEach((k, v) {
+      final poolInfo = store.earn.dexPoolInfoMap[k];
       final rate = Fmt.balanceDouble(v.toString(), acala_price_decimals) / 2;
       if (rate > 0) {
-        res[k] = rate * epochOfYear;
+        res[k] =
+            rate * epochOfYear / (poolInfo.sharesTotal / poolInfo.issuance);
       } else {
         res[k] = 0;
       }
