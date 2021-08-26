@@ -1,3 +1,8 @@
+## [0.3.0] - 20210826.
+
+* bump polkawallet_sdk 0.3.0.
+* add homaLite module.
+
 ## [0.2.6] - 20210723.
 
 * bump polkawallet_sdk 0.2.6.
