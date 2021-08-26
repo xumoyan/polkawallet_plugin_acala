@@ -1,3 +1,5 @@
+import 'package:polkawallet_ui/utils/format.dart';
+
 class TxHomaData extends _TxHomaData {
   static const String actionMint = 'mint';
   static const String actionRedeem = 'redeem';
@@ -8,19 +10,27 @@ class TxHomaData extends _TxHomaData {
   static const String redeemTypeWait = 'WaitForUnbonding';
   static TxHomaData fromJson(Map<String, dynamic> json) {
     TxHomaData data = TxHomaData();
-    data.hash = json['hash'];
-    data.action = json['action'];
-    data.amountPay = json['amountPay'];
-    data.amountReceive = json['amountReceive'];
-    data.time = DateTime.fromMillisecondsSinceEpoch(json['time']);
+    data.action = json['extrinsic']['method'];
+    data.hash = json['extrinsic']['id'];
+
+    data.action = json['extrinsic']['method'];
+    data.amountPay = Fmt.balanceInt(json['data'][1]['value'].toString());
+    data.amountReceive = Fmt.balanceInt(json['data'][2]['value'].toString());
+
+    data.time = (json['extrinsic']['timestamp'] as String).replaceAll(' ', '');
+    data.isSuccess = json['extrinsic']['isSuccess'];
     return data;
   }
 }
 
 abstract class _TxHomaData {
+  String block;
   String hash;
+
   String action;
-  String amountPay;
-  String amountReceive;
-  DateTime time;
+  BigInt amountPay;
+  BigInt amountReceive;
+
+  String time;
+  bool isSuccess = true;
 }

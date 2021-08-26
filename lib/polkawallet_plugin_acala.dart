@@ -30,6 +30,7 @@ import 'package:polkawallet_plugin_acala/pages/gov/democracy/referendumVotePage.
 import 'package:polkawallet_plugin_acala/pages/gov/democracyPage.dart';
 import 'package:polkawallet_plugin_acala/pages/homa/homaHistoryPage.dart';
 import 'package:polkawallet_plugin_acala/pages/homa/homaPage.dart';
+import 'package:polkawallet_plugin_acala/pages/homa/homaTxDetailPage.dart';
 import 'package:polkawallet_plugin_acala/pages/homa/mintPage.dart';
 import 'package:polkawallet_plugin_acala/pages/homa/redeemPage.dart';
 import 'package:polkawallet_plugin_acala/pages/loan/loanAdjustPage.dart';
@@ -200,7 +201,13 @@ class PluginAcala extends PolkawalletPlugin {
       HomaPage.route: (_) => HomaPage(this, keyring),
       MintPage.route: (_) => MintPage(this, keyring),
       HomaRedeemPage.route: (_) => HomaRedeemPage(this, keyring),
-      HomaHistoryPage.route: (_) => HomaHistoryPage(this, keyring),
+      HomaHistoryPage.route: (_) => ClientProvider(
+            child: Builder(
+              builder: (_) => HomaHistoryPage(this, keyring),
+            ),
+            uri: GraphQLConfig[_service.plugin.basic.name]['httpUri'],
+          ),
+      HomaTxDetailPage.route: (_) => HomaTxDetailPage(this, keyring),
       // NFT pages
       NFTPage.route: (_) => NFTPage(this, keyring),
       // Gov pages

@@ -152,6 +152,7 @@ class _HomaPageState extends State<HomaPage> {
         final poolInfo = widget.plugin.store.homa.poolInfo;
         final staked = poolInfo.staked ?? BigInt.zero;
         final cap = poolInfo.cap ?? BigInt.zero;
+        final amountLeft = cap - staked;
         final liquidTokenIssuance = poolInfo.liquidTokenIssuance ?? BigInt.zero;
 
         final List<charts.Series> seriesList = [
@@ -164,7 +165,7 @@ class _HomaPageState extends State<HomaPage> {
             measureFn: (num i, _) => i,
             data: [
               staked.toDouble(),
-              cap.toDouble(),
+              amountLeft.toDouble(),
             ],
           )
         ];

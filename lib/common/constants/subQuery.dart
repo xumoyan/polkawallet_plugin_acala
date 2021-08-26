@@ -79,34 +79,17 @@ const dexStakeQuery = r'''
 ''';
 const homaQuery = r'''
   query ($account: String) {
-    calls(filter: {
-      and: [
-        {
-          or: [
-            { method: {equalTo: "mint"} },
-            { method: {equalTo: "redeem"} }
-          ]
-        },
-        { section: {equalTo: "homa"} },
-        { signerId: { equalTo: $account } }
-      ]
-    }, orderBy: TIMESTAMP_DESC, first: 20) {
+    homaActions(filter: {accountId: {equalTo: $account}},
+      orderBy: TIMESTAMP_DESC, first: 20) {
       nodes {
         id
-        method
-        section
-        args
-        isSuccess
+        type
+        data
         extrinsic {
           id
-          block {number}
+          method
           timestamp
-          events {
-            nodes {
-              data,
-              method
-            }
-          }
+          isSuccess
         }
       }
     }
